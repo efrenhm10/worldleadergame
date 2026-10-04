@@ -126,7 +126,7 @@ and if it reaches midnight it ends the game for everyone.
 
 ## History, 1950–2026
 
-Around 200 historical events adapt to the state of the world. For example:
+More than 160 historical events adapt to the state of the world. For example:
 
 - A strong South Korea can deter the 1950 invasion, and a Soviet player can
   veto it.
