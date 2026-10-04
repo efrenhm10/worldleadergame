@@ -233,7 +233,7 @@ function renderCabinetSetup() {
 function viewsFor() {
     const v = [["office", "🏛️", "Office"]];
     if (G.gov.type === "colony") v.push(["movement", "✊", "Movement"]);
-    v.push(["policy", "📜", "Policy"], ["economy", "🏭", "Economy"], ["power", "⚖️", "Power"], ["world", "🌍", "World"], ["military", "🎖️", "Military"], ["record", "📖", "Record"]);
+    v.push([ "legislature", "📜", hasLegislature() ? "Legislature" : "Decrees"], ["lawbook", "📚", "Lawbook"], ["budget", "💰", "Budget"], ["economy", "🏭", "Economy"], ["power", "⚖️", "Power"], ["world", "🌍", "World"], ["military", "🎖️", "Military"], ["record", "📖", "Record"]);
     return v;
 }
 
@@ -280,7 +280,7 @@ function renderDock() {
 }
 
 function renderView() {
-    const fn = { office: viewOffice, movement: viewMovement, policy: viewPolicy, economy: viewEconomy, power: viewPower, world: viewWorld, military: viewMilitary, record: viewRecord }[view] || viewOffice;
+    const fn = { office: viewOffice, movement: viewMovement, legislature: viewLegislature, lawbook: viewLawbook, budget: viewBudget, economy: viewEconomy, power: viewPower, world: viewWorld, military: viewMilitary, record: viewRecord }[view] || viewOffice;
     $("#view").innerHTML = fn();
 }
 
@@ -289,6 +289,14 @@ function renderView() {
 function advisories() {
     const out = [];
     const a = approval();
+    const b = G.budget;
+    if (b && ["drafting", "rejected"].includes(b.status)) out.push(b.status === "rejected" ? `💰 The ${G.leg.name} rejected your budget. Revise and resubmit before 1 January (Budget tab).` : `💰 Budget season: the FY${b.fy} draft is waiting on the Budget tab${hasLegislature() ? ". It must pass by 31 December" : ""}.`);
+    if (b && b.status === "cr") out.push("⏸️ You are governing on a continuing resolution: no capital money this year.");
+    (G.bills || []).filter(x => x.sponsor === "player" && x.stage === "stuck").slice(0, 2).forEach(x => out.push(`🗄️ The ${x.title} is stuck in committee. Lobby, discharge or withdraw it (Legislature tab).`));
+    const desk = (G.bills || []).find(x => x.stage === "desk");
+    if (desk) out.push(`🖋️ The ${desk.title} is on your desk awaiting signature.`);
+    if (G.cip && G.cip.queue.length && !G.cip.active.length && G.cip.pool < G.cip.queue[0].cost) out.push("🏗️ Your capital program has projects waiting for money. Raise the capital budget next budget season.");
+    if (G.cip && !G.cip.queue.length && !G.cip.active.length && G.cip.pool > 0) out.push("🏗️ Capital money is sitting unused. Add projects to the CIP (Budget tab).");
     if (G.capital >= capitalCap() - 2) out.push("💡 Your political capital is maxed out. Spend it on policy, projects or diplomacy.");
     if (a < 40) out.push("⚠️ Your approval is low. Consider a popular policy, a speech, or fixing the economy.");
     if (G.econ.inflation > 8) out.push("📈 Inflation is high. Deficits and overheating growth drive it.");
@@ -365,65 +373,6 @@ function optEffects(o) {
     return bits.concat(ps).join(" · ");
 }
 
-function viewPolicy() {
-    const list = POLICY_AREAS.map(a => {
-        const o = curOpt(a.key);
-        return `<button class="policy-row ${ui.area === a.key ? "on" : ""}" data-act="area" data-k="${a.key}"><span>${a.icon} ${a.name}</span><b>${esc(optName(o))}</b></button>`;
-    }).join("");
-    let detail = `<p class="muted">Choose a policy area. How a change happens depends on your system: decree, a party vote, or a bill you must whip through the legislature.</p>`;
-    if (ui.area) detail = policyDetail(ui.area);
-    const e = G.econ;
-    const budget = `<div class="budget"><div><small>Revenue</small><b>${fmt(e.rev, 1)}% GDP</b></div><div><small>Spending</small><b>${fmt(e.spend, 1)}% GDP</b></div><div class="${e.deficit > 0 ? "bad" : "good"}"><small>${e.deficit > 0 ? "Deficit" : "Surplus"}</small><b>${fmt(Math.abs(e.deficit), 1)}%</b></div><div><small>Debt</small><b>${nominal(e.debt)}</b></div></div>`;
-    return `<div class="cols2 wide-right"><div>${panel("Budget", budget)}${panel("Laws & policies", list)}</div><div>${detail}</div></div>`;
-}
-
-function policyDetail(area) {
-    const a = POLICY[area], m = policyMethod(area);
-    const cool = onCooldown(area);
-    const opts = a.options.map(o => {
-        const allowed = !o.req || o.req(G.gov.type, G);
-        const cur = G.pol[area] === o.k;
-        return `<div class="opt ${cur ? "cur" : ""} ${ui.bill && ui.bill.area === area && ui.bill.k === o.k ? "sel" : ""}">
-            <div><b>${esc(optName(o))}</b>${cur ? ` <span class="badge small">Current</span>` : ""}${o.desc ? `<p class="small">${esc(o.desc)}</p>` : ""}<p class="tiny">${optEffects(o)}</p>
-            ${(IDEOLOGIES[G.leader.ideology] || { likes: [] }).likes.includes(o.k) ? `<p class="tiny good">Fits your ideology</p>` : (IDEOLOGIES[G.leader.ideology] || { hates: [] }).hates.includes(o.k) ? `<p class="tiny bad">Against your ideology</p>` : ""}</div>
-            ${cur ? "" : !allowed ? `<span class="muted tiny">Not available under your system</span>` : m.m === "blocked" ? "" : `<button data-act="propose" data-a="${area}" data-k="${o.k}" ${cool ? "disabled" : ""}>${m.m === "bill" ? "Draft bill" : "Enact"}</button>`}
-        </div>`;
-    }).join("");
-    let billUI = "";
-    if (ui.bill && ui.bill.area === area) billUI = m.m === "bill" ? billPanel() : decreePanel();
-    return panel(`${a.icon} ${a.name}`, `<p class="small muted">${esc(m.why)}${cool ? " <b>This area was changed recently; wait a few weeks.</b>" : ""}</p>${opts}`) + billUI;
-}
-
-function decreePanel() {
-    const b = ui.bill, o = policyOpt(b.area, b.k), cost = policyCost(b.area);
-    const react = changeReaction(b.area, b.k);
-    return panel(`Enact: ${esc(optName(o))}`, `<p>Cost: <b>${cost}</b> political capital.</p>
-        <p class="small">Expected reactions: ${Object.entries(react).map(([k, v]) => `<span class="${v > 0 ? "good" : "bad"}">${pillarName(k)} ${v > 0 ? "+" : ""}${Math.round(v * 0.5)}</span>`).join(" · ") || "none"}</p>
-        <div class="row"><button class="primary" data-act="decree" ${G.capital < cost ? "disabled" : ""}>Enact</button><button class="secondary" data-act="cancelBill">Cancel</button></div>`, "bill");
-}
-
-function billPanel() {
-    const b = ui.bill, o = policyOpt(b.area, b.k);
-    const fc = billForecast(b);
-    const cost = policyCost(b.area);
-    const rows = fc.rows.map(r => {
-        const lean = r.p >= 0.65 ? "for" : r.p <= 0.35 ? "against" : "und";
-        return `<tr><td><i class="dot" style="background:${ideoColor(r.f.ideo)}"></i> ${esc(r.f.name)}${r.f.gov ? " <span class='tiny muted'>(gov)</span>" : ""}</td><td>${r.f.seats}</td><td>${Math.round(r.f.loyalty)}</td><td class="c-${lean}">${Math.round(r.p * 100)}%</td><td>~${Math.round(r.exp)}</td>
-            <td>${!r.f.gov ? `<button class="mini ${b.conc[r.f.k] ? "on" : ""}" data-act="billConc" data-k="${r.f.k}" title="Pork for their districts: 0.15% of GDP">🏗️ Pork</button>` : ""}<button class="mini ${b.favor[r.f.k] ? "on" : ""}" data-act="billFavor" data-k="${r.f.k}" title="Owe them a favor later">🤝 Favor</button></td></tr>`;
-    }).join("");
-    const eo = policyMethod(b.area).eo;
-    return panel(`Bill: ${esc(optName(o))}`, `
-        <p>Needs <b>${fc.need}</b> of ${G.leg.total} votes. Projected yes: <b>${Math.round(fc.yes)}</b>. Chance of passing: <b class="${fc.prob > 0.6 ? "good" : fc.prob < 0.4 ? "bad" : "warn"}">${Math.round(fc.prob * 100)}%</b></p>
-        <div class="whipbar"><i style="width:${clamp(fc.yes / G.leg.total * 100, 0, 100)}%"></i><span style="left:${fc.need / G.leg.total * 100}%"></span></div>
-        <table class="whip"><tr><th>Faction</th><th>Seats</th><th>Loyalty</th><th>Yes chance</th><th>Votes</th><th>Deal</th></tr>${rows}</table>
-        <div class="row">
-            <button class="${b.whip ? "on" : ""}" data-act="billWhip">📣 Whip your side (${whipCost()} ⚡)</button>
-            <button class="primary" data-act="billVote" ${G.capital < cost + (b.whip ? whipCost() : 0) ? "disabled" : ""}>Call the vote (${cost} ⚡)</button>
-            ${eo ? `<button data-act="billEO" title="Skip the legislature. Costs legitimacy; courts may strike it down.">✒️ Executive order (${cost + 6} ⚡)</button>` : ""}
-            <button class="secondary" data-act="cancelBill">Cancel</button>
-        </div>`, "bill");
-}
-
 // ── Economy ─────────────────────────────────────────────────────────
 
 function viewEconomy() {
@@ -434,60 +383,65 @@ function viewEconomy() {
         const status = !avail ? (I.from && G.year < I.from ? `Unlocks ${I.from}` : `Needs ${I.res === "coast" ? "a coastline" : I.res}`) : gap > 3 ? `Held back: needs tech ${I.tech}, literacy ${I.lit}%, university ${I.uni}%` : "";
         return { k, I, i, avail, share, status, rate: i.rate || 0 };
     }).sort((a, b) => (b.avail - a.avail) || (b.share - a.share));
-    const table = rows.map(r => `<tr class="${r.avail ? "" : "dim"}">
-        <td title="${esc(r.I.desc)}">${r.I.icon} ${r.I.name}${r.status ? `<div class="tiny warn">${esc(r.status)}</div>` : ""}</td>
+    const table = rows.map(r => {
+        const met = r.avail ? sectorConditions(r.k).filter(c => c.met).length + "/" + sectorConditions(r.k).length : "";
+        return `<tr class="${r.avail ? "" : "dim"} ${ui.ind === r.k ? "sel" : ""}">
+        <td><button class="link-btn" data-act="indSel" data-k="${r.k}">${r.I.icon} ${r.I.name}</button>${r.status ? `<div class="tiny warn">${esc(r.status)}</div>` : ""}</td>
+        <td class="stars">${r.avail ? "★".repeat(Math.floor(sectorFit(r.k))) : ""}</td>
         <td>${r.avail ? nominal(indValue(r.k)) : "–"}</td><td>${r.avail ? fmt(r.share, 1) + "%" : "–"}</td>
         <td class="${r.rate > 4 ? "good" : r.rate < 0 ? "bad" : ""}">${r.avail ? fmt(r.rate, 1) + "%" : "–"}</td>
-        <td>${r.avail ? `<select data-change="support" data-k="${r.k}">${SUPPORT_LEVELS.map((s, i) => `<option value="${i}" ${r.i.sup === i ? "selected" : ""}>${s.name}</option>`).join("")}</select>` : ""}</td>
-        <td>${r.avail ? `<select data-change="own" data-k="${r.k}">${Object.entries(OWNERSHIP).map(([ok, o]) => `<option value="${ok}" ${r.i.own === ok ? "selected" : ""}>${o.name}</option>`).join("")}</select>` : ""}</td>
-        <td>${r.avail ? `<button class="mini" data-act="projectPick" data-k="${r.k}" title="${esc(r.I.project)}">🏗️ Build</button>` : ""}</td></tr>`).join("");
-    const projForm = ui.projInd ? `<div class="proj-form"><b>${INDUSTRIES[ui.projInd].project}</b> · cost ${nominal(projectCost())} · 6 ⚡ · choose a region:
+        <td class="tiny">${met}</td>
+        <td>${r.avail ? `<select id="sup_${r.k}" data-change="support" data-k="${r.k}">${SUPPORT_LEVELS.map((s, i) => `<option value="${i}" ${r.i.sup === i ? "selected" : ""}>${s.name}</option>`).join("")}</select>` : ""}</td>
+        <td>${r.avail ? `<select id="own_${r.k}" data-change="own" data-k="${r.k}">${Object.entries(OWNERSHIP).map(([ok, o]) => `<option value="${ok}" ${r.i.own === ok ? "selected" : ""}>${o.name}</option>`).join("")}</select>` : ""}</td></tr>`;
+    }).join("");
+    const projForm = ui.projInd ? `<div class="proj-form"><b>${INDUSTRIES[ui.projInd].project}</b> · ${nominal(projectCostBn("ind:" + ui.projInd))} from the capital budget · 2 ⚡ · choose a region:
         <div class="row">${G.regions.map((r, i) => `<button class="mini" data-act="project" data-k="${ui.projInd}" data-i="${i}">${esc(r.n)}</button>`).join("")}<button class="mini secondary" data-act="projectCancel">Cancel</button></div></div>` : "";
-    const projs = G.projects.filter(p => !p.done).map(p => `<p class="small">🏗️ ${esc(p.name)} (${esc(G.regions[p.region] ? G.regions[p.region].n : "")}): ${Math.round((1 - p.left / (p.end - p.start)) * 100)}% done, opens in ~${Math.max(1, Math.round(p.left / 4.3))} mo</p>`).join("") || "<p class='muted small'>No projects under construction.</p>";
     const tb = taxBase(), gdpN = G.econ.gdp * cpi();
-    const taxRow = (n, pct, tip) => `<tr title="${esc(tip || "")}"><td>${n}</td><td>${fmt(pct, 1)}%</td><td>${money(gdpN * pct / 100)}</td></tr>`;
+    const taxRow = (n, pc, tip) => pc > 0.005 ? `<tr title="${esc(tip || "")}"><td>${n}</td><td>${fmt(pc, 1)}%</td><td>${money(gdpN * pc / 100)}</td></tr>` : "";
     const jobsPanel = panel("Jobs, taxes & living standards", `
         ${meter("Living standards", livingStandards() / 100, true, Math.round(livingStandards()))}
         <div class="budget"><div><small>Workforce</small><b>${fmt(laborForce(), laborForce() < 10 ? 2 : 0)}M</b></div><div><small>Formal jobs</small><b>${Math.round(formalShare() * 100)}%</b></div><div><small>Unemployment</small><b>${fmt(e.unemp, 1)}%</b></div><div><small>Jobs you created</small><b>${fmtJobs(e.jobsCreated || 0)}</b></div></div>
         <h4>Where the money comes from (per year)</h4>
         <table class="taxes"><tr><th>Source</th><th>% of GDP</th><th>Amount</th></tr>
-        ${taxRow("Income & payroll taxes", tb.income, "Grows with formal (urban, industrial) jobs")}
+        ${taxRow("Income tax", tb.income, "Grows with formal (urban, industrial) jobs")}
+        ${taxRow("Social insurance contributions", tb.payroll, "Paid on formal wages")}
         ${taxRow("Corporate taxes", tb.corp, "Grows with private and foreign companies")}
-        ${tb.stateRev ? taxRow("State enterprise profits", tb.stateRev) : ""}
+        ${taxRow("Sales & excise taxes", tb.sales)}
+        ${taxRow("Land & property tax", tb.land)}
+        ${taxRow("Wealth tax", tb.wealth)}
+        ${taxRow("State enterprise profits", tb.stateRev)}
         ${taxRow("Oil & mining royalties", tb.resources)}
         ${taxRow("Tariffs & customs", tb.tariffs)}
+        ${taxRow("Program taxes, fees & aid", programRevenue())}
         ${tb.holidayLoss > 0.01 ? `<tr class="bad"><td>Lost to tax holidays</td><td>−${fmt(tb.holidayLoss, 1)}%</td><td>−${money(gdpN * tb.holidayLoss / 100)}</td></tr>` : ""}
         <tr><td><b>Total revenue</b></td><td><b>${fmt(e.rev, 1)}%</b></td><td><b>${money(gdpN * e.rev / 100)}</b></td></tr></table>
         ${meter("State capacity (ability to collect taxes)", e.taxCap, true, Math.round(e.taxCap * 100) + "%", "Rises with literacy and urbanization")}
-        <p class="tiny muted">The chain: companies and projects create jobs → formal jobs and profits widen the tax base → revenue pays for schools and clinics → health, education and living standards rise.</p>`);
+        <p class="tiny muted">Tax rates are set in the annual budget. The chain: companies and projects create jobs, formal jobs and profits widen the tax base, revenue pays for schools and clinics, and health, education and living standards rise.</p>`);
     const pros = refreshProspects();
     const prospects = pros.map((p, i) => {
-        const t = offerTerms(p), odds = prospectOdds(p);
-        const incs = Object.entries(INCENTIVES).map(([k, inc]) => `<div class="inc-row"><span>${inc.name}</span><select data-change="inc" data-i="${i}" data-k="${k}">${inc.opts.map((o, j) => `<option value="${j}" ${p.inc[k] === j ? "selected" : ""}>${o}</option>`).join("")}</select></div>`).join("");
+        const t = offerTerms(p), odds = prospectOdds(p) + (p.ceo ? p.ceo.bonus : 0);
+        const incs = Object.entries(INCENTIVES).map(([k, inc]) => `<div class="inc-row"><span>${inc.name}</span><select id="inc_${i}_${k}" data-change="inc" data-i="${i}" data-k="${k}">${inc.opts.map((o, j) => `<option value="${j}" ${p.inc[k] === j ? "selected" : ""}>${o}</option>`).join("")}</select></div>`).join("");
         return `<div class="prospect"><div class="row"><b>${p.home ? flagOf(p.home) : "🏳️"} ${esc(p.name)}</b> <span class="badge small">${INDUSTRIES[p.sector].icon} ${INDUSTRIES[p.sector].name}</span></div>
-            <p class="tiny">${p.known ? `They care most about <b>${PRIORITIES[p.prio]}</b>.` : "Their priorities are unknown. A visit to headquarters would reveal them."}</p>
+            <p class="tiny">${p.known ? `They care most about <b>${PRIORITIES[p.prio]}</b>.` : "Their priorities are unknown. Meet the CEO at headquarters to find out."}${p.ceo && p.ceo.round ? ` CEO meeting: ${p.ceo.bonus > 0.1 ? "went very well" : p.ceo.bonus > 0 ? "went well" : "went badly"}.` : ""}</p>
             ${incs}
             <div class="budget"><div><small>Jobs</small><b>${fmtJobs(t.jobs)}</b></div><div><small>Output</small><b>${nominal(t.out)}/yr</b></div><div><small>Your cost</small><b>${money(t.cost * cpi())}</b></div><div><small>Tax/yr after holiday</small><b>${money(t.annualTax * cpi())}</b></div></div>
-            <p class="small">Chance they say yes: <b class="${odds > 0.6 ? "good" : odds < 0.35 ? "bad" : "warn"}">${Math.round(odds * 100)}%</b>${t.cost > 0 ? ` · pays back in ~${Math.round(t.payback)} yrs` : ""}</p>
-            <div class="row">${p.known ? "" : `<button class="mini" data-act="visitHQ" data-i="${i}" ${G.capital < 4 ? "disabled" : ""}>✈️ Fly to HQ (4 ⚡)</button>`}<button class="mini primary" data-act="offer" data-i="${i}" ${G.capital < 5 ? "disabled" : ""}>Make the offer (5 ⚡)</button></div></div>`;
-    }).join("") || "<p class='muted small'>No companies are looking at your country right now. Improve stability, education and openness.</p>";
-    const avail = Object.keys(INDUSTRIES).filter(k => indAvailable(k) && indGap(k) < 4);
-    const deskPanel = panel("Investment desk", `<p class="small muted">Court foreign companies. New prospects arrive every six months.</p>${prospects}
-        <h4>Back a local entrepreneur</h4><p class="tiny muted">Costs 0.1% of GDP and 6 ⚡. Homegrown firms hire locally and pay taxes from day one, but they often fail.</p>
-        <div class="row nowrap"><select id="startupSector">${avail.map(k => `<option value="${k}">${INDUSTRIES[k].icon} ${INDUSTRIES[k].name}</option>`).join("")}</select><button data-act="startup" ${G.capital < 6 ? "disabled" : ""}>Back them</button></div>`);
-    const firms = (G.firms || []).slice().reverse().map(f => `<tr><td>${f.home && f.home !== G.ck ? flagOf(f.home) : "🏠"} ${esc(f.name)}</td><td>${INDUSTRIES[f.sector].icon}</td><td>${esc(G.regions[f.region] ? G.regions[f.region].n : "")}</td><td>${fmtJobs(f.jobs)}</td><td>${f.holidayUntil > G.year ? `<span class="warn">holiday to ${f.holidayUntil}</span>` : `<span class="good">paying</span>`}</td></tr>`).join("");
-    return `<div class="cols2 wide-left">
-        <div>${jobsPanel}${deskPanel}${firms ? panel("Companies you brought in", `<table><tr><th>Company</th><th></th><th>Region</th><th>Jobs</th><th>Taxes</th></tr>${firms}</table>`) : ""}${panel("Industries", `<p class="small muted">Support sectors with subsidies (costs % of GDP each year), choose who owns them, and build major projects in regions. Projects create jobs and win regional support.</p>${projForm}<table class="ind-table"><tr><th>Sector</th><th>Output</th><th>Share</th><th>Growth/yr</th><th>Support</th><th>Ownership</th><th></th></tr>${table}</table>`)}</div>
-        <div>
-            ${panel("Development", `
+            <p class="small">Chance they say yes: <b class="${odds > 0.6 ? "good" : odds < 0.35 ? "bad" : "warn"}">${Math.round(clamp(odds, 0.02, 0.97) * 100)}%</b>${t.cost > 0 ? ` · pays back in ~${Math.round(t.payback)} yrs` : ""}</p>
+            <div class="row">${p.ceo && p.ceo.round ? "" : `<button class="mini" data-act="ceoTalk" data-i="${i}" ${G.capital < 4 ? "disabled" : ""}>✈️ Meet the CEO (4 ⚡)</button>`}<button class="mini primary" data-act="offer" data-i="${i}" ${G.capital < 5 ? "disabled" : ""}>Make the offer (5 ⚡)</button></div></div>`;
+    }).join("") || "<p class='muted small'>No companies are looking at your country right now. Improve stability, education, infrastructure and openness.</p>";
+    const deskPanel = panel("Investment desk", `<p class="small muted">Court foreign companies. New prospects arrive every six months. To grow your own firms, open an industry from the table.</p>${prospects}`);
+    const firms = (G.firms || []).slice().reverse().map(f => `<tr class="${f.closed ? "dim" : ""}"><td>${f.home && f.home !== G.ck ? flagOf(f.home) : "🏠"} ${esc(f.name)}</td><td>${INDUSTRIES[f.sector].icon}</td><td>${esc(G.regions[f.region] ? G.regions[f.region].n : "")}</td><td>${fmtJobs(f.jobs)}</td><td>${f.closed ? "closed" : f.holidayUntil > G.year ? `<span class="warn">holiday to ${f.holidayUntil}</span>` : `<span class="good">paying</span>`}</td></tr>`).join("");
+    const right = ui.ind ? industryPanel(ui.ind) : panel("Development", `
                 ${meter(`Industrialization: ${devStage()}`, d.ind / 100, true, Math.round(d.ind))}
                 ${meter("Technology", clamp(d.tech / 150), true, Math.round(d.tech), "Unlocks advanced industries")}
                 ${meter("Literacy", d.lit / 100, true, Math.round(d.lit) + "%")}
                 ${meter("University-educated", clamp(d.uni / 30), true, fmt(d.uni, 1) + "%")}
                 ${meter("Urbanization", d.urban / 100, true, Math.round(d.urban) + "%")}
-                <p class="small muted">Education policy raises literacy and university enrollment; science policy and universities raise technology; open trade and foreign investment help you catch up with the leaders.</p>`)}
+                <p class="small muted">Open any industry for its natural fit, the conditions it needs to flourish, public investments you can build and homegrown firms you can back.</p>`);
+    return `<div class="cols2 wide-left">
+        <div>${panel("Industries", `<p class="small muted">Click an industry to develop it. ★ = natural fit. Conditions = how many of its needs you meet. Subsidies cost % of GDP each year.</p>${projForm}<div class="table-wrap"><table class="ind-table"><tr><th>Sector</th><th>Fit</th><th>Output</th><th>Share</th><th>Growth</th><th>Needs</th><th>Support</th><th>Ownership</th></tr>${table}</table></div>`)}
+            ${deskPanel}${firms ? panel("Companies", `<div class="table-wrap"><table><tr><th>Company</th><th></th><th>Region</th><th>Jobs</th><th>Taxes</th></tr>${firms}</table></div>`) : ""}</div>
+        <div>${right}${jobsPanel}
             ${panel("Economy", `<div class="budget"><div><small>GDP (nominal)</small><b>${nominal(e.gdp)}</b></div><div><small>Per person</small><b>$${Math.round(gdpPerCapita() * cpi()).toLocaleString()}</b></div><div><small>Population</small><b>${fmt(e.pop, e.pop < 10 ? 2 : 0)}M</b></div><div><small>Oil price</small><b>$${fmt(1.7 * G.oilPrice * (1 + Math.max(0, G.year - 1950) * 0.035), 1)}/bbl</b></div></div>`)}
-            ${panel("Projects", projs)}
         </div>
     </div>`;
 }

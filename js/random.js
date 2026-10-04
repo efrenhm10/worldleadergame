@@ -30,7 +30,7 @@ const RANDOM_EVENTS = [
     { id: "r_famine", w: () => G.s.poverty > 60 && G.ind.agriculture.out / G.econ.gdp > 0.3 ? 0.8 : 0 },
     { id: "r_youth", w: () => G.year >= 1956 ? 0.7 : 0 },
     { id: "r_minister", w: () => G.cabinet ? 0.8 : 0 },
-    { id: "r_infrastructure", w: () => G.pol.infra === "maintenance" ? 1 : 0.3 }
+    { id: "r_infrastructure", w: () => Math.min(cov("roads"), cov("power")) < 35 ? 1 : 0.3 }
 ];
 
 function randomEvent() {
@@ -179,14 +179,14 @@ SCENES.r_pork = a => {
     const ind = pick(Object.keys(INDUSTRIES).filter(k => indAvailable(k) && indGap(k) < 3)) || "agriculture";
     return S("🏗️", `${dateStr()} · ${G.leg.name}`, `The ${f.name} wants a project`,
         `Legislators from the ${f.name} say their votes depend on a ${INDUSTRIES[ind].project.toLowerCase()} in ${reg.n}.`,
-        [ch("Fund it", { fac: { [f.k]: 12 } }, "", { run: () => { startProject(ind, i, true); return "Construction begins."; } }),
-         ch("Promise it later (an IOU)", { fac: { [f.k]: 5 } }, "", { run: () => { G.ious.push({ f: f.k, t: G.t, due: G.t + 40 }); } }),
+        [ch("Put it at the top of the capital program", { fac: { [f.k]: 8 } }, "", { run: () => { const it = proposeProject("ind:" + ind, i, "fac:" + f.k, true); const qi = G.cip.queue.indexOf(it); if (qi > 0) { G.cip.queue.unshift(G.cip.queue.splice(qi, 1)[0]); fundQueue(); } return G.cip.active.includes(it) ? "Funded. Construction begins." : "It's first in line for next year's capital money."; } }),
+         ch("Add it to the back of the queue", { fac: { [f.k]: 3 } }, "", { run: () => { proposeProject("ind:" + ind, i, "fac:" + f.k, true); return "It joins the queue."; } }),
          ch("Refuse: no pork", { fac: { [f.k]: -10 }, p: { press: 2 } }, "")]);
 };
 
 SCENES.r_lobby = () => {
-    const area = pick(["tax", "labor", "trade", "resources", "economy"]);
-    const want = { tax: "low", labor: "restrict", trade: "protection", resources: "concessions", economy: "market" }[area];
+    const area = pick(["labor", "trade", "resources", "economy"]);
+    const want = { labor: "restrict", trade: "protection", resources: "concessions", economy: "market" }[area];
     return S("💼", dateStr(), "A lobbyist calls",
         `Industry associations offer a large donation to your party if you move toward "${optName(policyOpt(area, want))}" on ${POLICY[area].name.toLowerCase()}.`,
         [ch("Take the money and promise to try", { funds: 40, scandal: 4, p: { business: 6 } }, ""),
@@ -264,5 +264,5 @@ SCENES.minister_trouble = a => {
 
 SCENES.r_infrastructure = () => S("🌉", dateStr(), "Crumbling infrastructure",
     "A bridge has collapsed. Engineers warn that roads and power lines are decades behind.",
-    [ch("Launch a public works program", { cost: 0.3 }, "", { run: () => { if (G.pol.infra === "maintenance") G.pol.infra = "public"; } }),
+    [ch("Emergency repairs, then rebuild through the capital program", { cost: 0.1 }, "", { run: () => { proposeProject(cov("roads") < cov("power") ? "roads" : "power", 0, "event", true); return "A project joins the capital program."; } }),
      ch("Patch it up", { cost: 0.05, p: { people: -2 } }, "")]);

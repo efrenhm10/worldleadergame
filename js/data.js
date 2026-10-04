@@ -189,32 +189,6 @@ const POLICY_AREAS = [
         { k: "collectivized", name: "Total collectivization", desc: "Everything belongs to the state. Spectacular targets, and the risk of catastrophe.", fx: { growth: 0.2, unemp: -3, stability: -8, liberty: -15 }, p: { peasants: -30, politburo: 15, cadres: 15, business: -40 },
           req: g => ["one_party"].includes(g) }
     ]},
-    { key: "tax", name: "Taxation", icon: "💰", cost: 10, options: [
-        { k: "low", name: "Low taxes", rev: 12, fx: { growth: 0.4 }, p: { business: 10, labor: -4 } },
-        { k: "moderate", name: "Moderate taxes", rev: 20, fx: {}, p: {} },
-        { k: "high", name: "High progressive taxes", rev: 28, fx: { growth: -0.3 }, p: { business: -10, labor: 5 } },
-        { k: "confiscatory", name: "Confiscatory taxes", rev: 36, fx: { growth: -0.8, corruption: 3 }, p: { business: -25, labor: 8, cadres: 5, royals: -10 } }
-    ]},
-    { key: "welfare", name: "Welfare", icon: "🤲", cost: 10, options: [
-        { k: "minimal", name: "Minimal relief", spend: 2, fx: { stability: -3 }, p: { labor: -8, people: -3, business: 3 } },
-        { k: "safety", name: "Basic safety net", spend: 6, fx: { stability: 1 }, p: { labor: 3, people: 2 } },
-        { k: "welfare", name: "Welfare state", spend: 12, fx: { stability: 4, unemp: 0.3 }, p: { labor: 10, people: 5, business: -8, peasants: 3 } }
-    ]},
-    { key: "health", name: "Healthcare", icon: "⚕️", cost: 10, options: [
-        { k: "private", name: "Private medicine", spend: 1, fx: {}, p: { people: -3, business: 2 } },
-        { k: "subsidized", name: "Subsidized clinics", spend: 3, fx: { stability: 1, growth: 0.05 }, p: { people: 2 } },
-        { k: "national", name: "National health service", spend: 6, fx: { stability: 3, growth: 0.1, prestige: 2 }, p: { people: 6, labor: 5, business: -4 } }
-    ]},
-    { key: "education", name: "Education", icon: "🎓", cost: 8, options: [
-        { k: "basic", name: "Basic schooling", spend: 1.5, lit: 0.25, uni: 0.02, fx: { growth: -0.2 }, p: { clergy: 2 } },
-        { k: "expanded", name: "Expanded schooling", spend: 3.5, lit: 0.7, uni: 0.1, fx: { growth: 0.2 }, p: { press: 2 } },
-        { k: "mass", name: "Mass literacy & universities", spend: 6, lit: 1.4, uni: 0.25, fx: { growth: 0.5, liberty: 3, prestige: 2 }, p: { press: 5, clergy: -3, people: 2 } }
-    ]},
-    { key: "infra", name: "Infrastructure", icon: "🌉", cost: 10, options: [
-        { k: "maintenance", name: "Maintenance only", spend: 1, fx: { growth: -0.1 }, p: {} },
-        { k: "public", name: "Public works", spend: 3, fx: { unemp: -1, growth: 0.3, corruption: 2 }, p: { labor: 4, business: 3 } },
-        { k: "grand", name: "Grand projects", desc: "Dams, highways, steel cities.", spend: 6, fx: { unemp: -2, growth: 0.6, corruption: 4, prestige: 3, inflation: 0.5 }, p: { labor: 6, business: 5, tribes: 3 } }
-    ]},
     { key: "land", name: "Land & agriculture", icon: "🌾", cost: 12, options: [
         { k: "landlords", name: "Leave the landlords", fx: { stability: -2 }, p: { peasants: -12, tribes: 8, business: 3, royals: 4, clergy: 3 } },
         { k: "reform", name: "Land reform", desc: "Break up the great estates and give land to the tiller.", fx: { growth: 0.2, stability: 2 }, p: { peasants: 15, tribes: -12, business: -5, royals: -8, people: 3 } },
@@ -247,12 +221,6 @@ const POLICY_AREAS = [
         { k: "research", name: "Atomic research", spend: 0.4, rate: 0.35, fx: { prestige: 1 }, p: { press: 1 } },
         { k: "weapons", name: "Weapons program", spend: 1.5, rate: 1.2, fx: { prestige: 2 }, p: { military: 4 } },
         { k: "arsenal", name: "Arsenal expansion", spend: 3, rate: 1.0, fx: { prestige: 5 }, p: { military: 6 }, req: (g, s) => s && s.mil.nukes >= 2 }
-    ]},
-    { key: "science", name: "Science & research", icon: "🔬", cost: 10, options: [
-        { k: "no_rd", name: "No national research policy", fx: {}, p: {} },
-        { k: "universities", name: "University research grants", spend: 0.5, tech: 0.6, fx: { prestige: 1 }, p: { press: 3 } },
-        { k: "state_rd", name: "State research institutes", spend: 1.2, tech: 1.2, fx: { prestige: 2 }, p: { military: 2, cadres: 2 } },
-        { k: "national_labs", name: "National laboratories & R&D tax credits", spend: 2.2, tech: 2.0, fx: { prestige: 3, growth: 0.1 }, p: { business: 4, military: 3, press: 3 } }
     ]},
     { key: "press", name: "Press & speech", icon: "📰", cost: 10, options: [
         { k: "free", name: "Free press", fx: { liberty: 20, stability: -3 }, p: { press: 15, security: -10 } },
@@ -386,6 +354,8 @@ const INDUSTRIES = {
                     desc: "Machine learning and data centers. The frontier industry of the 2020s." },
     finance:      { name: "Banking & finance", icon: "🏦", tech: 30, lit: 60, uni: 3, jobs: 0.5, heavy: false, project: "Financial district & exchange",
                     desc: "Banks, insurance and trade finance. Thrives on stability and open trade." },
+    film:         { name: "Film & media", icon: "🎬", tech: 20, lit: 40, uni: 1, jobs: 1.0, heavy: false, project: "Film studio complex",
+                    desc: "Cinema, then television, then streaming. Censorship stifles it; a hit industry is soft power." },
     tourism:      { name: "Tourism", icon: "🏝️", tech: 5, lit: 20, uni: 0, jobs: 1.6, heavy: false, res: "tourism", project: "Resort & jet airport",
                     desc: "Hotels, beaches and airlines. Needs attractions and peace." }
 };
@@ -396,7 +366,7 @@ function industryTrend(k, year) {
     const T = {
         agriculture: [2, 1.5, 1.5, 1.5], mining: [3.5, 1.5, 1, 2], oil: [7, 2, 1, 1], textiles: [4, 2, 1.5, 1], steel: [6, 0.5, 0, 0.5],
         machinery: [6, 3, 2.5, 2], chemicals: [7, 3.5, 3, 2.5], shipbuilding: [6, -2, -1, 0], autos: [8, 3, 3, 2], electronics: [11, 8, 7, 4],
-        aerospace: [7, 4, 3, 3], computing: [18, 16, 14, 8], finance: [5, 5, 6, 3], tourism: [8, 6, 5, 4], renewables: [0, 0, 12, 14], ai: [0, 0, 0, 25]
+        aerospace: [7, 4, 3, 3], computing: [18, 16, 14, 8], finance: [5, 5, 6, 3], tourism: [8, 6, 5, 4], film: [5, 4, 5, 6], renewables: [0, 0, 12, 14], ai: [0, 0, 0, 25]
     };
     return T[k][e];
 }

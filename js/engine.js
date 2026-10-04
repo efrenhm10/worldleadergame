@@ -6,7 +6,7 @@
 // (historical events, elections, aging) hang off the weekly tick.
 
 let G = null;
-const SAVE_KEY = "worldleader-1950/v1";
+const SAVE_KEY = "worldleader-1950/v2";
 
 const clamp = (v, a = 0, b = 100) => Math.max(a, Math.min(b, v));
 const rnd = (a, b) => a + Math.random() * (b - a);
@@ -82,10 +82,14 @@ function newGame(opts) {
     setupGovTerms(c);
     setupParties(c, opts.party);
     setupEconomy(c);
+    initLaws(c);
+    G.bills = []; G.assets = {};
     G.cabinet = null;
     G.s.poverty = povertyTarget(); G.s.health = healthTarget(); G.s.crime = crimeTarget();
     G.ref = { health: G.s.health, poverty: G.s.poverty, crime: G.s.crime, pc: gdpPerCapita() };
+    recomputeDerived(); initInfra(); initCip();
     setupWorld();
+    G.econ.rev = taxBase().total; G.econ.spend = governmentSpend().total; G.econ.deficit = G.econ.spend - G.econ.rev;
     setupPillars();
     if (c.status === "colony") initColony(c);
     if (typeof setupInitialWars === "function") setupInitialWars();
@@ -205,18 +209,14 @@ function applyBackground() {
 
 function curOpt(area) { return policyOpt(area, G.pol[area]) || POLICY[area].options[0]; }
 
+// National frameworks plus every law in force.
 function policyFx(key) {
     let s = 0;
     POLICY_AREAS.forEach(a => { const o = curOpt(a.key); if (o.fx && o.fx[key]) s += o.fx[key]; });
-    return s;
+    return s + lawFx(key);
 }
 
-function policySpend() {
-    let s = 0;
-    POLICY_AREAS.forEach(a => { const o = curOpt(a.key); if (o.spend) s += o.spend; });
-    Object.values(G.ind).forEach(i => { s += SUPPORT_LEVELS[i.sup].spend * 0.5; });
-    return s;
-}
+function policySpend() { return governmentSpend().total; }
 
 function milSpend() { return (curOpt("military").spend || 0); }
 
@@ -255,6 +255,7 @@ function pillarTarget(k) {
     });
     if (w) t += s / w * 0.85;
     POLICY_AREAS.forEach(a => { const o = curOpt(a.key); if (o.p && o.p[k]) t += o.p[k] * 0.6; });
+    t += lawPillar(k) * 0.6 + taxPillarEffect(k);
     const id = IDEOLOGIES[G.leader.ideology];
     if (id && id.p && id.p[k]) t += id.p[k] * 0.5;
     t += G.pmods[k] || 0;
@@ -331,7 +332,7 @@ function prestigeTarget() {
     if (G.flags.moon) t += 8;
     if (G.gov.type === "colony") t = Math.min(t, 25);
     if (G.gov.type === "occupied") t -= 15;
-    t += (G.pmods.prestige || 0);
+    t += (G.pmods.prestige || 0) + Math.min(6, indShare("film") * 3);
     return clamp(t, 2, 98);
 }
 
@@ -339,7 +340,7 @@ function recomputeDerived() {
     const heavy = Object.entries(G.ind).filter(([k]) => INDUSTRIES[k].heavy).reduce((s, [k]) => s + indValue(k), 0);
     const agri = G.ind.agriculture.out;
     G.dev.ind = clamp(Math.round((heavy / G.econ.gdp * 2.6 - agri / G.econ.gdp * 0.6) * 100), 0, 100);
-    if (ME()) { ME().gdp = G.econ.gdp; ME().mil = G.mil.strength; ME().stab = G.s.stability; ME().nukes = G.mil.nukes; ME().pop = G.econ.pop; ME().gov = G.gov.type; ME().leader = G.leader.name; ME().align = G.align; ME().tech = G.dev.tech; }
+    if (G.nations && ME()) { ME().gdp = G.econ.gdp; ME().mil = G.mil.strength; ME().stab = G.s.stability; ME().nukes = G.mil.nukes; ME().pop = G.econ.pop; ME().gov = G.gov.type; ME().leader = G.leader.name; ME().align = G.align; ME().tech = G.dev.tech; }
 }
 
 function devStage(v = G.dev.ind) { let s = DEV_STAGES[0][1]; DEV_STAGES.forEach(([t, n]) => { if (v >= t) s = n; }); return s; }
@@ -390,8 +391,11 @@ function indRate(k) {
     if (i.own === "state") r += (econ === "planned" || econ === "collectivized") ? (d.heavy ? 1.2 : -0.5) : -0.8;
     if (i.own === "foreign") r += 1.2;
     r += (G.s.stability - 50) * 0.04;
-    r += { maintenance: -0.6, public: 0, grand: 0.5 }[G.pol.infra] || 0;
-    if (k === "agriculture") r += { landlords: -0.4, reform: 0.5, collective: -1.6, mechanize: 1.2 }[G.pol.land] || 0;
+    r += d.heavy ? covRel("power") * 0.8 + (covRel("rail") + covRel("roads")) * 0.3 : covRel("roads") * 0.3;
+    if (k === "agriculture") r += ({ landlords: -0.4, reform: 0.5, collective: -1.6, mechanize: 1.2 }[G.pol.land] || 0) + lawFx("agri") + covRel("irrigation") * 1.5;
+    else r += lawFx("indAll");
+    r += sectorBonus(k);
+    if (k === "film") r += { free: 1, restricted: -0.8, state: -2.5 }[G.pol.press] || 0;
     if (["textiles", "autos", "electronics", "finance", "tourism"].includes(k)) r += { trade_free: 1, protection: -0.6, autarky: -2 }[G.pol.trade] || 0;
     if (d.heavy && G.pol.trade === "protection") r += 0.4;
     if (["steel", "aerospace", "shipbuilding", "machinery"].includes(k) && playerWars().length) r += 1.5;
@@ -423,7 +427,8 @@ function advanceWeek() {
     statsTick();
     pillarsTick();
     regionsTick();
-    projectsTick();
+    cipTick();
+    legislatureTick();
     if (G.colony) colonyTick();
     capitalTick();
     worldWeekTick();
@@ -444,6 +449,7 @@ function monthlyTick(newYear) {
     }
     healthCheck();
     cabinetMonthly();
+    budgetSeasonCheck();
     histEventsTick();
     worldMonthTick();
     goalsCheck();
@@ -452,6 +458,10 @@ function monthlyTick(newYear) {
 }
 
 function yearlyTick() {
+    budgetNewYear();
+    programsYearly();
+    infraYearly();
+    yearlyFirms();
     // Sovereign default when debt spirals out of control.
     const dp = G.econ.debt / G.econ.gdp * 100;
     if (dp > 220) {
@@ -485,7 +495,7 @@ function yearlyTick() {
 
 // Aggregate growth comes from fundamentals; industries set the mix.
 function potentialGrowth() {
-    let g = 2.2 + convergence() + policyFx("growth") * 0.4 + (G.s.stability - 50) * 0.03;
+    let g = 2.2 + convergence() + policyFx("growth") * 0.4 + (G.s.stability - 50) * 0.03 + infraGrowth() - taxGrowthDrag();
     g += skill("economics") * 0.1 + minBonus("finance") * 0.15 + minBonus("industry") * 0.1;
     let sup = 0, tot = 0;
     Object.keys(G.ind).forEach(k => { if (!indAvailable(k)) return; const v = indValue(k); sup += v * SUPPORT_LEVELS[G.ind[k].sup].bonus; tot += v; });
@@ -528,21 +538,23 @@ function economyTick() {
     e.growth = e.growth * 0.94 + inst * 0.06;
     e.shock *= 0.97;
     // Population.
-    let popR = G.dev.ind > 60 ? 1.1 : 2.4;
-    if (G.pol.health === "national") popR += 0.2;
+    // Demographic transition: births fall as literacy and cities spread.
+    let popR = clamp(3.1 - G.dev.lit * 0.022 - G.dev.urban * 0.005, 0.1, 3);
+    if (G.year > 1990 && G.dev.lit > 95) popR -= 0.4;
+    if (G.ck === "usa") popR += 0.5;
+    if (lawOn("nhs") || lawOn("nhi")) popR += 0.2;
     if (["israel"].includes(G.ck) && G.year < 1965) popR += 5;
     if (["australia", "canada"].includes(G.ck)) popR += 1;
     e.pop *= 1 + popR / 100 / 52;
     // Budget (annual % of GDP).
     // Revenue comes from the tax base: formal wages, company profits,
     // resource royalties and tariffs. Industry and jobs widen it.
-    e.rev = taxBase().total;
+    e.rev = taxBase().total + programRevenue();
     const capT = 0.25 + 0.75 * clamp(G.dev.lit / 100 * 0.6 + G.dev.urban / 100 * 0.4, 0, 1);
     if (capT > e.taxCap) e.taxCap += (capT - e.taxCap) * 0.004;
     const war = playerWars().reduce((s, w) => s + [0, 0.6, 2, 5][commitOf(w)], 0);
     const debtPct = e.debt / e.gdp * 100;
-    const stateCap = clamp(e.taxCap * (0.6 + 0.4 * formalShare()) + ({ planned: 0.25, collectivized: 0.35 }[G.pol.economy] || 0), 0.25, 1);
-    e.spend = (3 + policySpend()) * stateCap + war + Math.min(debtPct, 250) * 0.03 + (G.flags.marshall ? -1 : 0) - minBonus("finance") * 0.2;
+    e.spend = governmentSpend().total;
     e.deficit = e.spend - e.rev;
     e.debt = Math.max(0, e.debt * (1 - Math.max(0, e.inflation) / 100 / 52) + e.gdp * e.deficit / 100 / 52);
     // Inflation and unemployment drift.
@@ -557,14 +569,15 @@ function economyTick() {
 }
 
 function devTick() {
-    const ed = curOpt("education"), sci = curOpt("science");
+    const litRate = (0.2 + lawFx("lit")) * (1 + covRel("schools") * 0.4);
+    const uniRate = (0.02 + lawFx("uni")) * (1 + covRel("universities") * 0.4);
     const colony = G.gov.type === "colony" ? 0.5 : 1;
-    G.dev.lit = clamp(G.dev.lit + (ed.lit || 0.2) * 2.2 * (1 - G.dev.lit / 100) / 52 * colony * (1 + minBonus("education") * 0.1), 0, 99.5);
-    G.dev.uni = clamp(G.dev.uni + (ed.uni || 0.02) * 2 * (1 - G.dev.uni / 55) / 52 * colony, 0, 55);
+    G.dev.lit = clamp(G.dev.lit + litRate * 2.2 * (1 - G.dev.lit / 100) / 52 * colony * (1 + minBonus("education") * 0.1), 0, 99.5);
+    G.dev.uni = clamp(G.dev.uni + uniRate * 2 * (1 - G.dev.uni / 55) / 52 * colony, 0, 55);
     const frontier = Math.max(...Object.values(G.nations).filter(n => n.tech != null).map(n => n.tech), G.dev.tech);
     const openness = { trade_free: 1.5, managed: 1, protection: 0.7, autarky: 0.3 }[G.pol.trade] || 1;
     const fdi = Object.values(G.ind).filter(i => i.own === "foreign" && i.out > 0).length * 0.1;
-    let r = (sci.tech || 0) + G.dev.uni * 0.05 + (frontier - G.dev.tech) * 0.025 * (openness + fdi) + (trait("intellectual") ? 0.3 : 0) + minBonus("education") * 0.15;
+    let r = lawFx("tech") + covEff("telecom") * 0.2 + G.dev.uni * 0.05 + (frontier - G.dev.tech) * 0.025 * (openness + fdi) + (trait("intellectual") ? 0.3 : 0) + minBonus("education") * 0.15;
     G.dev.tech = clamp(G.dev.tech + r / 52, 0, 200);
     const target = 12 + G.dev.ind * 0.55 + (G.econ.services / G.econ.gdp) * 25;
     G.dev.urban = clamp(G.dev.urban + (target - G.dev.urban) * 0.03 / 52 * 4, 0, 100);
@@ -597,7 +610,7 @@ function statsTick() {
     s.weariness = clamp(s.weariness);
     s.scandal = clamp(s.scandal - 0.35 + Math.max(0, s.corruption - 45) * 0.015 * (trait("honest") ? 0.5 : trait("corrupt") ? 1.6 : 1));
     // Military strength.
-    let t = G.mil.base * (mo.mult || 1) * (dr.mult || 1) * Math.sqrt(G.econ.gdp / G.econ.gdp0) * (0.6 + s.readiness / 125);
+    let t = G.mil.base * (1 + lawFx("mil") / 100) * (mo.mult || 1) * (dr.mult || 1) * Math.sqrt(G.econ.gdp / G.econ.gdp0) * (0.6 + s.readiness / 125);
     if (G.mil.noArmy) t *= 0.1;
     t += (G.ind.aerospace.out / G.econ.gdp) * G.mil.base * 3;
     G.mil.strength += (t - G.mil.strength) * 0.02;
@@ -670,26 +683,6 @@ function capitalTick() {
     G.funds = Math.min(999, G.funds + (G.pillars.business ? G.pillars.business.l / 100 : 0.3) * 0.6);
 }
 
-function projectsTick() {
-    G.projects.forEach(p => {
-        if (p.done) return;
-        p.left--;
-        if (p.left <= 0) {
-            p.done = true;
-            const i = G.ind[p.ind];
-            const before = i.out;
-            i.out += p.cost * (p.ind === "oil" ? 0.6 : 0.4);
-            if (i.out0 === 0) i.out0 = before || i.out * 0.5;
-            const r = G.regions[p.region];
-            if (r) r.mod += 6;
-            const jobs = jobsFor(p.cost * 0.4, p.ind) * 1.5;
-            addJobs(jobs);
-            log(`🏗️ ${p.name} opens in ${r ? r.n : "the country"}: ${fmtJobs(jobs)} jobs, ${INDUSTRIES[p.ind].name} capacity +${nominal(i.out - before)}.`, "good");
-            queueScene("ribbon", { name: p.name, region: r ? r.n : "" });
-        }
-    });
-    G.projects = G.projects.filter(p => !p.done || G.t - p.end < 30);
-}
 
 function healthCheck() {
     const L = G.leader;

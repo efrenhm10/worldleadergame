@@ -261,7 +261,7 @@ hscene("ukraine_aid", a => S("🇺🇦", `${dateStr()} · Kyiv`, "Ukraine asks f
 
 hscene("ai_boom", () => S("🤖", `${dateStr()} · The AI boom`, "Artificial intelligence",
     "Large language models have stunned the world. Tech giants are spending hundreds of billions on data centers. Your industry minister wants a national AI strategy.",
-    [ch("National AI crusade: chips, data centers, universities", { cost: 1, p: { business: 6 } }, "", { run: () => { G.ind.ai.sup = 3; G.pol.science = "national_labs"; } }),
+    [ch("National AI crusade: chips, data centers, universities", { cost: 1, p: { business: 6 } }, "", { run: () => { G.ind.ai.sup = 3; setLaw("national_labs", 1, "AI strategy"); } }),
      ch("Regulate first", { p: { press: 4, business: -3 }, prestige: 2 }, "", { run: () => { G.ind.ai.sup = Math.max(G.ind.ai.sup, 1); } }),
      ch("Leave it to the market", {}, "")]));
 

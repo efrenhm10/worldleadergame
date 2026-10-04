@@ -296,3 +296,74 @@ tr.dim { opacity: .5; }
     #toasts { left: 10px; right: 10px; bottom: 10px; max-width: none; }
     .toast { padding: 6px 9px; font-size: 12px; }
 }
+
+/* Legislature */
+.bill-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; text-align: left; margin: 4px 0; background: var(--bg2); }
+.bill-row.on { background: #2a2414; border-color: var(--accent); }
+.bill-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; white-space: nowrap; }
+.pill { display: inline-block; font-size: 10.5px; padding: 2px 7px; border-radius: 9px; background: var(--panel2); border: 1px solid var(--line2); color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+.stage-committee, .stage-floor { color: var(--accent2); border-color: #2c4a6b; }
+.stage-stuck, .stage-desk { color: var(--warn); border-color: #6b5320; }
+.stage-law { color: var(--good); border-color: #2a5c40; background: #15291e; }
+.stage-failed, .stage-vetoed, .stage-dead { color: var(--bad); border-color: #6b2c2c; }
+.stage-withdrawn { opacity: .6; }
+.stages span.warnstage { background: #3a2a14; border-color: var(--warn); color: var(--warn); }
+.table-wrap { overflow-x: auto; margin: 6px 0; }
+table.whip td:last-child { white-space: nowrap; }
+.col-btns { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+
+/* Bill builder */
+.builder-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+.builder-grid label { font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 3px; }
+.builder-grid label b { color: var(--text); }
+.builder-grid select, .builder-grid input[type=range] { width: 100%; margin: 0; }
+.checks { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.check { font-size: 12px; display: flex; align-items: center; gap: 5px; cursor: pointer; }
+.check input { margin: 0; width: auto; }
+.bill-preview { background: #10161e; border: 1px dashed var(--line2); border-radius: 6px; padding: 10px 12px; margin: 10px 0; font-family: var(--body); }
+.bill-preview .kicker { font-family: var(--type); color: var(--muted); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
+.bill-title { font-family: var(--type); text-transform: none; letter-spacing: 0; color: var(--text); font-size: 16px; border: none; padding: 0; margin: 2px 0 6px; }
+
+/* Lawbook */
+.lawcat { margin-bottom: 8px; }
+.lawcat h4 { margin: 10px 0 4px; }
+.law-row { position: relative; display: flex; justify-content: space-between; gap: 8px; width: 100%; text-align: left; margin: 2px 0; padding: 5px 9px; background: var(--bg2); overflow: hidden; font-size: 12.5px; }
+.law-row > span { position: relative; z-index: 1; }
+.law-row.off { color: var(--muted); background: transparent; border-style: dashed; }
+.law-row.on { border-color: var(--accent); background: #2a2414; }
+.law-row .lvl { font-variant-numeric: tabular-nums; color: var(--accent); white-space: nowrap; }
+.law-row.off .lvl { color: var(--muted); }
+.lvlbar { position: absolute; left: 0; bottom: 0; height: 2px; background: var(--accent); opacity: .8; }
+.lvlbar.inline { position: static; display: block; height: 6px; border-radius: 3px; min-width: 4px; max-width: 100%; }
+
+/* Budget & CIP */
+.budget-row { display: grid; grid-template-columns: minmax(110px, 1.2fr) 1.5fr 52px 52px; align-items: center; gap: 8px; padding: 3px 0; font-size: 12.5px; border-bottom: 1px solid #1d2734; }
+.budget-row input[type=range] { width: 100%; margin: 0; }
+.budget-row b { text-align: right; font-variant-numeric: tabular-nums; }
+.budget-row > :last-child { text-align: right; }
+.cip-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid #1d2734; font-size: 12.5px; }
+.cip-row > span:first-child { flex: 1; min-width: 0; }
+.cip-row > span:last-child { white-space: nowrap; }
+.cip-row.unfunded { opacity: .6; }
+.cip-row.unfunded > span:first-child::after { content: " · waiting for money"; font-size: 11px; color: var(--warn); }
+
+/* Industry development */
+.asset { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 8px; margin: 4px 0; background: var(--bg2); border: 1px solid var(--line); border-radius: 6px; font-size: 12.5px; }
+.asset.built { border-color: #2a5c40; background: #15291e; }
+.asset > button { flex-shrink: 0; }
+.conds { list-style: none; padding: 0; margin: 4px 0; font-size: 12.5px; }
+.conds li { padding: 2px 0; }
+.conds li.good { color: var(--good); }
+.conds li.bad { color: #d99a92; }
+.stars { color: var(--accent); letter-spacing: 1px; }
+.link-btn { background: none; border: none; padding: 0; color: var(--accent2); text-decoration: underline; cursor: pointer; font-size: inherit; }
+.ind-table tr.sel td { background: #2a2414; }
+
+@media (max-width: 780px) {
+    .builder-grid { grid-template-columns: 1fr; }
+    .budget-row { grid-template-columns: 1fr 1fr 46px; }
+    .budget-row > :nth-child(4) { grid-column: 1 / -1; text-align: left; }
+    .bill-row { flex-wrap: wrap; }
+    .bill-meta { flex-direction: row; align-items: center; }
+    .asset { flex-wrap: wrap; }
+}

@@ -9,6 +9,11 @@ It follows on from *Galactic Senate* (the Star Wars game) and borrows from
 *The Political Process* (whip counts, factions, regional campaigning) and
 *Democracy* (power bases that react to policy).
 
+From *Galactic Senate* it takes the bill builder, a legislature you have to
+work, the yearly budget with its capital improvement program, and sector-by-
+sector economic development, all rebuilt around how these real countries
+actually worked.
+
 ## Running it
 
 Open `index.html` in a browser. There is no build step and no server. The game
@@ -77,39 +82,135 @@ coup leader, your heir or the party's choice.
 
 ## Governing
 
-- **Policy:** 19 areas, from the economic system, taxes, welfare, health,
-  education, land and trade to labor, defense, the nuclear program, science,
-  the press, security, religion, civil rights, oil and space. Depending on your
-  system you decree changes, get them past the Politburo, or **draft a bill and
-  whip it** through the legislature faction by faction, with pork, favors
-  (which come due later) and executive orders.
+Governing works the way it did in *Galactic Senate*: laws before sliders, a
+legislature you work with over weeks, a yearly budget and a capital program.
+
+### The lawbook
+
+Nothing exists until it is law. The lawbook holds 60 laws, from public
+clinics, pensions, the minimum wage and the national police to R&D credits, a
+development bank and the six taxes (income, social insurance, corporate,
+sales, land and wealth). Each law has a strength from 10% to 100%, and its
+cost and effects scale with that strength and with its department's funding.
+
+- Once a year the executive may **adjust** a law by ±10% within its authority.
+- Anything bigger is an **amendment bill**; ending a law is a **repeal bill**.
+- Autocrats **decree**. Politburos can refuse, and colonial governors can
+  withhold assent.
+- 13 **national frameworks** (economic system, land, trade, labor, defense
+  posture, conscription, the bomb, the press, security services, religion,
+  civil rights, oil and space) are the big system-wide choices. Changing one is
+  a major reform.
+
+### The legislature
+
+Every bill goes through committee, floor debate and a vote, which takes
+several weeks.
+
+- **Committee:** the chair, usually from the governing side, can bottle a bill
+  up. You can lobby the chair, fast-track the bill (parliamentary leaders) or
+  file a discharge petition.
+- **Floor:** give speeches to build momentum, whip your side, amend the bill
+  (water it down, add a sunset clause or an independent audit, or sweeten it
+  for a faction), hand out pork and trade favors that come due later.
+- **Vote:** a faction-by-faction whip count shows the odds.
+- **Other factions' bills:** factions introduce their own bills, including
+  tax rises when deficits mount and tax cuts when the books allow. You can
+  back or oppose them. Presidents sign or veto what reaches their desk.
+- **Deficit politics:** when deficits run high, fiscal hawks resist new
+  spending.
+
+### The Bill Builder
+
+Write your own legislation. You choose:
+
+- **The problem:** 16 issues.
+- **How to tackle it:** fund services, a national program, subsidies, tax
+  credits, regulation, a ban, deregulation or nationalization.
+- **Who benefits:** a group or a region.
+- **How much a year.**
+- **How to pay for it:** the budget, borrowing, cuts elsewhere, a new levy or
+  foreign aid.
+- **Who runs it.**
+- **How long it lasts.**
+- **Provisions:** sunset, audit, local hiring, means-testing, worker
+  protections, private matching or earmarks.
+
+The builder drafts a titled bill with its cost, effects, supporters,
+opponents, risks and its odds of passing. Passed programs join the lawbook.
+
+Overlapping programs give diminishing returns. People get used to benefits, so
+gratitude fades over the years. Risks can strike: theft without an audit,
+contractor overruns, a growing bureaucracy, or demand for more.
+
+### The budget and the CIP
+
+Budget season opens every September.
+
+- **The treasury's draft:** your finance ministry drafts the budget and
+  proposes tax and spending changes to hold the deficit near 2% of GDP.
+- **Your changes:** you set department funding (70–130%, which weakens or
+  strengthens every law in that department), the rates of the taxes that exist
+  in law, and the capital budget.
+- **Passing it:** in a democracy the budget must pass by 31 December. If it
+  doesn't, the year starts under a **continuing resolution**: last year's
+  numbers and no money for new projects. If you never send the draft, the
+  ministry sends it as it stands in November.
+
+The capital budget funds the **Capital Improvement Program**, a queue of
+projects funded in order:
+
+- **Infrastructure:** roads, railways, ports, airports, power, schools,
+  hospitals, universities, housing, irrigation and telecoms.
+- **Industry:** new plants.
+- **Sector investments:** see below.
+- **Faction requests:** factions ask for projects in their districts and
+  resent waiting.
+
+Infrastructure coverage tracks what a country at your level normally has.
+Projects push it higher, which boosts growth, literacy and health, and
+underfunding lets it slide.
+
+### Power and elections
+
 - **Power bases:** each system weighs different groups (the public, your party,
   the army, business, labor, clergy, royals, Politburo, security services and
-  so on). Their loyalty drifts toward what your conditions and policies
-  deserve.
+  so on). Their loyalty drifts toward what your conditions and laws deserve.
 - **Elections:** region-by-region polling, rallies, ad blitzes, fundraising and
   real seat allocation (FPTP or proportional representation), with hung
   parliaments and coalition building.
 
 ## The economy: companies → jobs → tax base → living standards
 
-- **16 industries:** agriculture, mining, oil, textiles, steel, machinery,
+- **17 industries:** agriculture, mining, oil, textiles, steel, machinery,
   chemicals, shipbuilding, autos, electronics, aerospace, computing, finance,
-  tourism, renewables and AI. Each needs technology, literacy, universities or
-  natural resources.
-- **Investment desk:** court real companies of the era, from Ford, Shell and
-  Siemens to Sony, Samsung, Intel, TSMC, Tesla and Nvidia. You set a tax
+  tourism, film and media, renewables and AI.
+- **Economic development (Star Wars style, made real):** each industry page
+  shows four things:
+  - **Natural fit:** 1–5 stars, from the country's 1950 economy and
+    resources. India, the US and Nigeria are natural film countries; Saudi
+    Arabia is a natural oil producer.
+  - **Conditions to flourish:** for example, steel needs rail and power;
+    autos need roads, steel and a literate workforce; film needs city
+    audiences, a press regime short of state control, and power, then TV and
+    data networks.
+  - **Public investments for the CIP:** a steelworks' coking ovens, a school
+    of mines, a semiconductor fab, a studio lot, a national film school, a
+    film fund and production rebate.
+  - **Homegrown firms:** back a local founder with a grant, a
+    development-bank loan, a worker cooperative or a public stake.
+- **Investment desk:** court 85 real companies of the era, from Ford, Shell,
+  Siemens, MGM and Toho to Samsung, TSMC, Netflix and Nvidia. You set a tax
   holiday, capital grant, local hiring rules, labor waivers and site
-  infrastructure, and see the jobs, cost, payback period and odds before you
-  offer. Fly to their headquarters to learn what they care about. You can also
-  back local entrepreneurs.
+  infrastructure. Fly to headquarters for a three-round pitch. CEOs check your
+  claims against the facts.
 - **What new firms do:** plants hire workers, which lowers unemployment.
-  Formal jobs and company profits widen the **tax base** (income, corporate,
-  royalties and tariffs). Literacy and urbanization raise **state capacity**,
-  the ability to collect taxes. Revenue funds schools and clinics, which raise
-  health, education and living standards.
+  Formal jobs and company profits widen the **tax base**. Literacy and
+  urbanization raise **state capacity**, the ability to collect taxes. Revenue
+  pays for the laws that raise health, education and living standards.
 - **Development tracks:** industrialization (from agrarian to advanced),
-  technology, literacy, university education and urbanization.
+  technology, literacy, university education and urbanization. Population
+  growth slows as literacy and cities spread.
 - **The money supply:** GDP is simulated in 1950 dollars and shown in nominal
   dollars. Debt can spiral into default, and oil shocks hit importers and
   enrich exporters.
@@ -152,11 +253,16 @@ scandals, disasters, lobbyists, pork demands, investors and more.
 | `js/countries.js`, `js/countries2.js` | The 34 countries and the non-playable states |
 | `js/character.js` | Backstories, traits, skills, portraits |
 | `js/engine.js` | State, weekly simulation, economy, effects, saving |
+| `js/laws.js` | The lawbook, departments, taxes, adjustments and decrees |
+| `js/builder.js` | The Bill Builder |
+| `js/legislature.js` | Bills, committees, floor votes, factions' bills, programs |
+| `js/budget.js` | Infrastructure, the annual budget, the treasury draft, the CIP |
+| `js/develop.js` | Sector fit, conditions, public investments, CEO pitches, homegrown firms, film |
 | `js/cabinet.js` | Ministers, health, crime and poverty indicators |
 | `js/companies.js` | The investment desk, jobs, tax base, living standards |
 | `js/world.js` | AI nations, relations, wars |
-| `js/government.js` | Bills, elections, threats, succession, constitutional reform |
+| `js/government.js` | National frameworks, elections, threats, succession, constitutional reform |
 | `js/colony.js` | The independence path |
 | `js/scenes.js`, `js/history_scenes.js`, `js/random.js` | Decisions |
 | `js/history.js`, `js/hist_modern.js` | The 1950–2026 timeline |
-| `js/actions.js`, `js/ui.js`, `js/main.js` | Player actions, rendering, input |
+| `js/actions.js`, `js/ui.js`, `js/ui_gov.js`, `js/main.js` | Player actions, rendering, input |

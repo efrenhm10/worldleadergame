@@ -50,24 +50,37 @@ const ACTIONS = {
     menu: () => { save(); bootScreen(); },
     succession: () => beginSuccession(G.over.reason),
 
-    // Policy
-    area: d => { ui.area = d.k; ui.bill = null; render(); },
-    propose: d => { ui.bill = { area: d.a, k: d.k, old: G.pol[d.a], whip: false, conc: {}, favor: {}, cost: policyCost(d.a) }; render(); },
-    cancelBill: () => { ui.bill = null; render(); },
-    billWhip: () => { ui.bill.whip = !ui.bill.whip; render(); },
-    billConc: d => { ui.bill.conc[d.k] = !ui.bill.conc[d.k]; if (!ui.bill.conc[d.k]) delete ui.bill.conc[d.k]; render(); },
-    billFavor: d => { ui.bill.favor[d.k] = !ui.bill.favor[d.k]; if (!ui.bill.favor[d.k]) delete ui.bill.favor[d.k]; render(); },
-    billVote: () => { const b = ui.bill; ui.bill = null; voteOnBill(b); render(); },
-    billEO: () => { const b = ui.bill; ui.bill = null; executiveOrder(b.area, b.k); render(); },
-    decree: () => { const b = ui.bill; ui.bill = null; decreePolicy(b.area, b.k); render(); },
+    // Legislature, lawbook, budget
+    billSel: d => { ui.billSel = d.id; ui.builder = null; if (d.goto) view = "legislature"; render(); },
+    billAct: d => { billAction(d.id, d.k); render(); },
+    billPork: d => { billPork(d.id, d.k); render(); },
+    billFavor: d => { billFavor(d.id, d.k); render(); },
+    amend: d => { amendBill(d.id, d.t, d.k); render(); },
+    builderOpen: () => { ui.builder = builderDefaults(); view = "legislature"; render(); },
+    builderClose: () => { ui.builder = null; render(); },
+    builderSubmit: () => { if (proposeProgram(ui.builder)) { ui.builder = null; const b = (G.bills || []).slice(-1)[0]; if (b && b.sponsor === "player" && b.stage === "committee") ui.billSel = b.id; } render(); },
+    lawSel: d => { ui.law = d.k; ui.lawLevel = null; ui.area = null; render(); },
+    lawAdj: d => { adjustLaw(d.k, +d.d); render(); },
+    lawBill: d => { const def = lawDef(d.k); const lvl = d.repeal ? 0 : (ui.lawLevel != null ? ui.lawLevel : lawLevel(d.k) || 0.3); if (!d.repeal && lvl === lawLevel(d.k)) return toast("No change", "Pick a different level first."); proposeLawBill(d.k, lvl); ui.lawLevel = null; render(); },
+    lawDecree: d => { decreeLaw(d.k, d.repeal ? 0 : (ui.lawLevel != null ? ui.lawLevel : lawLevel(d.k) || 0.3)); ui.lawLevel = null; render(); },
+    area: d => { ui.area = d.k; ui.law = null; render(); },
+    fwBill: d => { proposeFrameworkBill(d.a, d.k); render(); },
+    fwEO: d => { executiveOrder(d.a, d.k); render(); },
+    fwDecree: d => { decreePolicy(d.a, d.k); render(); },
+    submitBudget: () => { submitBudget(); render(); },
+    cipMove: d => { cipMove(d.id, +d.d); render(); },
+    cipRemove: d => { cipRemove(d.id); render(); },
+    cipPropose: () => { const t = $("#cipType"), r = $("#cipRegion"); if (t && r) proposeProject(t.value, +r.value); render(); },
+    assetPropose: d => { proposeProject(`asset:${d.k}:${d.a}`, bestRegionFor(d.k)); render(); },
 
     // Economy
-    visitHQ: d => { visitHQ(+d.i); render(); },
+    indSel: d => { ui.ind = ui.ind === d.k ? null : d.k; render(); },
+    ceoTalk: d => { startCeoTalk(+d.i); render(); },
     offer: d => { makeOffer(+d.i); render(); },
-    startup: () => { const s = $("#startupSector"); if (s) backEntrepreneur(s.value); render(); },
+    startup: d => { backEntrepreneur(d.k, d.w); render(); },
     projectPick: d => { ui.projInd = d.k; render(); },
     projectCancel: () => { ui.projInd = null; render(); },
-    project: d => { ui.projInd = null; startProject(d.k, +d.i); render(); },
+    project: d => { ui.projInd = null; proposeProject("ind:" + d.k, +d.i); render(); },
 
     // Power
     power: d => { doPowerAction(d.k); render(); },
@@ -106,6 +119,10 @@ document.addEventListener("change", e => {
     if (el.dataset.change === "support") { setSupport(el.dataset.k, +el.value); render(); }
     if (el.dataset.change === "own") { setOwnership(el.dataset.k, el.value); render(); }
     if (el.dataset.change === "inc") { setIncentive(+el.dataset.i, el.dataset.k, +el.value); render(); }
+    if (el.dataset.change === "lawLevel") { ui.lawLevel = +el.value; render(); }
+    if (el.dataset.change === "builder") { const f = el.dataset.f; ui.builder[f] = ["amount", "years"].includes(f) ? +el.value : el.value; render(); }
+    if (el.dataset.change === "builderProv") { const k = el.dataset.k, p = ui.builder.provs; const i = p.indexOf(k); if (el.checked && i < 0) p.push(k); if (!el.checked && i >= 0) p.splice(i, 1); render(); }
+    if (el.dataset.change === "draft") { setDraft(el.dataset.kind, el.dataset.k, +el.value); render(); }
 });
 
 document.addEventListener("keydown", e => {

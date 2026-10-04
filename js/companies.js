@@ -26,6 +26,9 @@ const COMPANIES = [
     ["Levi Strauss", "textiles", "usa", 1950, 2026, "S"], ["Courtaulds", "textiles", "uk", 1950, 1990, "M"], ["Nike", "textiles", "usa", 1975, 2026, "M"], ["Inditex (Zara)", "textiles", null, 1990, 2026, "M"],
     ["Rio Tinto", "mining", "uk", 1950, 2026, "L"], ["Anglo American", "mining", "southafrica", 1950, 2026, "L"], ["Alcoa", "mining", "usa", 1950, 2026, "M"], ["BHP", "mining", "australia", 1960, 2026, "L"], ["Vale", "mining", "brazil", 1975, 2026, "L"],
     ["Vestas", "renewables", null, 2000, 2026, "M"], ["Tesla", "renewables", "usa", 2015, 2026, "L"], ["BYD", "renewables", "china", 2015, 2026, "L"], ["CATL", "renewables", "china", 2018, 2026, "L"],
+    ["Paramount Pictures", "film", "usa", 1950, 2026, "M"], ["Metro-Goldwyn-Mayer", "film", "usa", 1950, 2005, "M"], ["Warner Bros.", "film", "usa", 1950, 2026, "M"], ["Walt Disney Productions", "film", "usa", 1955, 2026, "M"],
+    ["Rank Organisation", "film", "uk", 1950, 1985, "S"], ["Pathé", "film", "france", 1950, 2026, "S"], ["Toho", "film", "japan", 1955, 2026, "S"], ["Televisa", "film", "mexico", 1973, 2026, "M"],
+    ["TV Globo", "film", "brazil", 1965, 2026, "M"], ["Sony Pictures", "film", "japan", 1989, 2026, "M"], ["Netflix", "film", "usa", 2015, 2026, "L"],
     ["Caterpillar", "machinery", "usa", 1950, 2026, "M"], ["Komatsu", "machinery", "japan", 1965, 2026, "M"], ["Bosch", "machinery", "germany", 1952, 2026, "M"]
 ].map(([name, sector, home, from, to, size]) => ({ name, sector, home, from, to, size }));
 
@@ -94,9 +97,9 @@ function prospectOdds(p) {
     o += (G.dev.lit - I.lit) / 120 * dbl("skills") - indGap(p.sector) * 0.05;
     o += (G.s.stability - 50) / 150 * dbl("stability");
     o += Math.log10(Math.max(0.05, G.econ.gdp)) * 0.04 * dbl("market");
-    o += ({ low: 0.08, moderate: 0, high: -0.06, confiscatory: -0.15 }[G.pol.tax] || 0) * dbl("taxes");
+    o += clamp((30 - taxRate("corporate")) * 0.006, -0.15, 0.12) * dbl("taxes");
     o += ({ restrict: 0.05, bargaining: -0.02, state_unions: -0.04 }[G.pol.labor] || 0) * dbl("labor");
-    o += ({ maintenance: -0.05, public: 0, grand: 0.05 }[G.pol.infra] || 0) * dbl("infra");
+    o += (covEff("power") + covEff("roads")) * 0.04 * dbl("infra") + sectorBonus(p.sector) * 0.03;
     o += ({ planned: -0.15, collectivized: -0.45, market: 0.05 }[G.pol.economy] || 0);
     o += ({ trade_free: 0.06, protection: -0.02, autarky: -0.35 }[G.pol.trade] || 0);
     if (G.pol.resources === "nationalized" && ["oil", "mining"].includes(p.sector)) o -= 0.15;
@@ -114,8 +117,7 @@ function offerCost(p) {
 function offerTerms(p) {
     const out = plantSize(p);
     const jobs = jobsFor(out, p.sector) * (p.inc.local === 2 ? 1.15 : 1);
-    const taxRate = (curOpt("tax").rev || 15) * 0.3 / 100;
-    const annualTax = out * taxRate * G.econ.taxCap;
+    const annualTax = out * taxRate("corporate") * 0.2 / 100 * G.econ.taxCap;
     const holidayYrs = [0, 5, 10][p.inc.holiday];
     const cost = offerCost(p);
     const payback = annualTax > 0 ? holidayYrs + cost / annualTax : 99;
@@ -182,47 +184,52 @@ function addJobs(thousands) {
 const fmtJobs = k => k >= 1000 ? `${fmt(k / 1000, 1)} million` : k >= 1 ? `${Math.round(k).toLocaleString()},000` : `${Math.max(1, Math.round(k * 1000)).toLocaleString()}`;
 
 // Homegrown firms: back a local entrepreneur.
-const LOCAL_SUFFIX = { agriculture: "Agro", mining: "Mining", oil: "Petroleum", textiles: "Textiles", steel: "Steel", machinery: "Engineering", chemicals: "Chemicals", shipbuilding: "Shipyards", autos: "Motors", electronics: "Electronics", aerospace: "Aviation", computing: "Systems", finance: "Bank", tourism: "Resorts", renewables: "Energy", ai: "AI Labs" };
+const LOCAL_SUFFIX = { film: "Studios", agriculture: "Agro", mining: "Mining", oil: "Petroleum", textiles: "Textiles", steel: "Steel", machinery: "Engineering", chemicals: "Chemicals", shipbuilding: "Shipyards", autos: "Motors", electronics: "Electronics", aerospace: "Aviation", computing: "Systems", finance: "Bank", tourism: "Resorts", renewables: "Energy", ai: "AI Labs" };
 
-function backEntrepreneur(sector) {
-    if (!indAvailable(sector)) return;
+function backEntrepreneur(sector, way = "grant") {
+    const W = LOCAL_WAYS[way];
+    if (!indAvailable(sector) || !W || (W.req && !W.req())) return;
     if (G.capital < 6) return toast("Not enough political capital", "Backing a startup costs 6.");
     G.capital -= 6;
-    const cost = G.econ.gdp * 0.001;
+    const cost = G.econ.gdp * W.cost / 100;
     G.econ.debt += cost;
-    const odds = clamp(0.35 + G.dev.lit / 250 + (G.s.stability - 50) / 200 + G.ind[sector].sup * 0.05 - indGap(sector) * 0.06 + skill("economics") * 0.02, 0.05, 0.85);
+    const odds = localOdds(sector, way);
     const founder = randomLeaderName(G.ck).split(" ").pop();
-    const name = `${founder} ${LOCAL_SUFFIX[sector] || "Industries"}`;
-    if (!chance(odds)) { log(`💼 ${name} goes bankrupt despite state backing.`, "bad"); return toast("Startup failed", `${name} went under. ${money(cost * cpi())} lost.`); }
+    const name = way === "coop" ? `${G.regions[bestRegionFor(sector)].n} ${LOCAL_SUFFIX[sector] || "Industries"} Cooperative` : way === "stake" ? `National ${LOCAL_SUFFIX[sector] || "Industries"} Corporation` : `${founder} ${LOCAL_SUFFIX[sector] || "Industries"}`;
+    if (W.p) applyEffects({ p: W.p });
+    if (!chance(odds)) { log(`💼 ${name} fails despite state backing.`, "bad"); return toast("It didn't work", `${name} went under. ${money(cost * cpi())} lost.`); }
     const out = Math.min(plantSize({ size: "S" }) * 0.6, G.econ.gdp * 0.015);
-    openFirm({ name, sector, home: G.ck, out, jobs: jobsFor(out, sector), holidayUntil: G.year, local: 2, region: bestRegionFor(sector), foreign: false });
-    applyEffects({ p: { business: 3 } });
+    openFirm({ name, sector, home: G.ck, out, jobs: jobsFor(out, sector) * (way === "coop" ? 1.2 : 1), holidayUntil: G.year, local: 2, region: bestRegionFor(sector), foreign: false, way });
+    applyEffects({ p: { business: way === "stake" ? 0 : 3 } });
 }
 
 // ── The tax base ────────────────────────────────────────────────────
 
 function taxBase() {
     const e = G.econ;
-    const rate = curOpt("tax").rev || 15;
     const eff = e.taxCap * (1 - G.s.corruption / 250);
     const formal = formalShare();
-    const income = rate * (0.35 + 0.65 * formal) * eff;
+    const income = taxRate("income") * 0.55 * (0.35 + 0.65 * formal) * eff;
+    const payroll = taxRate("payroll") * 0.8 * formal * eff;
+    const sales = taxRate("sales") * 0.35 * eff;
+    const agriShare = G.ind.agriculture.out / e.gdp;
+    const land = taxRate("land") * (0.5 + agriShare * 3) * eff;
+    const wealth = taxRate("wealth") * 1.2 * eff;
     let corpOut = 0, holidayOut = 0;
     Object.keys(G.ind).forEach(k => {
         if (["agriculture", "oil"].includes(k) || !indAvailable(k)) return;
-        const own = G.ind[k].own;
-        if (own !== "state") corpOut += indValue(k);
+        if (G.ind[k].own !== "state") corpOut += indValue(k);
     });
-    (G.firms || []).forEach(f => { if (f.foreign && f.holidayUntil > G.year) holidayOut += f.out; });
-    const corp = Math.max(0, corpOut - holidayOut) / e.gdp * rate * 0.3 * eff;
-    const holidayLoss = holidayOut / e.gdp * rate * 0.3 * eff;
+    (G.firms || []).forEach(f => { if (f.foreign && !f.closed && f.holidayUntil > G.year) holidayOut += f.out; });
+    const corp = Math.max(0, corpOut - holidayOut) / e.gdp * taxRate("corporate") * 0.2 * eff;
+    const holidayLoss = holidayOut / e.gdp * taxRate("corporate") * 0.2 * eff;
     const stateRev = ({ planned: 8, collectivized: 12 }[G.pol.economy] || 0) * Math.min(1, e.taxCap + 0.3);
     const royalty = { concessions: 0.15, partnership: 0.45, nationalized: 0.7 }[G.pol.resources] || 0.15;
     const resources = (indValue("oil") * royalty + indValue("mining") * royalty * 0.3) / e.gdp * 100;
-    const tariffs = { protection: 1.5, managed: 0.8, trade_free: 0.2, autarky: 0.5 }[G.pol.trade] || 0.8;
+    const tariffs = ({ protection: 1.5, managed: 0.8, trade_free: 0.2, autarky: 0.5 }[G.pol.trade] || 0.8) * eff;
     const colonyCut = G.gov.type === "colony" ? 0.6 : 1;
-    const total = (income + corp + stateRev + resources + tariffs * eff) * colonyCut;
-    return { income, corp, stateRev, resources, tariffs: tariffs * eff, holidayLoss, total, formal };
+    const total = (income + payroll + sales + land + wealth + corp + stateRev + resources + tariffs) * colonyCut;
+    return { income, payroll, sales, land, wealth, corp, stateRev, resources, tariffs, holidayLoss, total, formal };
 }
 
 function livingStandards(pc = gdpPerCapita() * cpi(), health = G.s.health, poverty = G.s.poverty, lit = G.dev.lit) {

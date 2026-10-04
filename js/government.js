@@ -5,9 +5,7 @@
 function policyMethod(area) {
     const type = G.gov.type, a = POLICY[area];
     if (type === "colony") {
-        if (!G.colony || G.colony.stage < 1) return { m: "blocked", why: "The colonial government controls policy. Win self-government first." };
-        if (!["education", "health", "welfare", "labor", "land", "infra"].includes(area)) return { m: "blocked", why: "Reserved to the colonial power until independence." };
-        return { m: "council", why: "Your ministers can propose this to the Legislative Council, subject to the Governor's assent." };
+        return { m: "blocked", why: G.colony && G.colony.stage >= 1 ? "National policy is reserved to the colonial power until independence. Your ministers can pass ordinances on health, welfare, education, farming and infrastructure in the Lawbook." : "The colonial government controls policy. Win self-government first." };
     }
     if (type === "occupied" && ["military", "draft", "nuclear", "security"].includes(area)) return { m: "blocked", why: `Reserved to the ${pillarName("occupation")} until sovereignty is restored.` };
     if (G.mil.noArmy && ["military", "draft", "nuclear"].includes(area) && type !== "occupied") return { m: "blocked", why: "You have no armed forces. Rearmament needs a constitutional change." };
@@ -51,29 +49,6 @@ function ideoStance(ideo, k) {
 }
 
 // Projected vote of each faction on a bill.
-function billForecast(bill) {
-    const pop = changePopularity(bill.area, bill.k);
-    const cur = G.pol[bill.area];
-    const leg = skill("legislation");
-    let yes = 0, varsum = 0;
-    const rows = G.factions.map(f => {
-        let st = ideoStance(f.ideo, bill.k) - ideoStance(f.ideo, cur) * 0.5;
-        let p;
-        if (f.gov) p = 0.5 + f.loyalty / 220 + st * 0.2 + pop * 0.08 + (bill.whip ? 0.12 : 0) + leg * 0.02;
-        else p = 0.12 + st * 0.28 + pop * 0.12 + (f.loyalty - 30) / 300;
-        if (bill.conc && bill.conc[f.k]) p += 0.22;
-        if (bill.favor && bill.favor[f.k]) p += 0.3;
-        if (G.gov.cohabitation && !f.gov) p -= 0.08;
-        p = clamp(p, 0.02, 0.98);
-        yes += f.seats * p; varsum += f.seats * p * (1 - p);
-        return { f, p, exp: f.seats * p };
-    });
-    const need = majority();
-    const sd = Math.sqrt(varsum) * 1.6 + G.leg.total * 0.015;
-    const z = (yes - need + 0.5) / Math.max(1, sd);
-    const prob = 1 / (1 + Math.exp(-1.7 * z));
-    return { rows, yes, need, prob, sd };
-}
 
 function bumpCooldown(area) { G.polCool[area] = G.t + 12; }
 function onCooldown(area) { return G.polCool[area] && G.polCool[area] > G.t; }
@@ -100,33 +75,6 @@ function enactPolicy(area, k, how) {
     return ch;
 }
 
-function voteOnBill(bill) {
-    const fc = billForecast(bill);
-    const yes = Math.round(clamp(fc.yes + gauss() * fc.sd, 0, G.leg.total));
-    const passed = yes >= fc.need;
-    G.capital -= bill.cost;
-    if (bill.whip) G.capital -= whipCost();
-    Object.keys(bill.conc || {}).forEach(fk => { G.econ.debt += G.econ.gdp * 0.0015; });
-    Object.keys(bill.favor || {}).forEach(fk => { G.ious.push({ f: fk, t: G.t, due: G.t + 26 + Math.floor(rnd(0, 30)) }); });
-    G.factions.forEach(f => {
-        const r = fc.rows.find(x => x.f === f);
-        if (f.gov && r.p < 0.4 && passed) f.loyalty -= 2;
-    });
-    const o = policyOpt(bill.area, bill.k);
-    if (passed) {
-        const ch = enactPolicy(bill.area, bill.k, `${G.leg.name} passes`);
-        record(`Passed: ${optName(o)} (${POLICY[bill.area].name}), ${yes}–${G.leg.total - yes}.`);
-        toast("Bill passes", `${optName(o)} passes the ${G.leg.name}, ${yes} to ${G.leg.total - yes}.`, ch);
-        if (GT().referendums && chance(clamp(0.2 - changePopularity(bill.area, bill.k) * 0.25, 0.05, 0.6))) queueScene("referendum", { area: bill.area, k: bill.k, old: bill.old });
-    } else {
-        bumpCooldown(bill.area);
-        const ch = applyEffects({ capital: -2, p: { party: -3, coalition: -3 }, legitimacy: -1 });
-        log(`📜 Bill defeated: ${optName(o)}, ${yes}–${G.leg.total - yes}.`, "bad");
-        toast("Bill defeated", `The ${G.leg.name} votes down ${optName(o)}, ${yes} to ${G.leg.total - yes}.`, ch);
-        if (G.gov.type === "parliamentary" && fc.prob < 0.35 && chance(0.25)) queueScene("no_confidence", { cause: "bill" });
-    }
-    return passed;
-}
 
 const whipCost = () => Math.max(3, 8 - skill("legislation"));
 

@@ -119,24 +119,6 @@ function setOwnership(k, own) {
     });
 }
 
-function projectCost() { return Math.max(0.02, G.econ.gdp * 0.006); }
-
-function startProject(k, regionIdx, free) {
-    if (!indAvailable(k)) return toast("Not possible", "This industry isn't available to you.");
-    if (G.gov.type === "colony" && (!G.colony || G.colony.stage < 1)) return toast("Not yet", "You need self-government first.");
-    const cap = free ? 0 : 6;
-    if (G.capital < cap) return toast("Not enough political capital", `Projects need ${cap}.`);
-    G.capital -= cap;
-    const cost = projectCost();
-    G.econ.debt += cost;
-    const weeks = Math.round(52 + rnd(0, 52) + indGap(k) * 8);
-    const r = G.regions[regionIdx] || G.regions[0];
-    G.projects.push({ ind: k, name: INDUSTRIES[k].project, region: G.regions.indexOf(r), cost, left: weeks, end: G.t + weeks, start: G.t });
-    r.mod += 2;
-    applyEffects({ unemp: -0.1, p: { labor: 1, business: 1 } });
-    log(`🏗️ Construction begins: ${INDUSTRIES[k].project} in ${r.n} (${money(cost)}, about ${Math.round(weeks / 4.3)} months).`, "policy");
-    if (!free) toast("Project launched", `${INDUSTRIES[k].project} in ${r.n}.`);
-}
 
 // ── Diplomacy ───────────────────────────────────────────────────────
 

@@ -344,7 +344,7 @@ norway: {
     weaknesses: ["Small, remote population", "War damage in the north", "Dependent on fish, timber and shipping prices"],
     goals: [
         goal("Save the oil wealth", "Once oil is found, put it in a national fund.", g => !!g.flags.oil_fund),
-        goal("Nordic model", "Run a welfare state with national health care.", g => g.pol.welfare === "welfare" && g.pol.health === "national"),
+        goal("Nordic model", "Full pensions, unemployment insurance and national health care.", g => lawLevel("pensions") >= 0.8 && lawOn("unemployment_ins") && (lawOn("nhs") || lawOn("nhi"))),
         goal("Richest in Europe", "Reach the highest GDP per person in Europe.", g => g.econ.gdp / g.econ.pop > 1.05 * Math.max(...["uk", "france", "germany", "switzerland"].map(k => g.nations[k] ? g.nations[k].gdp / g.nations[k].pop : 0)))
     ],
     blurb: "A former Oslo municipal worker who survived Sachsenhausen, you are 'Landsfaderen', the father of the nation. Norway is rebuilding, its fleet is on every ocean, and Labour has a majority. The question is what kind of country you make of it.",

@@ -229,7 +229,7 @@ hscene("eec_outside", () => S("🇪🇺", `${D()} · Brussels`, "The Common Mark
      ch("Stay out", {}, "")]));
 hscene("sputnik_usa", () => S("🛰️", `${D()} · A beep from space`, "Sputnik",
     "The Soviets have put a satellite in orbit. Americans are in shock: if they can launch a satellite, they can launch a warhead.",
-    [ch("Crash program: NASA, science, education", { cost: 0.5, p: { people: 4 } }, "", { run: () => { G.pol.space = "satellites"; G.pol.science = "national_labs"; if (G.pol.education !== "mass") G.pol.education = "mass"; } }),
+    [ch("Crash program: NASA, science, education", { cost: 0.5, p: { people: 4 } }, "", { run: () => { G.pol.space = "satellites"; setLaw("national_labs", 1, "Emergency program"); setLaw("universities", Math.max(0.8, lawLevel("universities")), "Emergency program"); } }),
      ch("Downplay it", { prestige: -6 }, "")]));
 hscene("little_rock", () => S("🏫", `${D()} · Little Rock, Arkansas`, "Little Rock Central High",
     "Arkansas' governor has used the National Guard to stop nine Black students entering a desegregated school.",

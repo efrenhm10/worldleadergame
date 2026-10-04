@@ -514,7 +514,7 @@ canada: {
     strengths: ["Resource wealth: wheat, nickel, uranium, oil", "Stable politics and a respected diplomatic corps", "Next door to the US market"],
     weaknesses: ["Dependence on the American economy", "Quebec's grievances", "A small population in a huge territory"],
     goals: [
-        goal("Medicare", "Create a national health insurance system.", g => g.pol.health === "national"),
+        goal("Medicare", "Create national health insurance or a national health service.", g => lawOn("nhi") || lawOn("nhs")),
         goal("Peacekeeper", "Reach a prestige of 70 as a middle power.", g => g.s.prestige >= 70),
         goal("Keep Quebec", "Keep Quebec in Canada through 1980.", g => g.year >= 1980 && !g.flags.quebec_gone)
     ],

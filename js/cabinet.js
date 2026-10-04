@@ -132,8 +132,7 @@ function gdpPerCapita(gdp = G.econ.gdp, pop = G.econ.pop) { return gdp * 1000 / 
 function healthTarget() {
     const pc = gdpPerCapita();
     let t = 20 + 28 * Math.log10(Math.max(1, pc / 20)) + (G.dev.lit - 50) * 0.1;
-    t += { private: -4, subsidized: 2, national: 7 }[G.pol.health] || 0;
-    t += { welfare: 2, safety: 1 }[G.pol.welfare] || 0;
+    t += lawFx("health") + covRel("hospitals") * 4;
     t += minBonus("health") * 1.5 - G.s.weariness * 0.05;
     return clamp(t, 5, 98);
 }
@@ -141,7 +140,7 @@ function healthTarget() {
 function povertyTarget() {
     const pc = gdpPerCapita();
     let t = 100 - 32 * Math.log10(Math.max(1, pc / 15));
-    t -= { minimal: 0, safety: 5, welfare: 11 }[G.pol.welfare] || 0;
+    t += lawFx("poverty") - covRel("housing") * 3;
     t -= G.pol.land === "reform" ? 3 : 0;
     t += (G.econ.unemp - 6) * 0.8 - minBonus("health");
     if (G.pol.economy === "collectivized" || G.pol.economy === "planned") t -= 4;
@@ -152,6 +151,7 @@ function crimeTarget() {
     let t = 15 + G.econ.unemp * 1.2 + G.dev.urban * 0.15 + G.s.poverty * 0.2 + (G.s.liberty > 60 ? 4 : 0) - (G.s.stability - 50) * 0.15;
     t -= { political: 8, terror: 15 }[G.pol.security] || 0;
     t -= minBonus("interior") * 2;
+    t += lawFx("crime") - covRel("housing") * 1.5;
     return clamp(t, 2, 95);
 }
 
