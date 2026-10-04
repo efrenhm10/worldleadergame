@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>World Leader: 1950</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Special+Elite&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<section id="boot" class="screen active">
+    <div class="boot">
+        <div class="kicker">JANUARY 1950 · A POLITICAL SIMULATION</div>
+        <h1>WORLD LEADER</h1>
+        <p class="lede">The Cold War is just beginning. Korea is about to explode, empires are crumbling, and the bomb is no longer America's alone. Pick one of 34 countries and lead it as its head of government, under its real 1950 system, through 76 years of history that may not happen the way you remember.</p>
+        <div class="row center">
+            <button id="newBtn" class="primary big" data-act="newGame">Choose a country</button>
+            <button id="continueBtn" class="secondary big" data-act="continueGame">Continue</button>
+        </div>
+        <div class="boot-grid">
+            <div><b>🏛️ Real governments</b><span>Presidential, parliamentary, semi-presidential, monarchy, one-party, junta, collegial, colony. Each has its own way to lose power: impeachment, no-confidence, coups, purges, palace plots.</span></div>
+            <div><b>📜 Whip the votes</b><span>Draft bills and count votes faction by faction. Whip, trade favors, hand out pork, or skip the legislature and rule by decree.</span></div>
+            <div><b>🏭 Build a nation</b><span>14 industries, literacy, technology and industrialization. Grow from a rice-paddy economy into a superpower.</span></div>
+            <div><b>🌍 A living world</b><span>Every other country acts on its own. History happens on schedule, until you change it.</span></div>
+            <div><b>👤 Your character</b><span>Backstory, traits, skills, ideology, party and a face. Then pick your cabinet.</span></div>
+        </div>
+    </div>
+</section>
+
+<section id="countries" class="screen">
+    <div class="setup-head">
+        <div><div class="kicker">STEP 1 OF 3</div><h1>Choose your country</h1><p class="muted">Bars show each country's situation in January 1950. Green is good and red is bad; for crime, unemployment and poverty, a longer bar is worse.</p></div>
+        <button class="secondary" data-act="menu">← Back</button>
+    </div>
+    <div id="countryList"></div>
+</section>
+
+<section id="dossierScreen" class="screen"><div id="dossier"></div></section>
+<section id="creator" class="screen"><div id="creatorBody"></div></section>
+<section id="cabinet" class="screen"><div id="cabinetBody"></div></section>
+
+<section id="play" class="screen">
+    <header id="hud"></header>
+    <nav id="dock"></nav>
+    <main id="view"></main>
+    <footer class="foot"><button class="link" data-act="menu">Save &amp; main menu</button> <span class="muted tiny">Space = next week · 1–9 = choose an option</span></footer>
+</section>
+
+<section id="fall" class="screen"><div id="fallBody"></div></section>
+
+<div id="scene"></div>
+<div id="toasts"></div>
+
+<script src="js/data.js"></script>
+<script src="js/countries.js"></script>
+<script src="js/countries2.js"></script>
+<script src="js/character.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/cabinet.js"></script>
+<script src="js/companies.js"></script>
+<script src="js/world.js"></script>
+<script src="js/government.js"></script>
+<script src="js/colony.js"></script>
+<script src="js/scenes.js"></script>
+<script src="js/history.js"></script>
+<script src="js/hist_modern.js"></script>
+<script src="js/history_scenes.js"></script>
+<script src="js/random.js"></script>
+<script src="js/actions.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
