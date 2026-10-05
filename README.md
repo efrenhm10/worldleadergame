@@ -272,6 +272,26 @@ showed "+10".
 - **Development tracks:** industrialization (from agrarian to advanced),
   technology, literacy, university education and urbanization. Population
   growth slows as literacy and cities spread.
+- **Trade agreements** work sector by sector. Each partner has its own export
+  profile, which changes as economies modernize. Before you sign (World tab →
+  a nation → Trade agreement), the draft shows three things:
+  - **You sell them:** industries where you're stronger than the partner grow
+    faster, more so in a big market. South Africa's farms and mines gain from
+    a US deal.
+  - **They compete with you:** where they're stronger, your producers lose
+    ground and the unions in those industries turn against you. In the same
+    deal, US machinery, finance and steel squeeze South Africa's.
+  - **Cheaper imports:** what they make and you don't gets cheaper, adding a
+    little growth and lowering inflation.
+
+  Tariff revenue falls too. You can sign the full deal, or add a safeguard
+  clause that shields your most exposed industry at the cost of 25% smaller
+  export gains. Your trade policy scales everything: free trade gives the
+  biggest gains and the stiffest competition, protection softens both.
+  - Terms are recalculated every January.
+  - The Economy tab lists each deal and its net effect on every industry.
+  - Each industry's panel shows which deals drive it.
+  - You can end a deal at any time, at a cost to relations.
 - **The money supply:** GDP is simulated in 1950 dollars and shown in nominal
   dollars. Debt can spiral into default, and oil shocks hit importers and
   enrich exporters.
@@ -413,6 +433,7 @@ scandals, disasters, lobbyists, pork demands, investors and more.
 | `js/impact.js` | Impact snapshots, previews and the "what's moving the country" breakdown |
 | `js/family.js` | Spouse, children, heirs and family events |
 | `js/power.js` | The world power ranking |
+| `js/trade.js` | Trade agreements: sector-by-sector exports, competition and cheaper imports |
 | `js/institutions.js` | The UN, IMF, World Bank and regional banks, GATT/WTO, OECD, G7/G20, debt relief |
 | `js/cabinet.js` | Ministers, health, crime and poverty indicators |
 | `js/companies.js` | The investment desk, jobs, tax base, living standards |

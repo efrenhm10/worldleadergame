@@ -453,7 +453,7 @@ function viewEconomy() {
     return `<div class="cols2 wide-left">
         <div>${panel("Industries", `<p class="small muted">Click an industry to develop it. ★ = natural fit. Conditions = how many of its needs you meet. Subsidies cost % of GDP each year.</p>${projForm}<div class="table-wrap"><table class="ind-table"><tr><th>Sector</th><th>Fit</th><th>Output</th><th>Share</th><th>Growth</th><th>Needs</th><th>Support</th><th>Ownership</th></tr>${table}</table></div>`)}
             ${deskPanel}${firms ? panel("Companies", `<div class="table-wrap"><table><tr><th>Company</th><th></th><th>Region</th><th>Jobs</th><th>Taxes a year</th></tr>${firms}</table></div>`) : ""}</div>
-        <div>${right}${jobsPanel}
+        <div>${right}${jobsPanel}${tradePanel()}
             ${panel("Economy", `<div class="budget"><div><small>GDP (nominal)</small><b>${nominal(e.gdp)}</b></div><div><small>Per person</small><b>$${Math.round(gdpPerCapita() * cpi()).toLocaleString()}</b></div><div><small>Population</small><b>${fmt(e.pop, e.pop < 10 ? 2 : 0)}M</b></div><div><small>Oil price</small><b>$${fmt(1.7 * G.oilPrice * (1 + Math.max(0, G.year - 1950) * 0.035), 1)}/bbl</b></div></div>`)}
         </div>
     </div>`;
@@ -527,6 +527,7 @@ function viewWorld() {
             <p>${n.gov && GOV_TYPES[n.gov] ? govBadge(n.gov) : ""} Led by <b>${esc(n.leader)}</b></p>
             <div class="budget"><div><small>GDP</small><b>${nominal(n.gdp)}</b></div><div><small>Military</small><b>${Math.round(n.mil)}</b></div><div><small>Stability</small><b>${Math.round(n.stab)}</b></div><div><small>Nukes</small><b>${n.nukes >= 3 ? "H-bomb" : n.nukes >= 2 ? "Atomic" : "None"}</b></div></div>
             <p class="small">Relations with you: ${relBadge(getRel(G.ck, n.key))} · Alignment: ${n.align > 35 ? "Western" : n.align < -35 ? "Eastern" : "Non-aligned"}${memberOf ? ` · ${esc(memberOf)}` : ""}${treaties ? ` · Treaties: ${esc(treaties)}` : ""}${n.status === "colony" ? ` · Colony of ${esc(nationName(n.master))}` : ""}</p>
+            ${(() => { const deal = G.treaties.find(t => t.type === "trade" && t.with === n.key); const x = deal ? dealTerms(deal) : n.status === "sovereign" ? tradeTerms(n.key) : null; return x ? `<p class="tiny"><b>🚢 ${deal ? "Your trade agreement" : "A trade agreement would mean"}:</b> ${esc(termsText(x, n.name))}${deal ? ` <button class="mini secondary danger" data-act="tradeCancel" data-k="${n.key}">End it</button>` : ""}</p>` : ""; })()}
             ${acts}`);
     }
     const wars = G.wars.filter(w => !w.over).map(w => `<p class="small">⚔️ <b>${esc(w.name)}</b>: ${w.a.map(flagOf).join("")} vs ${w.b.map(flagOf).join("")} · front ${w.front > 0 ? "+" : ""}${Math.round(w.front)} · ${Math.round(w.weeks / 4.3)} months</p>`).join("") || "<p class='muted small'>The world is at peace, for now.</p>";

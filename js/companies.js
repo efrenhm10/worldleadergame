@@ -237,7 +237,7 @@ function taxBase() {
     const stateRev = ({ planned: 8, collectivized: 12 }[G.pol.economy] || 0) * Math.min(1, e.taxCap + 0.3);
     const royalty = { concessions: 0.15, partnership: 0.45, nationalized: 0.7 }[G.pol.resources] || 0.15;
     const resources = (indValue("oil") * royalty + indValue("mining") * royalty * 0.3) / e.gdp * 100;
-    const tariffs = ({ protection: 1.5, managed: 0.8, trade_free: 0.2, autarky: 0.5 }[G.pol.trade] || 0.8) * eff * gattTariffMult();
+    const tariffs = ({ protection: 1.5, managed: 0.8, trade_free: 0.2, autarky: 0.5 }[G.pol.trade] || 0.8) * eff * gattTariffMult() * tradeTariffMult();
     const colonyCut = G.gov.type === "colony" ? 0.6 : 1;
     const extra = extraTaxRevenue(eff, formal);
     const extraSum = Object.values(extra).reduce((a, b) => a + b, 0);

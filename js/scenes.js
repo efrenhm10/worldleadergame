@@ -350,7 +350,7 @@ SCENES.approach = a => {
     const tag = `${n.flag} ${dateStr()} · ${nm}`;
     switch (a.kind) {
         case "trade": return S("🚢", tag, `${nm} proposes a trade agreement`, `${n.leader}'s government offers lower tariffs on both sides.`,
-            [ch("Sign it", { rel: { [k]: 10 }, growth: 0.2, p: { business: 3, labor: -1 } }, "Trade agreement signed.", { run: () => G.treaties.push({ type: "trade", with: k, t: G.t }) }),
+            [ch("Hear the terms", {}, "", { req: !G.treaties.some(t => t.type === "trade" && t.with === k), run: () => { queueScene("trade_deal", { who: k, offered: true }); return ""; } }),
              ch("Decline politely", { rel: { [k]: -3 } }, "")]);
         case "aid_offer": return S("💵", tag, `${nm} offers development aid`, `${nm} offers loans for roads and power stations, with strings attached.`,
             [ch("Accept", { cash: 0.8, rel: { [k]: 10 }, align: n.align > 0 ? 6 : -6, p: { foreign: 6 } }, "Engineers arrive."),

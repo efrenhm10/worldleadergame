@@ -265,7 +265,7 @@ function pillarTarget(k) {
     });
     if (w) t += s / w * 0.85;
     POLICY_AREAS.forEach(a => { const o = curOpt(a.key); if (o.p && o.p[k]) t += o.p[k] * 0.6; });
-    t += lawPillar(k) * 0.6 + taxPillarEffect(k) + familyPillar(k);
+    t += lawPillar(k) * 0.6 + taxPillarEffect(k) + familyPillar(k) + tradePillar(k);
     const id = IDEOLOGIES[G.leader.ideology];
     if (id && id.p && id.p[k]) t += id.p[k] * 0.5;
     t += G.pmods[k] || 0;
@@ -405,7 +405,7 @@ function indRate(k) {
     r += d.heavy ? covRel("power") * 0.8 + (covRel("rail") + covRel("roads")) * 0.3 : covRel("roads") * 0.3;
     if (k === "agriculture") r += ({ landlords: -0.4, reform: 0.5, collective: -1.6, mechanize: 1.2 }[G.pol.land] || 0) + lawFx("agri") + covRel("irrigation") * 1.5;
     else r += lawFx("indAll");
-    r += sectorBonus(k) + taxIndEffect(k);
+    r += sectorBonus(k) + taxIndEffect(k) + tradeIndEffect(k);
     if (k === "film") r += { free: 1, restricted: -0.8, state: -2.5 }[G.pol.press] || 0;
     if (["textiles", "autos", "electronics", "finance", "tourism"].includes(k)) r += { trade_free: 1, protection: -0.6, autarky: -2 }[G.pol.trade] || 0;
     if (d.heavy && G.pol.trade === "protection") r += 0.4;
@@ -478,6 +478,7 @@ function yearlyTick() {
     holidaysEnd();
     powerYearly();
     familyYearly();
+    refreshTrade();
     // Sovereign default when debt spirals out of control.
     const dp = G.econ.debt / G.econ.gdp * 100;
     if (dp > (G.inst && G.inst.program ? 260 : 220)) {
@@ -524,6 +525,7 @@ function potentialGrowth() {
     if (G.gov.type === "colony") g -= 0.5;
     if (G.year >= 1974) g -= 0.5;
     g -= instGrowthDrag();
+    g += tradeGrowth();
     return clamp(g, -15, 14);
 }
 
@@ -579,6 +581,7 @@ function economyTick() {
     const oilImp = G.res.includes("oil") ? -0.5 : 1.2;
     let infT = 3 + policyFx("inflation") + Math.max(0, e.deficit) * 0.45 + Math.max(0, e.growth - 6) * 0.4 + (G.oilPrice - 1) * oilImp * 0.6 + Math.min(15, Math.max(0, debtPct - 100) * 0.03) + war * 0.4;
     if (G.year >= 1971 && G.year <= 1982) infT += 3;
+    infT += tradeInflation();
     e.inflation += (clamp(infT, -3, 60) - e.inflation) * 0.035;
     e.jobsAdded = (e.jobsAdded || 0) * 0.9985;
     e.formalAdded = (e.formalAdded || 0) * 0.9995;

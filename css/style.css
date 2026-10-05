@@ -86,6 +86,7 @@ label { display: block; font-size: 12px; color: var(--muted); text-transform: up
 .cols2.wide-right { grid-template-columns: 1fr 1.6fr; }
 .cols2.wide-left { grid-template-columns: 1.7fr 1fr; }
 .cols3 { display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 14px; }
+.cols2 > *, .cols3 > * { min-width: 0; }
 .setup-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
 .setup-head > div:first-child { max-width: 860px; }
 
@@ -369,6 +370,10 @@ table.whip td:last-child { white-space: nowrap; }
 .infra-row p { margin: 1px 0 6px; line-height: 1.35; }
 .region-row { padding: 6px 0; border-bottom: 1px solid #1d2734; }
 .region-row p { margin: 2px 0 0; }
+
+/* Trade */
+.trade-deal { padding: 6px 0; border-bottom: 1px solid #1d2734; }
+.trade-deal p { margin: 3px 0 0; }
 
 /* Family */
 ul.family { list-style: none; padding: 0; margin: 4px 0; font-size: 13px; }

@@ -71,6 +71,7 @@ const ACTIONS = {
     cipMove: d => { cipMove(d.id, +d.d); render(); },
     cipRemove: d => { cipRemove(d.id); render(); },
     cipPropose: () => { const t = $("#cipType"); if (t) { ui.cipType = t.value; openRegionPicker(t.value); } render(); },
+    tradeCancel: d => { cancelTrade(d.k); render(); },
     famMarry: () => { seekSpouse(); render(); },
     famDivorce: () => { divorce(); render(); },
     famLaw: () => { changeSuccessionLaw(); render(); },
