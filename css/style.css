@@ -370,6 +370,20 @@ table.whip td:last-child { white-space: nowrap; }
 .region-row { padding: 6px 0; border-bottom: 1px solid #1d2734; }
 .region-row p { margin: 2px 0 0; }
 
+/* World standing */
+.standing { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.st-rank { font-family: var(--head); font-size: 34px; color: var(--accent); line-height: 1; }
+.power-row { display: grid; grid-template-columns: 34px minmax(0, 1.6fr) 1fr 28px; align-items: center; gap: 6px; width: 100%; text-align: left; padding: 4px 6px; margin: 2px 0; background: var(--bg2); font-size: 12.5px; }
+.power-row.me { border-color: var(--accent); background: #2a2414; }
+.pr-rank { color: var(--muted); font-variant-numeric: tabular-nums; }
+.pr-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pr-tier { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pr-bar { height: 6px; background: #0b0f15; border-radius: 3px; overflow: hidden; }
+.pr-bar i { display: block; height: 100%; background: var(--accent2); }
+.power-row.me .pr-bar i { background: var(--accent); }
+.pr-score { text-align: right; font-variant-numeric: tabular-nums; }
+@media (max-width: 780px) { .power-row { grid-template-columns: 30px minmax(0, 1.6fr) 1fr 26px; } }
+
 /* Institutions */
 .inst { padding: 8px 10px; margin: 6px 0; background: var(--bg2); border: 1px solid var(--line); border-radius: 6px; }
 .inst.member { border-color: #2a5c40; }

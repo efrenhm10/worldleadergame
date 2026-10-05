@@ -264,6 +264,7 @@ function renderHud() {
             ${stat("Inflation", fmt(G.econ.inflation, 1) + "%", G.econ.inflation > 8 ? "bad" : G.econ.inflation < 4 ? "good" : "")}
             ${stat("Jobless", fmt(G.econ.unemp, 1) + "%", G.econ.unemp > 9 ? "bad" : G.econ.unemp < 5 ? "good" : "")}
             ${stat("Debt", Math.round(debtPct) + "%", debtPct > 90 ? "bad" : debtPct < 40 ? "good" : "", "Public debt as % of GDP")}
+            ${(() => { const me = myStanding(); return me ? stat("World rank", `#${me.rank}`, me.rank <= 5 ? "good" : "", `${me.tier[1]} · power score ${Math.round(me.score)} (World tab)`) : ""; })()}
             ${stat("Capital", Math.floor(G.capital), "capital", `Political capital. +${fmt(capitalIncome(), 1)}/month.`)}
             ${stat("Funds", "$" + Math.round(G.funds) + "M", "", "Party campaign funds")}
             ${stat("☢️ Clock", minutes + " min", minutes <= 3 ? "bad" : minutes >= 9 ? "good" : "", "Minutes to midnight: world nuclear tension")}
@@ -331,7 +332,7 @@ function viewOffice() {
             ${panel("How you could fall", `<p class="small muted">${GOV_TYPES[G.gov.type].name}: ${GOV_TYPES[G.gov.type].fall.join(" · ")}</p>` + threatPanel())}
         </div>
         <div>
-            ${panel("Key indicators", indicatorBars(liveProfile()))}
+            ${panel("Key indicators", indicatorBars(liveProfile()) + (() => { const me = myStanding(); return me ? `<p class="small">🌐 World standing: <b>#${me.rank}</b> · ${me.tier[2]} ${me.tier[1]} <span class="tiny muted">(power score ${Math.round(me.score)}; details on the World tab)</span></p>` : ""; })())}
             ${panel("What's moving the country", viewDrivers())}
             ${panel("Trends (last 6 years)", `<div class="spark-row"><span>Approval</span>${sparkline("a", "#7bd88f")}</div><div class="spark-row"><span>Growth</span>${sparkline("g", "#6fb3ff")}</div><div class="spark-row"><span>Stability</span>${sparkline("s", "#f0c05a")}</div><div class="spark-row"><span>GDP</span>${sparkline("gdp", "#c39bff")}</div>`)}
         </div>
@@ -527,6 +528,7 @@ function viewWorld() {
         <div>${panel("Nations", `<div class="filters">${areas.map(a => `<button class="mini ${ui.worldFilter === a ? "on" : ""}" data-act="wfilter" data-k="${a}">${a === "all" ? "All" : a}</button>`).join("")}</div><div class="nation-list">${list}</div><p class="tiny muted"><i class="dot" style="background:${SIDE_COLORS.west}"></i> West <i class="dot" style="background:${SIDE_COLORS.east}"></i> East <i class="dot" style="background:${SIDE_COLORS.nonaligned}"></i> Non-aligned <i class="dot" style="background:${SIDE_COLORS.colony}"></i> Colony</p>`)}</div>
         <div>${detail}</div>
         <div>
+            ${viewStanding()}
             ${panel("The Cold War", `<div class="clock"><b>${minutes}</b> minutes to midnight</div>${meter("World tension", G.tension / 100, false, Math.round(G.tension))}<p class="small">Your alignment: <b>${G.align > 35 ? "Western" : G.align < -35 ? "Eastern" : "Non-aligned"}</b> (${G.align > 0 ? "+" : ""}${Math.round(G.align)})</p>`)}
             ${panel("Wars", wars)}
             ${panel("Alliances & organizations", blocs)}

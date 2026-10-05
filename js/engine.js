@@ -90,6 +90,7 @@ function newGame(opts) {
     recomputeDerived(); initInfra(); initCip();
     setupWorld();
     initInstitutions();
+    G.powerHist = []; powerYearly();
     G.econ.rev = taxBase().total; G.econ.spend = governmentSpend().total; G.econ.deficit = G.econ.spend - G.econ.rev;
     setupPillars();
     if (c.status === "colony") initColony(c);
@@ -467,6 +468,7 @@ function yearlyTick() {
     programsYearly();
     yearlyFirms();
     holidaysEnd();
+    powerYearly();
     // Sovereign default when debt spirals out of control.
     const dp = G.econ.debt / G.econ.gdp * 100;
     if (dp > (G.inst && G.inst.program ? 260 : 220)) {

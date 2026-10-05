@@ -204,7 +204,11 @@ function worldWeekTick() {
         let g = 1.3 + (gap < 0.15 ? -0.4 : clamp(gap * 2.2, 0, 4.5) * Math.pow(clamp((n.tech || 30) / 100, 0.05, 1), 1.2) * clamp(n.stab / 60, 0.3, 1.2)) + (n.growth - 3) * 0.6;
         if (G.year >= 1974) g -= 0.8;
         n.gdp *= 1 + (g + gauss() * 0.5) / 100 / 52;
-        n.pop *= 1 + (pc > 1500 ? 0.9 : 2.3) / 100 / 52;
+        // Demographic transition: births fall with income and, worldwide, over time.
+        let popR = clamp(2.6 - 0.9 * Math.log10(Math.max(1, pc / 60)) - Math.max(0, G.year - 1965) * 0.02, 0, 3);
+        if (["usa", "canada", "australia"].includes(n.key)) popR += 0.5;
+        if (n.key === "china" && G.year >= 1980) popR = Math.min(popR, 0.7);
+        n.pop *= 1 + popR / 100 / 52;
         n.stab = clamp(n.stab + (55 - n.stab) * 0.004 + gauss() * 0.4);
         n.tech = Math.min(200, (n.tech || 30) + (n.gdp / n.pop > 1 ? 1.2 : 0.5) / 52);
     });
@@ -212,6 +216,9 @@ function worldWeekTick() {
 }
 
 function worldMonthTick() {
+    // The occupation of Japan ends in April 1952 even if no one signs at San Francisco.
+    const jp = G.nations.japan;
+    if (jp && G.ck !== "japan" && jp.status === "occupied" && (G.year > 1952 || (G.year === 1952 && G.month >= 5))) { jp.status = "sovereign"; jp.gov = "parliamentary"; }
     // Historical leader changes for AI nations.
     Object.values(G.nations).forEach(n => {
         if (n.key === G.ck || n.diverged || n.rebel) return;

@@ -276,6 +276,28 @@ showed "+10".
   dollars. Debt can spiral into default, and oil shocks hit importers and
   enrich exporters.
 
+## World standing
+
+A power ranking of every sovereign state, in the spirit of real power indexes.
+
+- **The score:** economy 35%, military 25% (nuclear arsenals count),
+  technology 15% (weighted by the size of the economy behind it), influence
+  15% (prestige, alliances, a Security Council veto) and population 10%. Each
+  part is measured against the world's strongest country at the time.
+- **Tiers:** 🌟 Superpower, 🏛️ Great power, ⚖️ Middle power, 📍 Regional power.
+- **Where it shows:** your rank is in the top bar and on the Office tab.
+- **The World tab:**
+  - Your rank, tier and change since last year, and how far you are behind
+    the next country.
+  - Your rank in each part, and the biggest gap you can close.
+  - Your rank by year, and the top 15.
+- **Milestones:** rising a tier or entering the top 10, 5, 3 or the #1 spot is
+  announced and recorded.
+
+In 1950 the US and USSR are the superpowers, and Britain, China and France
+the great powers. Left to itself the world reaches 2025 with the US and China
+on top and Russia, Germany and Japan among the great powers.
+
 ## International institutions (Institutions tab)
 
 The postwar order as it actually worked. Countries join on their real dates
@@ -362,6 +384,7 @@ scandals, disasters, lobbyists, pork demands, investors and more.
 | `js/budget.js` | Infrastructure, the annual budget, the treasury draft, the CIP |
 | `js/develop.js` | Sector fit, conditions, public investments, CEO pitches, homegrown firms, film |
 | `js/impact.js` | Impact snapshots, previews and the "what's moving the country" breakdown |
+| `js/power.js` | The world power ranking |
 | `js/institutions.js` | The UN, IMF, World Bank and regional banks, GATT/WTO, OECD, G7/G20, debt relief |
 | `js/cabinet.js` | Ministers, health, crime and poverty indicators |
 | `js/companies.js` | The investment desk, jobs, tax base, living standards |

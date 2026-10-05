@@ -447,5 +447,5 @@ const HIST = [
       if (w) { w.mom = 15; W("⚔️ A US-led coalition goes to war to expel Iraq from Kuwait."); }
   } },
 { id: "ussr_end", y: 1991, m: 12, cond: () => ai("russia") && G.nations.russia.gov === "one_party" && !G.nations.russia.diverged,
-  fire: () => { const r = G.nations.russia; r.name = "Russia"; r.gov = "presidential"; r.leader = "Boris Yeltsin"; r.align = 30; r.gdp *= 0.6; leaveBloc("warsaw", "russia"); G.tension = clamp(G.tension - 30); log("🏳️ The Soviet Union is dissolved. Russia emerges under Boris Yeltsin.", "major"); } }
+  fire: () => { const r = G.nations.russia; r.name = "Russia"; r.gov = "presidential"; r.leader = "Boris Yeltsin"; r.align = 30; r.gdp *= 0.5; r.pop *= 0.51; r.mil *= 0.55; r.growth = 1; leaveBloc("warsaw", "russia"); G.tension = clamp(G.tension - 30); log("🏳️ The Soviet Union is dissolved. Russia emerges under Boris Yeltsin.", "major"); } }
 ];
