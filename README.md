@@ -201,6 +201,37 @@ Infrastructure coverage tracks what a country at your level normally has.
 Projects push it higher, which boosts growth, literacy and health, and
 underfunding lets it slide.
 
+### The Finance tab: treasury and debt
+
+The **treasury** is the cash the government actually holds. The top bar
+shows it, and clicking it opens the Finance tab.
+
+- **Money comes in from:**
+  - **Development aid.** Rich countries you're on good terms with pledge aid
+    each January to much poorer ones, paid monthly: the US most, then Canada,
+    Switzerland, Australia and others, and the USSR for its friends. The
+    Marshall Plan funds Western Europe until 1952, and US aid goes to Japan,
+    Korea and Taiwan. Aid you request from the World tab and aid offers also
+    land here.
+  - Budget surpluses, if you choose to save them.
+  - Capital money left unspent at year end.
+  - Windfalls and asset sales.
+- **Spending it:**
+  - Pay for any waiting CIP project outright with its 💰 button, on top of
+    the capital budget.
+  - Top up the capital budget.
+  - Repay debt.
+  - If you choose, let it cover deficits and one-off costs.
+  - Cash loses value when inflation is above 2%.
+- **National debt** in dollars:
+  - Debt per person, interest this year, and years of revenue it would take
+    to repay.
+  - Who you owe: development-bank project loans versus bonds and banks.
+  - Its history, and the danger lines at 70% (growth drag), 90% (debt
+    crisis) and 220% (default).
+- **Money in & out:** this year's revenue, spending and deficit in dollars,
+  with spending broken down by department.
+
 ### Power and elections
 
 - **Power bases:** each system weighs different groups (the public, your party,
@@ -269,9 +300,14 @@ showed "+10".
   from 1955". Literacy and
   urbanization raise **state capacity**, the ability to collect taxes. Revenue
   pays for the laws that raise health, education and living standards.
-- **Development tracks:** industrialization (from agrarian to advanced),
+- **Development tracks:** industrialization (from agrarian to advanced; heavy
+  industry's share of the economy, discounted while most people farm),
   technology, literacy, university education and urbanization. Population
   growth slows as literacy and cities spread.
+  - Foreign companies speed up technological catch-up, and formal jobs pull
+    people into cities.
+  - The Economy tab shows what your companies add up to (output, share of GDP,
+    jobs) and how much each track moved in the last 12 months.
 - **Trade agreements** work sector by sector. Each partner has its own export
   profile, which changes as economies modernize. Before you sign (World tab →
   a nation → Trade agreement), the draft shows three things:
@@ -433,6 +469,7 @@ scandals, disasters, lobbyists, pork demands, investors and more.
 | `js/impact.js` | Impact snapshots, previews and the "what's moving the country" breakdown |
 | `js/family.js` | Spouse, children, heirs and family events |
 | `js/power.js` | The world power ranking |
+| `js/treasury.js` | The treasury, development aid, debt and the Finance tab |
 | `js/trade.js` | Trade agreements: sector-by-sector exports, competition and cheaper imports |
 | `js/institutions.js` | The UN, IMF, World Bank and regional banks, GATT/WTO, OECD, G7/G20, debt relief |
 | `js/cabinet.js` | Ministers, health, crime and poverty indicators |

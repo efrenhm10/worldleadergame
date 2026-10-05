@@ -85,8 +85,8 @@ SCENES.r_investor = a => {
     const reg = regionPick(a.r);
     return S("🏢", `${dateStr()} · Foreign investment`, `${corp} wants to build in ${C().name}`,
         `${corp} proposes a large ${INDUSTRIES[k].name.toLowerCase()} plant in ${reg.n}, if you offer a tax holiday and look the other way on labor rules.`,
-        [ch("Accept their terms (10-year tax holiday)", { p: { business: 5, labor: -3 } }, "", { run: () => { const out = Math.min(G.econ.gdp * 0.005, plantSize({ size: "M" })); openFirm({ name: corp, sector: k, home: null, out, jobs: jobsFor(out, k), holidayUntil: G.year + 10, local: 0, region: G.regions.indexOf(reg), foreign: true }); return ""; } }),
-         ch("Accept, but demand local hiring and tech transfer", { capital: -4 }, "", { req: capOK(4), run: () => { if (!chance(0.5 + skill("economics") * 0.07)) return "They walk away."; const out = Math.min(G.econ.gdp * 0.004, plantSize({ size: "M" })); openFirm({ name: corp, sector: k, home: null, out, jobs: jobsFor(out, k) * 1.15, holidayUntil: G.year + 5, local: 2, region: G.regions.indexOf(reg), foreign: true }); return ""; } }),
+        [ch("Accept their terms (10-year tax holiday)", { p: { business: 5, labor: -3 } }, "", { run: () => { const out = Math.min(G.econ.gdp * 0.005, plantSize({ size: "M" })); openFirm({ name: corp, sector: k, home: firms.length ? firms[a.r % firms.length].home : null, out, jobs: jobsFor(out, k), holidayUntil: G.year + 10, local: 0, region: G.regions.indexOf(reg), foreign: true }); return ""; } }),
+         ch("Accept, but demand local hiring and tech transfer", { capital: -4 }, "", { req: capOK(4), run: () => { if (!chance(0.5 + skill("economics") * 0.07)) return "They walk away."; const out = Math.min(G.econ.gdp * 0.004, plantSize({ size: "M" })); openFirm({ name: corp, sector: k, home: firms.length ? firms[a.r % firms.length].home : null, out, jobs: jobsFor(out, k) * 1.15, holidayUntil: G.year + 5, local: 2, region: G.regions.indexOf(reg), foreign: true }); return ""; } }),
          ch("Refuse: no foreign capitalists", { p: { people: 2, business: -3 } }, "")]);
 };
 
@@ -160,8 +160,8 @@ SCENES.r_inflation = () => S("📈", dateStr(), "Runaway prices",
 SCENES.r_debt = () => S("🏦", dateStr(), "Debt crisis",
     `Public debt is ${Math.round(G.econ.debt / G.econ.gdp * 100)}% of GDP and creditors are nervous.`,
     [ch("IMF program: austerity", { growth: -1.5, p: { people: -8, labor: -6, business: 4 } }, "", { run: () => imfFromEvent() }),
-     ch("Default on foreign debts", { cash: 10, prestige: -10, growth: -2, rel: { usa: -15, uk: -10 } }, ""),
-     ch("Inflate it away", { inflation: 6, cash: 3 }, "")]);
+     ch("Default on foreign debts", { debtCut: 10, prestige: -10, growth: -2, rel: { usa: -15, uk: -10 } }, ""),
+     ch("Inflate it away", { inflation: 6, debtCut: 3 }, "")]);
 
 SCENES.r_boom = () => S("💎", dateStr(), "Commodity boom",
     "World prices for your main exports have shot up.",

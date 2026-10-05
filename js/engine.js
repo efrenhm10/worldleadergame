@@ -99,6 +99,7 @@ function newGame(opts) {
     initInstitutions();
     G.powerHist = []; powerYearly();
     G.leader.family = initFamily(!!opts.historical);
+    tre(); treasuryYearly();
     G.econ.rev = taxBase().total; G.econ.spend = governmentSpend().total; G.econ.deficit = G.econ.spend - G.econ.rev;
     setupPillars();
     if (c.status === "colony") initColony(c);
@@ -350,14 +351,16 @@ function prestigeTarget() {
 function recomputeDerived() {
     const heavy = Object.entries(G.ind).filter(([k]) => INDUSTRIES[k].heavy).reduce((s, [k]) => s + indValue(k), 0);
     const agri = G.ind.agriculture.out;
-    G.dev.ind = clamp(Math.round((heavy / G.econ.gdp * 2.6 - agri / G.econ.gdp * 0.6) * 100), 0, 100);
+    // Heavy industry's weight in the economy, discounted while most people still farm.
+    G.dev.ind = clamp(Math.round(heavy / G.econ.gdp * 2.6 * (1 - agri / G.econ.gdp) * 1000) / 10, 0, 100);
     if (G.nations && ME()) { ME().gdp = G.econ.gdp; ME().mil = G.mil.strength; ME().stab = G.s.stability; ME().nukes = G.mil.nukes; ME().pop = G.econ.pop; ME().gov = G.gov.type; ME().leader = G.leader.name; ME().align = G.align; ME().tech = G.dev.tech; }
 }
 
 function devStage(v = G.dev.ind) { let s = DEV_STAGES[0][1]; DEV_STAGES.forEach(([t, n]) => { if (v >= t) s = n; }); return s; }
 
 function snapshot() {
-    return { t: G.t, a: Math.round(approval()), g: +fmt(G.econ.growth, 1), s: Math.round(G.s.stability), gdp: +fmt(G.econ.gdp, 2), i: +fmt(G.econ.inflation, 1) };
+    return { t: G.t, a: Math.round(approval()), g: +fmt(G.econ.growth, 1), s: Math.round(G.s.stability), gdp: +fmt(G.econ.gdp, 2), i: +fmt(G.econ.inflation, 1), d: Math.round(G.econ.debt / G.econ.gdp * 100),
+        dv: [G.dev.ind, G.dev.tech, G.dev.lit, G.dev.uni, G.dev.urban].map(v => Math.round(v * 100) / 100) };
 }
 
 // ── Industry availability ───────────────────────────────────────────
@@ -465,6 +468,7 @@ function monthlyTick(newYear) {
     worldMonthTick();
     goalsCheck();
     institutionsMonth();
+    treasuryMonthly();
     infraMonthly();
     statsMonthly();
     if (G.colony) colonyMonth();
@@ -473,6 +477,7 @@ function monthlyTick(newYear) {
 
 function yearlyTick() {
     budgetNewYear();
+    treasuryYearly();
     programsYearly();
     yearlyFirms();
     holidaysEnd();
@@ -576,7 +581,8 @@ function economyTick() {
     const debtPct = e.debt / e.gdp * 100;
     e.spend = governmentSpend().total;
     e.deficit = e.spend - e.rev;
-    e.debt = Math.max(0, e.debt * (1 - Math.max(0, e.inflation) / 100 / 52) + e.gdp * e.deficit / 100 / 52);
+    e.debt = Math.max(0, e.debt * (1 - Math.max(0, e.inflation) / 100 / 52));
+    treasuryWeek(e.gdp * e.deficit / 100 / 52);
     // Inflation and unemployment drift.
     const oilImp = G.res.includes("oil") ? -0.5 : 1.2;
     let infT = 3 + policyFx("inflation") + Math.max(0, e.deficit) * 0.45 + Math.max(0, e.growth - 6) * 0.4 + (G.oilPrice - 1) * oilImp * 0.6 + Math.min(15, Math.max(0, debtPct - 100) * 0.03) + war * 0.4;
@@ -595,10 +601,12 @@ function libertyTarget() { return clamp(50 + policyFx("liberty")); }
 function corruptionTarget() { return clamp(C().econ.corruption + policyFx("corruption") + (trait("honest") ? -8 : 0) + (trait("corrupt") ? 8 : 0) + (G.s.liberty < 30 ? 5 : 0) - (G.pol.press === "free" ? 4 : 0) + (G.pmods.corruption || 0), 1, 95); }
 // Literacy points a year at today's level.
 function literacyRate() { return (0.2 + lawFx("lit")) * (1 + covRel("schools") * 0.4) * 2.2 * (1 - G.dev.lit / 100) * (G.gov.type === "colony" ? 0.5 : 1) * (1 + minBonus("education") * 0.1); }
+// Foreign companies bring know-how: each open one speeds up catching up with the frontier.
+const firmTech = () => Math.min(0.6, (G.firms || []).filter(f => !f.closed && f.foreign).length * 0.04);
 function techRate() {
     const frontier = Math.max(...Object.values(G.nations).filter(n => n.tech != null).map(n => n.tech), G.dev.tech);
     const openness = { trade_free: 1.5, managed: 1, protection: 0.7, autarky: 0.3 }[G.pol.trade] || 1;
-    const fdi = Object.values(G.ind).filter(i => i.own === "foreign" && i.out > 0).length * 0.1;
+    const fdi = Object.values(G.ind).filter(i => i.own === "foreign" && i.out > 0).length * 0.1 + firmTech();
     return lawFx("tech") + covEff("telecom") * 0.2 + G.dev.uni * 0.05 + (frontier - G.dev.tech) * 0.025 * (openness + fdi) + (trait("intellectual") ? 0.3 : 0) + minBonus("education") * 0.15;
 }
 
@@ -608,7 +616,7 @@ function devTick() {
     G.dev.lit = clamp(G.dev.lit + literacyRate() / 52, 0, 99.5);
     G.dev.uni = clamp(G.dev.uni + uniRate * 2 * (1 - G.dev.uni / 55) / 52 * colony, 0, 55);
     G.dev.tech = clamp(G.dev.tech + techRate() / 52, 0, 200);
-    const target = 12 + G.dev.ind * 0.55 + (G.econ.services / G.econ.gdp) * 25;
+    const target = 12 + G.dev.ind * 0.55 + (G.econ.services / G.econ.gdp) * 25 + Math.min(10, (G.econ.formalAdded || 0) * 1.5);
     G.dev.urban = clamp(G.dev.urban + (target - G.dev.urban) * 0.03 / 52 * 4, 0, 100);
 }
 
@@ -739,8 +747,10 @@ function applyEffects(e, mult = 1) {
     if (e.growth) { G.econ.shock += e.growth * mult; push("Growth", e.growth * mult); }
     if (e.inflation) { G.econ.inflation = Math.max(-5, G.econ.inflation + e.inflation * mult); push("Inflation", e.inflation * mult, true); }
     if (e.unemp) { G.econ.unemp = clamp(G.econ.unemp + e.unemp * mult, 0.5, 40); push("Unemployment", e.unemp * mult, true); }
-    if (e.cost) { const bn = G.econ.gdp * e.cost * mult / 100; G.econ.debt += bn; out.push({ label: "Cost", v: money(bn), good: false, raw: true }); }
-    if (e.cash) { G.econ.debt = Math.max(0, G.econ.debt - G.econ.gdp * e.cash * mult / 100); out.push({ label: "Treasury", v: "+" + money(G.econ.gdp * e.cash * mult / 100), good: true, raw: true }); }
+    if (e.cost) { const bn = G.econ.gdp * e.cost * mult / 100; treasuryPay(bn); out.push({ label: "Cost", v: nominal(bn), good: false, raw: true }); }
+    if (e.cash) { const bn = G.econ.gdp * e.cash * mult / 100; treasuryAdd(bn, "windfall", "Windfall"); out.push({ label: "Treasury", v: "+" + nominal(bn), good: true, raw: true }); }
+    if (e.aid) { const bn = G.econ.gdp * e.aid * mult / 100; treasuryAdd(bn, "aid", e.aidFrom ? `Aid from ${nationName(e.aidFrom)}` : "Foreign aid"); out.push({ label: "Treasury (aid)", v: "+" + nominal(bn), good: true, raw: true }); }
+    if (e.debtCut) { const bn = Math.min(G.econ.debt, G.econ.gdp * e.debtCut * mult / 100); G.econ.debt -= bn; out.push({ label: "Debt", v: "−" + nominal(bn), good: true, raw: true }); }
     if (e.capital) { G.capital = clamp(G.capital + e.capital * mult, -20, 99); push("Political capital", e.capital * mult); }
     if (e.funds) { G.funds = Math.max(0, G.funds + e.funds * mult); push("Party funds ($M)", e.funds * mult); }
     if (e.mil) { G.mil.strength = Math.max(0, G.mil.strength * (1 + e.mil * mult / 100)); push("Military strength %", e.mil * mult); }
@@ -803,6 +813,7 @@ function load() {
     try {
         const s = localStorage.getItem(SAVE_KEY); if (!s) return false; G = JSON.parse(s);
         if (G && G.scenes) G.scenes = G.scenes.filter(q => q.id !== "cip_region");   // pickers never outlive a session
+        if (G && G.firms) G.firms.forEach(f => { if (f.foreign && !f.home) { const c = COMPANIES.find(x => x.name === f.name); if (c) f.home = c.home; } });
         return !!G && G.v === 1;
     } catch (e) { return false; }
 }

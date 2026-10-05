@@ -313,6 +313,7 @@ function financingTick() {
             if (G.inst.lent.year !== G.year) G.inst.lent = { year: G.year };
             G.inst.lent[it.fin.lender] = (G.inst.lent[it.fin.lender] || 0) + it.cost;
             G.econ.debt += it.cost * L.share;
+            credAdd(it.fin.lender, it.cost * L.share);
             it.lender = it.fin.lender; delete it.fin;
             activateProject(it);
             G.factions.forEach(f => { if (f.gov) f.loyalty = clamp(f.loyalty - 1); });

@@ -353,7 +353,7 @@ function budgetNewYear() {
         } else adoptDraft();
     }
     // New fiscal year: refund unspent capital money, open the new pool.
-    G.econ.debt = Math.max(0, G.econ.debt - G.cip.pool);
+    treasuryAdd(G.cip.pool, "refund", `Unspent FY${G.year - 1} capital money`);
     G.cip.pool = b.status === "cr" ? 0 : G.econ.gdp * b.capital / 100;
     G.cip.spentFY = 0;
     fundQueue();

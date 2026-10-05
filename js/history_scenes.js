@@ -9,8 +9,8 @@ FALL_TEXT.nuclear = "Nuclear war";
 // ── 1950 ──
 hscene("sinosoviet_china", () => S("🤝", `${D()} · Moscow`, "The treaty with Stalin",
     "After weeks of waiting at a dacha, Stalin will sign an alliance. In exchange he wants special rights in Manchuria's railway and Port Arthur, and joint mining companies in Xinjiang.",
-    [ch("Sign on Soviet terms", { cash: 1.5, align: -10, prestige: -3, rel: { russia: 25 }, p: { politburo: 5 } }, "$300 million in credits and thousands of Soviet advisers.", { run: () => { joinBloc("sinosov", "china"); joinBloc("sinosov", "russia"); G.dev.tech += 3; } }),
-     ch("Bargain hard for better terms", {}, "", { run: () => { if (chance(0.35 + skill("diplomacy") * 0.08)) { joinBloc("sinosov", "china"); joinBloc("sinosov", "russia"); applyEffects({ cash: 1.5, prestige: 4, rel: { russia: 15 } }); return "Stalin grudgingly agrees to return Port Arthur by 1952."; } applyEffects({ rel: { russia: -15 } }); return "Stalin is offended. No treaty for now."; } }),
+    [ch("Sign on Soviet terms", { aid: 1.5, aidFrom: "russia", align: -10, prestige: -3, rel: { russia: 25 }, p: { politburo: 5 } }, "$300 million in credits and thousands of Soviet advisers.", { run: () => { joinBloc("sinosov", "china"); joinBloc("sinosov", "russia"); G.dev.tech += 3; } }),
+     ch("Bargain hard for better terms", {}, "", { run: () => { if (chance(0.35 + skill("diplomacy") * 0.08)) { joinBloc("sinosov", "china"); joinBloc("sinosov", "russia"); applyEffects({ aid: 1.5, aidFrom: "russia", prestige: 4, rel: { russia: 15 } }); return "Stalin grudgingly agrees to return Port Arthur by 1952."; } applyEffects({ rel: { russia: -15 } }); return "Stalin is offended. No treaty for now."; } }),
      ch("Go it alone", { rel: { russia: -25 }, prestige: 5, p: { politburo: -10 } }, "China stands independent, and isolated.")]));
 hscene("sinosoviet_russia", () => S("🤝", `${D()} · The Kremlin`, "Mao wants an alliance",
     "Mao Zedong has been in Moscow for weeks. He wants a mutual defense treaty, credits and help building heavy industry.",

@@ -353,7 +353,7 @@ SCENES.approach = a => {
             [ch("Hear the terms", {}, "", { req: !G.treaties.some(t => t.type === "trade" && t.with === k), run: () => { queueScene("trade_deal", { who: k, offered: true }); return ""; } }),
              ch("Decline politely", { rel: { [k]: -3 } }, "")]);
         case "aid_offer": return S("💵", tag, `${nm} offers development aid`, `${nm} offers loans for roads and power stations, with strings attached.`,
-            [ch("Accept", { cash: 0.8, rel: { [k]: 10 }, align: n.align > 0 ? 6 : -6, p: { foreign: 6 } }, "Engineers arrive."),
+            [ch("Accept", { aid: 0.8, aidFrom: k, rel: { [k]: 10 }, align: n.align > 0 ? 6 : -6, p: { foreign: 6 } }, "The money goes into the treasury, ready for roads and power stations (Budget tab)."),
              ch("Refuse the strings", { prestige: 2, rel: { [k]: -5 } }, "")]);
         case "arms": return S("🛩️", tag, `${nm} offers an arms deal`, "Jet fighters and tanks at friendly prices.",
             [ch("Buy", { cost: 0.5, mil: 8, p: { military: 6 }, rel: { [k]: 8 }, align: n.align > 0 ? 4 : -4 }, "The new weapons arrive."),
@@ -375,7 +375,7 @@ SCENES.approach = a => {
             const us = k === "usa";
             return S(us ? "🦅" : "☭", tag, `${nm} courts you`,
                 us ? "The American ambassador hints at Marshall-style aid, military assistance and investment if you join the Western camp." : "The Soviet ambassador offers steel mills, cheap loans and arms if you lean toward Moscow.",
-                [ch(`Lean toward ${us ? "the West" : "the East"}`, { align: us ? 15 : -15, cash: 1, rel: { [k]: 15, [us ? "russia" : "usa"]: -10 }, p: { foreign: 8 } }, "The aid arrives."),
+                [ch(`Lean toward ${us ? "the West" : "the East"}`, { align: us ? 15 : -15, aid: 1, aidFrom: k, rel: { [k]: 15, [us ? "russia" : "usa"]: -10 }, p: { foreign: 8 } }, "The aid arrives in the treasury."),
                  ch("Play both sides", { capital: -4, rel: { [k]: 3 }, prestige: 2 }, "You take a little from each.", { req: capOK(4) }),
                  ch("Refuse: we are non-aligned", { prestige: 3, rel: { [k]: -6 } }, "Your independence is noted in the Third World.")]);
         }

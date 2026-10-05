@@ -85,6 +85,9 @@ const ACTIONS = {
     instLeave: d => { leaveInst(d.k); render(); },
     imfRequest: () => { requestImf(); render(); },
     finProject: d => { askFinancing(d.id); render(); },
+    cipTreasury: d => { payProjectFromTreasury(d.id); render(); },
+    treCapital: d => { treasuryToCapital(+d.f); render(); },
+    treRepay: d => { treasuryRepay(+d.f); render(); },
     parisClub: () => { parisClub(); render(); },
     hipc: () => { hipcApply(); render(); },
     ceoTalk: d => { startCeoTalk(+d.i); render(); },
@@ -129,6 +132,7 @@ document.addEventListener("click", e => {
 document.addEventListener("change", e => {
     const el = e.target;
     if (el.dataset.change === "support") { setSupport(el.dataset.k, +el.value); render(); }
+    if (el.dataset.change === "treOpt") { treasuryOpt(el.dataset.k, el.value); render(); }
     if (el.dataset.change === "own") { setOwnership(el.dataset.k, el.value); render(); }
     if (el.dataset.change === "inc") { setIncentive(+el.dataset.i, el.dataset.k, +el.value); render(); }
     if (el.dataset.change === "lawLevel") { ui.lawLevel = +el.value; render(); }

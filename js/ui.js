@@ -53,7 +53,7 @@ function relBadge(v) {
 }
 
 function sparkline(key, color = "#6fb3ff") {
-    const pts = G.hist.slice(-80).map(h => h[key]);
+    const pts = G.hist.filter(h => h[key] != null).slice(-80).map(h => h[key]);
     if (pts.length < 2) return "";
     const lo = Math.min(...pts), hi = Math.max(...pts), rng = hi - lo || 1;
     const d = pts.map((v, i) => `${(i / (pts.length - 1) * 100).toFixed(1)},${(28 - (v - lo) / rng * 26).toFixed(1)}`).join(" ");
@@ -234,7 +234,7 @@ function renderCabinetSetup() {
 function viewsFor() {
     const v = [["office", "🏛️", "Office"]];
     if (G.gov.type === "colony") v.push(["movement", "✊", "Movement"]);
-    v.push([ "legislature", "📜", hasLegislature() ? "Legislature" : "Decrees"], ["lawbook", "📚", "Lawbook"], ["budget", "💰", "Budget"], ["economy", "🏭", "Economy"], ["power", "⚖️", "Power"], ["world", "🌍", "World"], ["institutions", "🌐", "Institutions"], ["military", "🎖️", "Military"], ["record", "📖", "Record"]);
+    v.push([ "legislature", "📜", hasLegislature() ? "Legislature" : "Decrees"], ["lawbook", "📚", "Lawbook"], ["budget", "💰", "Budget"], ["finance", "💵", "Finance"], ["economy", "🏭", "Economy"], ["power", "⚖️", "Power"], ["world", "🌍", "World"], ["institutions", "🌐", "Institutions"], ["military", "🎖️", "Military"], ["record", "📖", "Record"]);
     return v;
 }
 
@@ -266,10 +266,11 @@ function renderHud() {
             ${stat("Growth", fmt(G.econ.growth, 1) + "%", lvl(G.econ.growth, 4, 0.5))}
             ${stat("Inflation", fmt(G.econ.inflation, 1) + "%", G.econ.inflation > 8 ? "bad" : G.econ.inflation < 4 ? "good" : "")}
             ${stat("Jobless", fmt(G.econ.unemp, 1) + "%", G.econ.unemp > 9 ? "bad" : G.econ.unemp < 5 ? "good" : "")}
-            ${stat("Debt", Math.round(debtPct) + "%", debtPct > 90 ? "bad" : debtPct < 40 ? "good" : "", "Public debt as % of GDP")}
+            <div class="hstat link ${debtPct > 90 ? "bad" : debtPct < 40 ? "good" : ""}" data-act="view" data-v="finance" title="Public debt: ${nominal(G.econ.debt)}. Click for the Finance tab."><small>Debt</small><b>${Math.round(debtPct)}% · ${nominal(G.econ.debt)}</b></div>
             ${(() => { const me = myStanding(); return me ? stat("World rank", `#${me.rank}`, me.rank <= 5 ? "good" : "", `${me.tier[1]} · power score ${Math.round(me.score)} (World tab)`) : ""; })()}
             ${stat("Capital", Math.floor(G.capital), "capital", `Political capital. +${fmt(capitalIncome(), 1)}/month.`)}
-            ${stat("Funds", "$" + Math.round(G.funds) + "M", "", "Party campaign funds")}
+            <div class="hstat link good" data-act="view" data-v="finance" title="Cash the government holds: aid, savings and unspent capital money. Click for the Finance tab."><small>Treasury</small><b>${moneyFine(cashNow() * cpi())}</b></div>
+            ${stat("Party $", "$" + Math.round(G.funds) + "M", "", "Your party's campaign funds (for ads and elections), not government money")}
             ${stat("☢️ Clock", minutes + " min", minutes <= 3 ? "bad" : minutes >= 9 ? "good" : "", "Minutes to midnight: world nuclear tension")}
         </div>
         <div class="hud-right">
@@ -284,7 +285,7 @@ function renderDock() {
 }
 
 function renderView() {
-    const fn = { office: viewOffice, movement: viewMovement, legislature: viewLegislature, lawbook: viewLawbook, budget: viewBudget, economy: viewEconomy, power: viewPower, world: viewWorld, institutions: viewInstitutions, military: viewMilitary, record: viewRecord }[view] || viewOffice;
+    const fn = { office: viewOffice, movement: viewMovement, legislature: viewLegislature, lawbook: viewLawbook, budget: viewBudget, finance: viewFinance, economy: viewEconomy, power: viewPower, world: viewWorld, institutions: viewInstitutions, military: viewMilitary, record: viewRecord }[view] || viewOffice;
     $("#view").innerHTML = fn();
 }
 
@@ -386,6 +387,24 @@ function optEffects(o) {
 
 // ── Economy ─────────────────────────────────────────────────────────
 
+// Change in a development stat over the last 12 months (snapshots every 4 weeks).
+function devTrend(i) {
+    const h = G.hist.filter(x => x.dv);
+    if (h.length < 2) return "";
+    const past = h.find(x => x.t >= G.t - 52) || h[0], now = [G.dev.ind, G.dev.tech, G.dev.lit, G.dev.uni, G.dev.urban][i];
+    const dlt = now - past.dv[i];
+    if (Math.abs(dlt) < 0.01) return "";
+    return ` <span class="tiny ${dlt > 0 ? "good" : "bad"}">${dlt > 0 ? "▲" : "▼"}${fmt(Math.abs(dlt), Math.abs(dlt) < 1 ? 2 : 1)}</span>`;
+}
+
+// What your companies add up to, so their weight in the economy is visible.
+function devCompanies() {
+    const fs = (G.firms || []).filter(f => !f.closed);
+    if (!fs.length) return "";
+    const out = fs.reduce((s, f) => s + f.out, 0), jobs = fs.reduce((s, f) => s + f.jobs, 0);
+    return `<p class="tiny">🏢 <b>${fs.length} compan${fs.length > 1 ? "ies" : "y"}</b> produce ${nominal(out)} a year (${fmt(out / G.econ.gdp * 100, 1)}% of GDP) and employ ${fmtJobs(jobs)} (${fmt(jobs / Math.max(1, laborForce() * 1000) * 100, 1)}% of the workforce).</p>`;
+}
+
 function viewEconomy() {
     const d = G.dev, e = G.econ;
     const rows = Object.keys(INDUSTRIES).map(k => {
@@ -442,13 +461,15 @@ function viewEconomy() {
             <div class="row">${p.ceo && p.ceo.round ? "" : `<button class="mini" data-act="ceoTalk" data-i="${i}" ${G.capital < 4 ? "disabled" : ""}>✈️ Meet the CEO (4 ⚡)</button>`}<button class="mini primary" data-act="offer" data-i="${i}" ${G.capital < 5 ? "disabled" : ""}>Make the offer (5 ⚡)</button></div></div>`;
     }).join("") || "<p class='muted small'>No companies are looking at your country right now. Improve stability, education, infrastructure and openness.</p>";
     const deskPanel = panel("Investment desk", `<p class="small muted">Court foreign companies. New prospects arrive every six months. To grow your own firms, open an industry from the table.</p>${prospects}`);
-    const firms = (G.firms || []).slice().reverse().map(f => `<tr class="${f.closed ? "dim" : ""}"><td>${f.home && f.home !== G.ck ? flagOf(f.home) : "🏠"} ${esc(f.name)}</td><td>${INDUSTRIES[f.sector].icon}</td><td>${esc(G.regions[f.region] ? G.regions[f.region].n : "")}</td><td>${fmtJobs(f.jobs)}</td><td>${f.closed ? "closed" : (() => { const ft = firmTaxes([f]); return `${f.holidayUntil > G.year ? `<span class="warn">holiday to ${f.holidayUntil}</span> (then ${moneyFine(ft.corpLater)})` : `<span class="good">${moneyFine(ft.corp)}</span>`} corp. · workers <span class="good">${moneyFine(ft.workers)}</span>`; })()}</td></tr>`).join("");
+    const firms = (G.firms || []).slice().reverse().map(f => `<tr class="${f.closed ? "dim" : ""}"><td>${f.home && f.home !== G.ck ? flagOf(f.home) : f.foreign ? "🌐" : "🏠"} ${esc(f.name)}</td><td>${INDUSTRIES[f.sector].icon}</td><td>${esc(G.regions[f.region] ? G.regions[f.region].n : "")}</td><td>${fmtJobs(f.jobs)}</td><td>${f.closed ? "closed" : (() => { const ft = firmTaxes([f]); return `${f.holidayUntil > G.year ? `<span class="warn">holiday to ${f.holidayUntil}</span> (then ${moneyFine(ft.corpLater)})` : `<span class="good">${moneyFine(ft.corp)}</span>`} corp. · workers <span class="good">${moneyFine(ft.workers)}</span>`; })()}</td></tr>`).join("");
     const right = ui.ind ? industryPanel(ui.ind) : panel("Development", `
-                ${meter(`Industrialization: ${devStage()}`, d.ind / 100, true, Math.round(d.ind))}
-                ${meter("Technology", clamp(d.tech / 150), true, Math.round(d.tech), "Unlocks advanced industries")}
-                ${meter("Literacy", d.lit / 100, true, Math.round(d.lit) + "%")}
-                ${meter("University-educated", clamp(d.uni / 30), true, fmt(d.uni, 1) + "%")}
-                ${meter("Urbanization", d.urban / 100, true, Math.round(d.urban) + "%")}
+                ${devCompanies()}
+                ${meter(`Industrialization: ${devStage()}`, d.ind / 100, true, fmt(d.ind, d.ind < 10 ? 1 : 0) + devTrend(0), "Heavy industry and manufacturing as a share of the economy, held back while most people farm. Grows as industries and companies grow.")}
+                ${meter("Technology", clamp(d.tech / 150), true, fmt(d.tech, d.tech < 10 ? 1 : 0) + devTrend(1), `Unlocks advanced industries. Rises with universities, telecoms, research laws and openness; each foreign company speeds up catching up${firmTech() ? ` (yours add ${Math.round(firmTech() * 100)}%)` : ""}.`)}
+                ${meter("Literacy", d.lit / 100, true, fmt(d.lit, d.lit < 10 ? 1 : 0) + "%" + devTrend(2), "Rises with schools (CIP) and education laws.")}
+                ${meter("University-educated", clamp(d.uni / 30), true, fmt(d.uni, d.uni < 1 ? 2 : 1) + "%" + devTrend(3), "Rises with universities (CIP) and higher-education laws.")}
+                ${meter("Urbanization", d.urban / 100, true, fmt(d.urban, d.urban < 10 ? 1 : 0) + "%" + devTrend(4), "People move to cities as industry, services and formal jobs grow.")}
+                <p class="tiny muted">▲ = change over the last 12 months. These move a little every week; decades of steady growth build an industrial nation.</p>
                 <p class="small muted">Open any industry for its natural fit, the conditions it needs to flourish, public investments you can build and homegrown firms you can back.</p>`);
     return `<div class="cols2 wide-left">
         <div>${panel("Industries", `<p class="small muted">Click an industry to develop it. ★ = natural fit. Conditions = how many of its needs you meet. Subsidies cost % of GDP each year.</p>${projForm}<div class="table-wrap"><table class="ind-table"><tr><th>Sector</th><th>Fit</th><th>Output</th><th>Share</th><th>Growth</th><th>Needs</th><th>Support</th><th>Ownership</th></tr>${table}</table></div>`)}

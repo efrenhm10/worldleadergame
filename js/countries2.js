@@ -251,7 +251,7 @@ ethiopia: {
     ],
     blurb: "You warned the League of Nations in 1936 that 'it is us today, it will be you tomorrow', and the world remembered. You came back in 1941 behind British troops. Now you are building schools, an air force and a modern state, from the top down, as an absolute monarch.",
     drama: ["The UN debates Eritrea's future.", "The rases resent your new provincial governors.", "Young officers trained abroad talk of constitutions."],
-    names: "african",
+    names: "ethiopian",
     hist: [[1974, 9, "Mengistu Haile Mariam", "military_junta"], [1987, 9, "Mengistu Haile Mariam", "one_party"]]
 },
 

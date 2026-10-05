@@ -136,7 +136,7 @@ const DIPLO = [
     { k: "aid", name: "Give economic aid", icon: "💵", cost: 4, desc: "Costs 0.3% of GDP. Buys goodwill and pulls them toward your bloc.", ok: n => n.gdp < G.econ.gdp,
       run: n => { applyEffects({ cost: 0.3, prestige: 1 }); addRel(G.ck, n.key, 15); n.align = clamp(n.align + (G.align - n.align) * 0.1, -100, 100); } },
     { k: "askaid", name: "Request aid", icon: "🙏", cost: 6, desc: "Ask a richer friend for money. Needs relations of +25.", ok: n => n.gdp > G.econ.gdp * 2 && getRel(G.ck, n.key) >= 25,
-      run: n => { if (chance(0.4 + getRel(G.ck, n.key) / 150)) { applyEffects({ cash: 1.2, align: n.align > G.align ? 5 : -5, p: { foreign: 5 } }); toast("Aid granted", `${n.name} sends money.`); } else toast("Aid refused", `${n.name} declines.`); } },
+      run: n => { if (chance(0.4 + getRel(G.ck, n.key) / 150)) { toast("Aid granted", `${n.name} sends money. It goes into the treasury (Budget tab).`, applyEffects({ aid: 1.2, aidFrom: n.key, align: n.align > G.align ? 5 : -5, p: { foreign: 5 } })); } else toast("Aid refused", `${n.name} declines.`); } },
     { k: "arms", name: "Buy arms", icon: "🛩️", cost: 4, desc: "Costs 0.5% of GDP. +8% military strength.", ok: n => getRel(G.ck, n.key) >= 30 && n.mil > G.mil.strength,
       run: n => { applyEffects({ cost: 0.5, mil: 8, p: { military: 4 } }); addRel(G.ck, n.key, 4); } },
     { k: "denounce", name: "Denounce", icon: "📣", cost: 2, desc: "Rally nationalists at home; anger them abroad.", ok: n => true,
