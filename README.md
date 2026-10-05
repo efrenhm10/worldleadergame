@@ -261,7 +261,12 @@ showed "+10".
   infrastructure. Fly to headquarters for a three-round pitch. CEOs check your
   claims against the facts.
 - **What new firms do:** plants hire workers, which lowers unemployment.
-  Formal jobs and company profits widen the **tax base**. Literacy and
+  Each new job moves a worker into the formal, taxpaying economy, so
+  **income tax and contributions rise from day one**. Company profits pay
+  **corporate tax** once any tax holiday ends, and you're told when that
+  happens. Offer cards, the opening notice, the Companies table and the tax
+  table all show the money, e.g. "workers $1.3M a year · company $5.0M a year
+  from 1955". Literacy and
   urbanization raise **state capacity**, the ability to collect taxes. Revenue
   pays for the laws that raise health, education and living standards.
 - **Development tracks:** industrialization (from agrarian to advanced),

@@ -191,7 +191,7 @@ function yearlyFirms() {
         if (f.foreign || f.closed) return;
         const b = sectorBonus(f.sector);
         if (b > 0.5 && chance(0.25)) { const add = f.out * 0.3; f.out += add; G.ind[f.sector].out += add; const j = jobsFor(add, f.sector); f.jobs += j; addJobs(j); log(`📈 ${f.name} expands: ${fmtJobs(j)} new jobs.`, "good"); }
-        else if (b < -0.5 && chance(0.12)) { f.closed = true; G.ind[f.sector].out = Math.max(0.0001, G.ind[f.sector].out - f.out * 0.8); G.econ.jobsAdded -= f.jobs / Math.max(1, laborForce() * 1000) * 100; log(`📉 ${f.name} goes bankrupt. ${fmtJobs(f.jobs)} jobs lost.`, "bad"); }
+        else if (b < -0.5 && chance(0.12)) { f.closed = true; G.ind[f.sector].out = Math.max(0.0001, G.ind[f.sector].out - f.out * 0.8); G.econ.jobsAdded -= f.jobs / Math.max(1, laborForce() * 1000) * 100; G.econ.formalAdded = Math.max(0, (G.econ.formalAdded || 0) - f.jobs / Math.max(1, laborForce() * 1000) * 100); log(`📉 ${f.name} goes bankrupt. ${fmtJobs(f.jobs)} jobs lost.`, "bad"); }
     });
 }
 

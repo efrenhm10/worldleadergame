@@ -24,10 +24,17 @@ const IMPACT_STATS = [
     ["spend", "Spending", () => governmentSpend().total, true, 0.05, "% GDP"]
 ];
 
+// Money with enough precision for small amounts ($bn nominal in).
+function moneyFine(bn) { const m = bn * 1000; return Math.abs(m) >= 10 ? money(bn) : Math.abs(m) >= 1 ? `$${fmt(m, 1)}M` : `$${Math.max(1, Math.round(m * 1000))}K`; }
+const TAX_LINES = [["income", "Income tax"], ["payroll", "Contributions"], ["corp", "Corporate tax"]];
+
 function impactSnapshot() {
     if (!G || !G.econ || !G.nations) return null;
-    const snap = { stats: {}, pillars: {}, infra: {}, ind: {} };
+    const snap = { stats: {}, pillars: {}, infra: {}, ind: {}, taxes: {} };
     try {
+        const tb = taxBase(), gdpN = G.econ.gdp * cpi();
+        TAX_LINES.forEach(([k]) => { snap.taxes[k] = (tb[k] || 0) / 100 * gdpN; });
+        snap.taxes.total = tb.total / 100 * gdpN;
         IMPACT_STATS.forEach(([k, , fn]) => { snap.stats[k] = fn(); });
         Object.keys(G.pillars).forEach(k => { snap.pillars[k] = pillarTarget(k); });
         if (G.infra) Object.keys(INFRA).forEach(k => { snap.infra[k] = infraTarget(k); });
@@ -48,6 +55,11 @@ function impactDiff(before, why, quiet) {
         const lab = { lit: "Literacy gain/yr", tech: "Tech progress/yr", growth: "Growth (pts/yr)", rev: "Revenue (% GDP)", spend: "Spending (% GDP)" }[k] || `${label} (trend)`;
         out.push({ label: lab, v, good: lowGood ? d < 0 : d > 0, unit, kind: "stat" });
     });
+    const totalN = Math.max(1e-9, after.taxes.total);
+    TAX_LINES.forEach(([k, label]) => {
+        const d = after.taxes[k] - (before.taxes[k] || 0);
+        if (Math.abs(d) >= totalN * 0.0004 && Math.abs(d) * 1000 >= 0.05) out.push({ label: `${label}/yr`, v: (d > 0 ? "+" : "−") + moneyFine(Math.abs(d)), good: d > 0, raw: true, kind: "tax" });
+    });
     Object.keys(after.pillars).forEach(k => {
         const d = after.pillars[k] - (before.pillars[k] != null ? before.pillars[k] : after.pillars[k]);
         if (Math.abs(d) >= 1) out.push({ label: `${pillarName(k)} (trend)`, v: Math.round(d), good: d > 0, kind: "pillar" });
@@ -60,13 +72,15 @@ function impactDiff(before, why, quiet) {
         const d = after.ind[k] - (before.ind[k] != null ? before.ind[k] : after.ind[k]);
         if (Math.abs(d) >= 0.15) out.push({ label: `${INDUSTRIES[k].name} growth`, v: Math.round(d * 10) / 10, good: d > 0, kind: "ind" });
     });
+    const order = { tax: 0, stat: 1, infra: 2, ind: 3, pillar: 4 };
+    out.sort((a, b) => order[a.kind] - order[b.kind]);
     if (out.length && why && !quiet) log(`📊 ${why}: ${impactText(out)}.`, "policy");
     return out;
 }
 
 // "Health +3, Poverty −2 (targets) · Growth +0.2%/yr · Business ▲ +4 · Highways & roads coverage +12"
 function impactText(list) {
-    return list.map(c => `${c.label.replace(" (trend)", "")} ${c.v > 0 ? "+" : "−"}${Math.abs(c.v)}`).join(", ");
+    return list.map(c => c.raw ? `${c.label} ${c.v}` : `${c.label.replace(" (trend)", "")} ${c.v > 0 ? "+" : "−"}${Math.abs(c.v)}`).join(", ");
 }
 
 // Wrap any decision: run it, then report what it moved.
@@ -134,7 +148,7 @@ function viewDrivers() {
 }
 
 // Chips for views (same look as on notices).
-function chipsHtml(list, max = 10) { return (list || []).slice(0, max).map(c => `<span class="chg ${c.good ? "good" : "bad"}">${esc(c.label)}${c.kind === "stat" || c.kind === "pillar" ? "" : ""} ${c.v > 0 ? "+" : ""}${c.v}</span>`).join(""); }
+function chipsHtml(list, max = 10) { return (list || []).slice(0, max).map(c => `<span class="chg ${c.good ? "good" : "bad"}">${esc(c.label)} ${c.raw ? esc(String(c.v)) : (c.v > 0 ? "+" : "") + c.v}</span>`).join(""); }
 
 // What-if: apply a change, measure, undo.
 function impactPreview(apply, undo) {

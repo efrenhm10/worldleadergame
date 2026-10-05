@@ -253,7 +253,7 @@ function activateProject(it) {
     const info = projectInfo(it.type);
     const weeks = Math.round(info.weeks * rnd(0.85, 1.25) + (it.type.startsWith("ind:") ? indGap(it.type.slice(4)) * 6 : 0));
     G.cip.active.push(Object.assign(it, { left: weeks, total: weeks, start: G.t }));
-    addJobs(jobsFor(it.cost * 0.3, "machinery") * 0.5);
+    addJobs(jobsFor(it.cost * 0.3, "machinery") * 0.5, true);
     if (it.src.startsWith("fac:")) { const f = G.factions.find(x => x.k === it.src.slice(4)); if (f) { f.loyalty = clamp(f.loyalty + 6); } }
     if (G.regions[it.region]) G.regions[it.region].mod += 2;
 }

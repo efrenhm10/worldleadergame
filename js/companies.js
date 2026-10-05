@@ -50,7 +50,9 @@ const INCENTIVES = {
 };
 
 function laborForce() { return G.econ.pop * 0.42; } // millions
-function formalShare() { return clamp(0.2 + 0.8 * G.dev.urban / 100, 0.2, 1); }
+// Share of workers in formal, taxpaying jobs: cities, plus the factory and
+// office jobs you bring in (they pay better than average, so count double).
+function formalShare() { return clamp(0.2 + 0.8 * G.dev.urban / 100 + (G.econ.formalAdded || 0) * 2 / 100, 0.2, 1); }
 
 // Thousands of jobs a plant of `out` ($bn, 1950 dollars) creates.
 function jobsFor(out, sector) {
@@ -172,15 +174,20 @@ function openFirm(f) {
     if (r) r.mod += 4 + Math.min(6, f.jobs / Math.max(1, laborForce() * 1000) * 400);
     if (f.local === 2) G.dev.tech += 0.8; else if (f.local === 1) G.dev.tech += 0.3;
     const where = r ? r.n : "the country";
-    log(`🏢 ${f.name} opens a ${INDUSTRIES[f.sector].name.toLowerCase()} plant in ${where}: ${fmtJobs(f.jobs)} jobs.`, "good");
+    log(`🏢 ${f.name} opens ${/^[aeiou]/i.test(INDUSTRIES[f.sector].name) ? "an" : "a"} ${INDUSTRIES[f.sector].name.toLowerCase()} plant in ${where}: ${fmtJobs(f.jobs)} jobs.`, "good");
     record(`Brought ${f.name} to ${where} (${fmtJobs(f.jobs)} jobs), ${G.year}.`);
-    toast(`${f.name} is coming!`, `A new ${INDUSTRIES[f.sector].name.toLowerCase()} plant in ${where}. ${fmtJobs(f.jobs)} jobs${f.holidayUntil > G.year ? `; taxes from ${f.holidayUntil}` : "; pays taxes from day one"}.`, [{ label: "Jobs", v: fmtJobs(f.jobs), good: true, raw: true }].concat(impactDiff(before, f.name)));
+    const ft = firmTaxes([f]);
+    const taxTxt = ` Its workers will pay about ${moneyFine(ft.workers)} a year in income tax and contributions; the company ${f.holidayUntil > G.year ? `${moneyFine(ft.corpLater)} a year in corporate tax once its holiday ends in ${f.holidayUntil}` : `${moneyFine(ft.corp)} a year in corporate tax`}.`;
+    log(`💰 ${f.name}:${taxTxt}`, "good");
+    toast(`${f.name} is coming!`, `A new ${INDUSTRIES[f.sector].name.toLowerCase()} plant in ${where}. ${fmtJobs(f.jobs)} jobs.${taxTxt}`, [{ label: "Jobs", v: fmtJobs(f.jobs), good: true, raw: true }].concat(impactDiff(before, f.name)));
 }
 
-function addJobs(thousands) {
+function addJobs(thousands, temporary) {
     const pct = thousands / Math.max(1, laborForce() * 1000) * 100;
     G.econ.jobsAdded = (G.econ.jobsAdded || 0) + pct;
     G.econ.jobsCreated = (G.econ.jobsCreated || 0) + thousands;
+    // Permanent jobs move workers into the formal, taxpaying economy.
+    if (!temporary) G.econ.formalAdded = (G.econ.formalAdded || 0) + pct;
 }
 
 const fmtJobs = k => k >= 1000 ? `${fmt(k / 1000, 1)} million` : k >= 1 ? `${Math.round(k).toLocaleString()},000` : `${Math.max(1, Math.round(k * 1000)).toLocaleString()}`;
@@ -211,8 +218,10 @@ function taxBase() {
     const e = G.econ;
     const eff = e.taxCap * (1 - G.s.corruption / 250);
     const formal = formalShare();
-    const income = taxRate("income") * 0.55 * (0.35 + 0.65 * formal) * eff;
-    const payroll = taxRate("payroll") * 0.8 * formal * eff;
+    // Only people with jobs pay income tax and contributions.
+    const employed = clamp((100 - e.unemp) / 94, 0.6, 1.06);
+    const income = taxRate("income") * 0.55 * (0.35 + 0.65 * formal) * eff * employed;
+    const payroll = taxRate("payroll") * 0.8 * formal * eff * employed;
     const sales = taxRate("sales") * 0.35 * eff;
     const agriShare = G.ind.agriculture.out / e.gdp;
     const land = taxRate("land") * (0.5 + agriShare * 3) * eff;
@@ -234,6 +243,32 @@ function taxBase() {
     const extraSum = Object.values(extra).reduce((a, b) => a + b, 0);
     const total = (income + payroll + sales + land + wealth + corp + stateRev + resources + tariffs + extraSum) * colonyCut;
     return Object.assign({ income, payroll, sales, land, wealth, corp, stateRev, resources, tariffs, holidayLoss, total, formal }, extra);
+}
+
+// Foreign firms start paying corporate tax when their holiday ends.
+function holidaysEnd() {
+    (G.firms || []).filter(f => f.foreign && !f.closed && f.holidayUntil === G.year).forEach(f => {
+        const ft = firmTaxes([f]);
+        log(`💰 ${f.name}'s tax holiday ends: it now pays about ${moneyFine(ft.corp)} a year in corporate tax.`, "good");
+        toast("Tax holiday ends", `${f.name} starts paying corporate tax.`, [{ label: "Corporate tax/yr", v: "+" + moneyFine(ft.corp), good: true, raw: true }]);
+    });
+}
+
+// Taxes paid by the firms you brought in and by their workers ($bn nominal a year).
+function firmTaxes(list = (G.firms || []).filter(f => !f.closed)) {
+    const e = G.econ, eff = e.taxCap * (1 - G.s.corruption / 250), gdpN = e.gdp * cpi();
+    const cut = G.gov.type === "colony" ? 0.6 : 1;
+    const employed = clamp((100 - e.unemp) / 94, 0.6, 1.06);
+    let corp = 0, corpLater = 0, workers = 0, jobs = 0;
+    list.forEach(f => {
+        const share = f.out / e.gdp;
+        const c = share * taxRate("corporate") * 0.2 * eff * cut / 100 * gdpN;
+        if (f.foreign && f.holidayUntil > G.year) corpLater += c; else corp += c;
+        const pct = f.jobs / Math.max(1, laborForce() * 1000) * 100;
+        workers += (taxRate("income") * 0.55 * 0.65 + taxRate("payroll") * 0.8) * pct * 2 / 100 * eff * employed * cut / 100 * gdpN;
+        jobs += f.jobs;
+    });
+    return { corp, corpLater, workers, jobs, n: list.length };
 }
 
 function livingStandards(pc = gdpPerCapita() * cpi(), health = G.s.health, poverty = G.s.poverty, lit = G.dev.lit) {

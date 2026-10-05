@@ -466,6 +466,7 @@ function yearlyTick() {
     budgetNewYear();
     programsYearly();
     yearlyFirms();
+    holidaysEnd();
     // Sovereign default when debt spirals out of control.
     const dp = G.econ.debt / G.econ.gdp * 100;
     if (dp > (G.inst && G.inst.program ? 260 : 220)) {
@@ -569,6 +570,7 @@ function economyTick() {
     if (G.year >= 1971 && G.year <= 1982) infT += 3;
     e.inflation += (clamp(infT, -3, 60) - e.inflation) * 0.035;
     e.jobsAdded = (e.jobsAdded || 0) * 0.9985;
+    e.formalAdded = (e.formalAdded || 0) * 0.9995;
     e.unemp += (unempTarget() - e.unemp) * 0.04;
 }
 

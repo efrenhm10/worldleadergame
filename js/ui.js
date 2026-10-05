@@ -410,6 +410,7 @@ function viewEconomy() {
         ${taxRow("Income tax", tb.income, "Grows with formal (urban, industrial) jobs")}
         ${taxRow("Social insurance contributions", tb.payroll, "Paid on formal wages")}
         ${taxRow("Corporate taxes", tb.corp, "Grows with private and foreign companies")}
+        ${(() => { const ft = firmTaxes(); return ft.n ? `<tr class="sub"><td colspan="3" class="tiny">↳ The ${ft.n} compan${ft.n > 1 ? "ies" : "y"} you brought in (${fmtJobs(ft.jobs)} jobs) pay <b class="good">${moneyFine(ft.corp)}</b> corporate tax${ft.corpLater > 0 ? ` (+${moneyFine(ft.corpLater)} when tax holidays end)` : ""}; their workers pay <b class="good">${moneyFine(ft.workers)}</b> in income tax and contributions a year.</td></tr>` : ""; })()}
         ${taxRow("Sales tax", tb.sales)}
         ${Object.values(LAWS).filter(l => l.tax && TAX_EXTRA[l.tax]).map(l => taxRow(l.name, tb[l.tax])).join("")}
         ${taxRow("Land & property tax", tb.land)}
@@ -429,12 +430,12 @@ function viewEconomy() {
         return `<div class="prospect"><div class="row"><b>${p.home ? flagOf(p.home) : "🏳️"} ${esc(p.name)}</b> <span class="badge small">${INDUSTRIES[p.sector].icon} ${INDUSTRIES[p.sector].name}</span></div>
             <p class="tiny">${p.known ? `They care most about <b>${PRIORITIES[p.prio]}</b>.` : "Their priorities are unknown. Meet the CEO at headquarters to find out."}${p.ceo && p.ceo.round ? ` CEO meeting: ${p.ceo.bonus > 0.1 ? "went very well" : p.ceo.bonus > 0 ? "went well" : "went badly"}.` : ""}</p>
             ${incs}
-            <div class="budget"><div><small>Jobs</small><b>${fmtJobs(t.jobs)}</b></div><div><small>Output</small><b>${nominal(t.out)}/yr</b></div><div><small>Your cost</small><b>${money(t.cost * cpi())}</b></div><div><small>Tax/yr after holiday</small><b>${money(t.annualTax * cpi())}</b></div></div>
+            <div class="budget"><div><small>Jobs</small><b>${fmtJobs(t.jobs)}</b></div><div><small>Output</small><b>${nominal(t.out)}/yr</b></div><div><small>Your cost</small><b>${money(t.cost * cpi())}</b></div><div><small>Corporate tax/yr</small><b>${moneyFine(t.annualTax * cpi())}</b>${t.holidayYrs ? `<span class="tiny muted">after a ${t.holidayYrs}-yr holiday</span>` : ""}</div><div><small>Workers' taxes/yr</small><b class="good">${moneyFine(firmTaxes([{ out: t.out, jobs: t.jobs }]).workers)}</b><span class="tiny muted">from day one</span></div></div>
             <p class="small">Chance they say yes: <b class="${odds > 0.6 ? "good" : odds < 0.35 ? "bad" : "warn"}">${Math.round(clamp(odds, 0.02, 0.97) * 100)}%</b>${t.cost > 0 ? ` · pays back in ~${Math.round(t.payback)} yrs` : ""}</p>
             <div class="row">${p.ceo && p.ceo.round ? "" : `<button class="mini" data-act="ceoTalk" data-i="${i}" ${G.capital < 4 ? "disabled" : ""}>✈️ Meet the CEO (4 ⚡)</button>`}<button class="mini primary" data-act="offer" data-i="${i}" ${G.capital < 5 ? "disabled" : ""}>Make the offer (5 ⚡)</button></div></div>`;
     }).join("") || "<p class='muted small'>No companies are looking at your country right now. Improve stability, education, infrastructure and openness.</p>";
     const deskPanel = panel("Investment desk", `<p class="small muted">Court foreign companies. New prospects arrive every six months. To grow your own firms, open an industry from the table.</p>${prospects}`);
-    const firms = (G.firms || []).slice().reverse().map(f => `<tr class="${f.closed ? "dim" : ""}"><td>${f.home && f.home !== G.ck ? flagOf(f.home) : "🏠"} ${esc(f.name)}</td><td>${INDUSTRIES[f.sector].icon}</td><td>${esc(G.regions[f.region] ? G.regions[f.region].n : "")}</td><td>${fmtJobs(f.jobs)}</td><td>${f.closed ? "closed" : f.holidayUntil > G.year ? `<span class="warn">holiday to ${f.holidayUntil}</span>` : `<span class="good">paying</span>`}</td></tr>`).join("");
+    const firms = (G.firms || []).slice().reverse().map(f => `<tr class="${f.closed ? "dim" : ""}"><td>${f.home && f.home !== G.ck ? flagOf(f.home) : "🏠"} ${esc(f.name)}</td><td>${INDUSTRIES[f.sector].icon}</td><td>${esc(G.regions[f.region] ? G.regions[f.region].n : "")}</td><td>${fmtJobs(f.jobs)}</td><td>${f.closed ? "closed" : (() => { const ft = firmTaxes([f]); return `${f.holidayUntil > G.year ? `<span class="warn">holiday to ${f.holidayUntil}</span> (then ${moneyFine(ft.corpLater)})` : `<span class="good">${moneyFine(ft.corp)}</span>`} corp. · workers <span class="good">${moneyFine(ft.workers)}</span>`; })()}</td></tr>`).join("");
     const right = ui.ind ? industryPanel(ui.ind) : panel("Development", `
                 ${meter(`Industrialization: ${devStage()}`, d.ind / 100, true, Math.round(d.ind))}
                 ${meter("Technology", clamp(d.tech / 150), true, Math.round(d.tech), "Unlocks advanced industries")}
@@ -444,7 +445,7 @@ function viewEconomy() {
                 <p class="small muted">Open any industry for its natural fit, the conditions it needs to flourish, public investments you can build and homegrown firms you can back.</p>`);
     return `<div class="cols2 wide-left">
         <div>${panel("Industries", `<p class="small muted">Click an industry to develop it. ★ = natural fit. Conditions = how many of its needs you meet. Subsidies cost % of GDP each year.</p>${projForm}<div class="table-wrap"><table class="ind-table"><tr><th>Sector</th><th>Fit</th><th>Output</th><th>Share</th><th>Growth</th><th>Needs</th><th>Support</th><th>Ownership</th></tr>${table}</table></div>`)}
-            ${deskPanel}${firms ? panel("Companies", `<div class="table-wrap"><table><tr><th>Company</th><th></th><th>Region</th><th>Jobs</th><th>Taxes</th></tr>${firms}</table></div>`) : ""}</div>
+            ${deskPanel}${firms ? panel("Companies", `<div class="table-wrap"><table><tr><th>Company</th><th></th><th>Region</th><th>Jobs</th><th>Taxes a year</th></tr>${firms}</table></div>`) : ""}</div>
         <div>${right}${jobsPanel}
             ${panel("Economy", `<div class="budget"><div><small>GDP (nominal)</small><b>${nominal(e.gdp)}</b></div><div><small>Per person</small><b>$${Math.round(gdpPerCapita() * cpi()).toLocaleString()}</b></div><div><small>Population</small><b>${fmt(e.pop, e.pop < 10 ? 2 : 0)}M</b></div><div><small>Oil price</small><b>$${fmt(1.7 * G.oilPrice * (1 + Math.max(0, G.year - 1950) * 0.035), 1)}/bbl</b></div></div>`)}
         </div>
