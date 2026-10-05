@@ -104,7 +104,7 @@ function lawControls(k) {
     if (lawPending(k)) return `<p class="small warn">A bill on this law is before the ${esc(G.leg.name)}. <button class="mini" data-act="view" data-v="legislature">To the floor →</button></p>`;
     const target = ui.lawLevel != null ? ui.lawLevel : lvl > 0 ? lvl : 0.3;
     const slider = d.tax
-        ? `<label class="small">Rate: <b>${fmt(target * d.max, 1)}%</b><input type="range" min="0.05" max="1" step="0.05" value="${target}" data-change="lawLevel"></label>`
+        ? `<label class="small">Rate: <b>${fmt(target * d.max, 1)}${TAX_UNIT[d.tax] || "%"}</b> · would raise about <b>${fmt(taxRevenueAt(k, target * d.max), 2)}% of GDP</b> (${money(G.econ.gdp * cpi() * taxRevenueAt(k, target * d.max) / 100)}) a year<input type="range" min="0.05" max="1" step="0.05" value="${target}" data-change="lawLevel"></label>`
         : `<label class="small">Level: <b>${pct(target)}</b><input type="range" min="0.1" max="1" step="0.1" value="${target}" data-change="lawLevel"></label>`;
     if (!demo) return `${slider}<div class="row"><button class="primary" data-act="lawDecree" data-k="${k}">${lvl ? "Decree new level" : "Enact by decree"} (${d.tax ? 8 : 6} ⚡)</button>${lvl ? `<button class="secondary" data-act="lawDecree" data-k="${k}" data-repeal="1">Repeal (6 ⚡)</button>` : ""}</div>`;
     if (!lvl) return `<p class="small">This law does not exist yet. Draft it, choose how strong it starts, and pass it.</p>${slider}<div class="row"><button class="primary" data-act="lawBill" data-k="${k}">Draft the ${esc(d.name)} Act (4 ⚡)</button></div>`;
@@ -114,7 +114,7 @@ function lawControls(k) {
 }
 
 function lawEffectsAt(d, lvl) {
-    if (d.tax) return `<span class="muted">Current rate: ${fmt(taxRate(d.tax), 1)}%</span>`;
+    if (d.tax) return lawOn(d.key) ? `<span class="muted">Rate now ${fmt(taxRate(d.tax), 1)}${TAX_UNIT[d.tax] || "%"}, raising about ${fmt(taxRevenueAt(d.key, taxRate(d.tax)), 2)}% of GDP a year.</span>` : `<span class="muted">Not collected yet.</span>`;
     const m = lvl * fundMult(d.dept || (LAW_CATS[d.cat] && LAW_CATS[d.cat].dept));
     const eff = {};
     Object.entries(d.fx || {}).forEach(([k, v]) => { eff[k] = v * m; });
@@ -124,16 +124,16 @@ function lawEffectsAt(d, lvl) {
 
 function viewLawbook() {
     const cats = Object.entries(LAW_CATS).map(([ck, c]) => {
-        const laws = lawsInCat(ck).filter(d => lawAvailable(d.key) || lawOn(d.key));
+        const laws = lawsInCat(ck).filter(d => lawAvailable(d.key) || lawOn(d.key) || (d.from && d.from > G.year));
         return `<div class="lawcat"><h4>${c.icon} ${c.name}${c.dept ? ` <span class="tiny muted">funding ${pct(fundMult(c.dept))}</span>` : ""}</h4>
-            ${laws.map(d => { const l = lawLevel(d.key); return `<button class="law-row ${ui.law === d.key ? "on" : ""} ${l ? "" : "off"}" data-act="lawSel" data-k="${d.key}"><span>${esc(d.name)}${d.custom ? " <span class='tiny badge'>yours</span>" : ""}${lawPending(d.key) ? " <span class='tiny warn'>bill pending</span>" : ""}</span><span class="lvl">${l ? (d.tax ? fmt(taxRate(d.tax), 1) + "%" : pct(l)) : "—"}</span>${l && !d.tax ? `<i class="lvlbar" style="width:${l * 100}%"></i>` : ""}</button>`; }).join("")}</div>`;
+            ${laws.map(d => { const l = lawLevel(d.key), locked = !l && d.from && d.from > G.year; return `<button class="law-row ${ui.law === d.key ? "on" : ""} ${l ? "" : "off"} ${locked ? "locked" : ""}" data-act="lawSel" data-k="${d.key}"><span>${esc(d.name)}${locked ? ` <span class='tiny muted'>from ${d.from}</span>` : ""}${d.custom ? " <span class='tiny badge'>yours</span>" : ""}${lawPending(d.key) ? " <span class='tiny warn'>bill pending</span>" : ""}</span><span class="lvl">${l ? (d.tax ? fmt(taxRate(d.tax), 1) + "%" : pct(l)) : "—"}</span>${l && !d.tax ? `<i class="lvlbar" style="width:${l * 100}%"></i>` : ""}</button>`; }).join("")}</div>`;
     }).join("");
     let detail = panel("The lawbook", `<p class="small">Laws don't exist until you pass them. Each has a strength from 10% to 100%: its cost and effects scale with that level and with its department's funding in the budget. Once a year the executive may adjust a law by ±10%; anything bigger needs an amendment, and ending one needs a repeal.${hasLegislature() ? "" : " You rule by decree, so you can set any law directly."}</p>`);
     if (ui.law && lawDef(ui.law)) {
         const d = lawDef(ui.law), l = lawLevel(ui.law);
         const st = Object.entries(d.st || {}).filter(([, v]) => v).map(([k, v]) => `<span class="${v > 0 ? "good" : "bad"}">${IDEOLOGIES[k].name} ${v > 0 ? "for" : "against"}</span>`).join(" · ");
         detail = panel(esc(d.name), `<p class="small">${esc(d.desc || "")}</p>
-            <p class="tiny"><b>${l ? `In force at ${d.tax ? fmt(taxRate(d.tax), 1) + "%" : pct(l)}${G.laws[ui.law] && G.laws[ui.law].since ? `, since ${dateStr(G.laws[ui.law].since).split(" ").pop()}` : ""}` : "Not in force"}.</b> ${l ? lawEffectsAt(d, l) : "At 100%: " + lawEffectsAt(d, 1)}</p>
+            <p class="tiny"><b>${l ? `In force at ${d.tax ? fmt(taxRate(d.tax), 1) + "%" : pct(l)}${G.laws[ui.law] && G.laws[ui.law].since ? `, since ${dateStr(G.laws[ui.law].since).split(" ").pop()}` : ""}` : "Not in force"}.</b> ${l ? lawEffectsAt(d, l) : d.tax ? lawEffectsAt(d, 0) : "At 100%: " + lawEffectsAt(d, 1)}</p>
             ${st ? `<p class="tiny">Ideologies: ${st}</p>` : ""}${d.until ? `<p class="tiny warn">Expires ${d.until}.</p>` : ""}
             ${lawControls(ui.law)}`);
     }
@@ -162,7 +162,7 @@ function viewBudget() {
     const gdpN = G.econ.gdp * cpi();
     const statusText = { adopted: `FY${G.year} budget in force.`, drafting: `Drafting the FY${b.fy} budget.`, submitted: `The FY${b.fy} budget is before the ${G.leg.name}.`, passed: `The FY${b.fy} budget has passed and takes effect on 1 January.`, rejected: `The ${G.leg.name} rejected your budget. Revise and resubmit before 1 January.`, cr: "Continuing resolution: no budget passed. No money for new capital projects." }[b.status];
     const deptRows = Object.entries(DEPTS).map(([k, dp]) => `<div class="budget-row"><span>${dp.name}</span>${editing ? `<input type="range" min="0.7" max="1.3" step="0.05" value="${d.depts[k]}" data-change="draft" data-kind="dept" data-k="${k}">` : `<i class="lvlbar inline" style="width:${(d.depts[k] - 0.7) / 0.6 * 100}%"></i>`}<b class="${d.depts[k] > 1 ? "good" : d.depts[k] < 1 ? "bad" : ""}">${pct(d.depts[k])}</b><span class="tiny muted">${fmt(pr.lines[k] || 0, 1)}%</span></div>`).join("");
-    const taxRows = Object.values(LAWS).filter(l => l.tax && lawOn(l.key)).map(l => `<div class="budget-row"><span>${l.name}</span>${editing ? `<input type="range" min="0" max="${l.max}" step="0.5" value="${d.rates[l.tax]}" data-change="draft" data-kind="rate" data-k="${l.tax}">` : "<span></span>"}<b>${fmt(d.rates[l.tax], 1)}%</b><span class="tiny muted">${fmt(pr.taxes[l.tax] || 0, 1)}%</span></div>`).join("") || "<p class='tiny muted'>No taxes in law. Enact them in the Lawbook.</p>";
+    const taxRows = Object.values(LAWS).filter(l => l.tax && lawOn(l.key)).map(l => `<div class="budget-row"><span>${l.name}</span>${editing ? `<input type="range" min="0" max="${l.max}" step="${l.max <= 10 ? 0.1 : 0.5}" value="${d.rates[l.tax] || 0}" data-change="draft" data-kind="rate" data-k="${l.tax}">` : "<span></span>"}<b>${fmt(d.rates[l.tax] || 0, 1)}${TAX_UNIT[l.tax] || "%"}</b><span class="tiny muted">${fmt(pr.taxes[l.tax] || 0, 1)}%</span></div>`).join("") || "<p class='tiny muted'>No taxes in law. Enact them in the Lawbook.</p>";
     const cip = G.cip || { queue: [], active: [], pool: 0 };
     const regionName = i => G.regions[i] ? G.regions[i].n : "";
     const srcTag = s => s.startsWith("fac:") ? `<span class="tiny warn">requested by ${esc(factionName(s.slice(4)))}</span>` : s === "event" ? "<span class='tiny muted'>emergency</span>" : "";

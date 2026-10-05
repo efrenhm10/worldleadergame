@@ -229,8 +229,10 @@ function taxBase() {
     const resources = (indValue("oil") * royalty + indValue("mining") * royalty * 0.3) / e.gdp * 100;
     const tariffs = ({ protection: 1.5, managed: 0.8, trade_free: 0.2, autarky: 0.5 }[G.pol.trade] || 0.8) * eff * gattTariffMult();
     const colonyCut = G.gov.type === "colony" ? 0.6 : 1;
-    const total = (income + payroll + sales + land + wealth + corp + stateRev + resources + tariffs) * colonyCut;
-    return { income, payroll, sales, land, wealth, corp, stateRev, resources, tariffs, holidayLoss, total, formal };
+    const extra = extraTaxRevenue(eff, formal);
+    const extraSum = Object.values(extra).reduce((a, b) => a + b, 0);
+    const total = (income + payroll + sales + land + wealth + corp + stateRev + resources + tariffs + extraSum) * colonyCut;
+    return Object.assign({ income, payroll, sales, land, wealth, corp, stateRev, resources, tariffs, holidayLoss, total, formal }, extra);
 }
 
 function livingStandards(pc = gdpPerCapita() * cpi(), health = G.s.health, poverty = G.s.poverty, lit = G.dev.lit) {

@@ -153,7 +153,7 @@ const IMF_CHECK = {
     subsidies: () => !lawOn("food_subsidies") && !lawOn("price_controls") && lawLevel("price_supports") <= 0.3,
     privatize: c => stateFirmCount() <= c.target,
     trade: () => G.pol.trade === "trade_free",
-    vat: () => lawOn("sales_tax") && taxRate("sales") >= 10,
+    vat: () => taxRate("vat") >= 10 || taxRate("sales") >= 10,
     social: () => fundMult("health") >= 1 && fundMult("welfare") >= 1 && fundMult("education") >= 1,
     anticorr: () => lawOn("anti_corruption"),
     revenue: c => G.econ.rev >= c.target
@@ -172,7 +172,7 @@ function imfConditions() {
         const sf = stateFirmCount();
         if (sf >= 2) out.push({ k: "privatize", t: `Privatize state firms: no more than ${Math.floor(sf / 2)} sectors state-owned`, target: Math.floor(sf / 2) });
         if (G.pol.trade !== "trade_free") out.push({ k: "trade", t: "Liberalize trade (free-trade framework)" });
-        if (!lawOn("sales_tax") || taxRate("sales") < 10) out.push({ k: "vat", t: "A sales tax or VAT of at least 10%" });
+        if (taxRate("vat") < 10 && taxRate("sales") < 10) out.push({ k: "vat", t: "Introduce a VAT (or sales tax) of at least 10%" });
     } else {
         out.push({ k: "social", t: "Protect health, education and welfare: departments funded at 100% or more" });
         if (lawOn("food_subsidies") || lawOn("price_controls")) out.push({ k: "subsidies", t: "Replace blanket subsidies and price controls with targeted support" });

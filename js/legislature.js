@@ -375,7 +375,7 @@ function fiscalBill(f) {
     const taxes = Object.values(LAWS).filter(d => d.tax && lawAvailable(d.key) && !lawPending(d.key));
     let d = null, level;
     if (def > 3 && (f.gov || left)) {
-        const fresh = taxes.filter(t => !lawOn(t.key) && ["sales_tax", "payroll_tax", "income_tax", "corporate_tax"].includes(t.key));
+        const fresh = taxes.filter(t => !lawOn(t.key) && ["vat", "sales_tax", "payroll_tax", "income_tax", "corporate_tax", "sin_tax", "fuel_tax"].includes(t.key));
         const room = taxes.filter(t => lawOn(t.key) && lawLevel(t.key) < 0.8 && t.key !== "wealth_tax");
         if (fresh.length && chance(0.5)) { d = pick(fresh); level = 0.3; }
         else if (room.length) { d = pick(room); level = Math.round((lawLevel(d.key) + 0.1) * 10) / 10; }

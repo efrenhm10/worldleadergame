@@ -95,9 +95,22 @@ const LAWS = {
     income_tax:     { cat: "tax", name: "Income tax", tax: "income", max: 50, desc: "Tax on wages and salaries. Brings in more as formal jobs grow.", st: { socialist: 1, liberal: -1, conservative: -1 } },
     payroll_tax:    { cat: "tax", name: "Social insurance contributions", tax: "payroll", max: 20, desc: "Paid by employers and workers to fund pensions and benefits.", st: { socdem: 1, liberal: -1 } },
     corporate_tax:  { cat: "tax", name: "Corporate income tax", tax: "corporate", max: 60, desc: "Tax on company profits.", st: { socialist: 1, socdem: 1, liberal: -2, conservative: -1 } },
-    sales_tax:      { cat: "tax", name: "Sales & excise taxes", tax: "sales", max: 25, desc: "Taxes on goods, alcohol and tobacco. Easy to collect even where few people have formal jobs.", st: { conservative: 1, socialist: -1 } },
+    sales_tax:      { cat: "tax", name: "Sales tax", tax: "sales", max: 25, desc: "A tax on retail sales. Easy to collect even where few people have formal jobs, but it hits the poor hardest and drags on business.", st: { conservative: 1, socialist: -1 } },
     land_tax:       { cat: "tax", name: "Land & property tax", tax: "land", max: 5, desc: "Tax on land. Landlords hate it.", st: { socialist: 1, socdem: 1, traditionalist: -1, conservative: -1 } },
-    wealth_tax:     { cat: "tax", name: "Wealth tax", tax: "wealth", max: 3, desc: "An annual levy on large fortunes.", st: { socialist: 2, communist: 1, liberal: -2, conservative: -2 } }
+    wealth_tax:     { cat: "tax", name: "Wealth tax", tax: "wealth", max: 3, desc: "An annual levy on large fortunes.", st: { socialist: 2, communist: 1, liberal: -2, conservative: -2 } },
+    vat:            { cat: "tax", name: "Value-added tax (VAT)", tax: "vat", max: 25, from: 1954, desc: "Collected at every stage of production, so it is hard to evade and drags less on growth than a sales tax. Invented in France in 1954; most of the world adopts it by the 1990s. It needs a formal economy that keeps invoices.", st: { liberal: 1, conservative: 1, socialist: -1, communist: -1 } },
+    capital_gains:  { cat: "tax", name: "Capital gains tax", tax: "gains", max: 40, desc: "Tax on profits from selling shares and property. Brings in more as finance grows; investors grumble.", st: { socdem: 1, socialist: 1, liberal: -2, conservative: -1 } },
+    inheritance:    { cat: "tax", name: "Estate & inheritance tax", tax: "estate", max: 70, desc: "Tax on fortunes passed to heirs. Little revenue, big symbolism. Old money and royal families hate it.", st: { socialist: 2, socdem: 1, conservative: -2, traditionalist: -2 } },
+    sin_tax:        { cat: "tax", name: "Tobacco & alcohol excise", tax: "sin", max: 60, desc: "Excise on cigarettes and drink. Raises steady money and nudges public health up; smokers and drinkers complain.", st: { traditionalist: 1, socdem: 1, liberal: -1 } },
+    fuel_tax:       { cat: "tax", name: "Fuel tax", tax: "fuel", max: 80, desc: "Excise on petrol and diesel. Revenue grows with roads and cars. Drivers, truckers and farmers hate it; it also curbs pollution.", st: { socdem: 1, conservative: -1, nationalist: -1 } },
+    export_duty:    { cat: "tax", name: "Export duties", tax: "export", max: 30, desc: "A cut of every crop, ore and barrel sold abroad, like Argentina's grain duties or colonial marketing boards. Easy money for a weak state, but it slows farming and mining.", st: { nationalist: 1, socialist: 1, liberal: -2, traditionalist: -1 } },
+    windfall_tax:   { cat: "tax", name: "Windfall profits tax on oil", tax: "windfall", max: 70, from: 1973, desc: "Taxes the extra profit oil companies make when prices soar, as the US, UK and Norway did after the oil shocks. Slows new drilling.", st: { socialist: 1, socdem: 1, liberal: -1, conservative: -1 } },
+    carbon_tax:     { cat: "tax", name: "Carbon tax", tax: "carbon", max: 100, from: 1990, desc: "A price on carbon emissions, pioneered by Finland, Norway and Sweden in 1990–91. Cleaner air and a boost for renewables; heavy industry pays.", st: { socdem: 2, liberal: 1, conservative: -1, nationalist: -1 } },
+    stamp_duty:     { cat: "tax", name: "Stamp duty & financial transactions tax", tax: "stamp", max: 3, desc: "A small levy on share trades and property deals. Easy to collect where finance is big, but traders move elsewhere.", st: { socialist: 1, socdem: 1, liberal: -2 } },
+    luxury_tax:     { cat: "tax", name: "Luxury goods tax", tax: "luxury", max: 50, desc: "Higher rates on cars, jewelry and furs. Popular, but it raises little and smuggling follows.", st: { socialist: 1, nationalist: 1, liberal: -1 } },
+    digital_tax:    { cat: "tax", name: "Digital services tax", tax: "digital", max: 10, from: 2019, desc: "A levy on the local revenue of the big tech platforms. Washington threatens retaliatory tariffs.", st: { socdem: 1, nationalist: 1, liberal: -1 } },
+    poll_tax:       { cat: "tax", name: "Poll tax (head tax)", tax: "poll", max: 10, desc: "The same flat sum from every adult, like the colonial hut tax or Britain's 1990 'community charge'. Works where nobody files a tax return, but it is deeply hated and can spark revolts.", st: { conservative: 1, socialist: -2, socdem: -2 } },
+    tourism_tax:    { cat: "tax", name: "Tourist & departure tax", tax: "tourism", max: 20, desc: "Charges on hotel stays and airport departures. Foreigners pay, so voters don't mind, but tourists notice.", st: {} }
 };
 Object.entries(LAWS).forEach(([k, d]) => { d.key = k; });
 
@@ -161,6 +174,7 @@ function initLaws(c, preset) {
     if (G.ck === "usa") { G.laws.veterans = { level: 0.8, since: 0 }; G.laws.military_pay = { level: 0.7, since: 0 }; }
     if (c.preset === "communist") { G.laws.price_controls = { level: 0.8, since: 0 }; G.laws.information_ministry = { level: 0.8, since: 0 }; }
     if (pol.land === "mechanize") G.laws.extension = { level: 0.5, since: 0 };
+    Object.entries(START_TAXES[G.ck] || {}).forEach(([k, rate]) => { rates[LAWS[k].tax] = rate; G.laws[k] = { level: rate / LAWS[k].max, since: 0 }; });
     Object.keys(G.laws).forEach(k => { if (!G.laws[k] || G.laws[k].level <= 0) delete G.laws[k]; });
     G.budget = {
         depts: Object.fromEntries(Object.keys(DEPTS).map(k => [k, 1])),
@@ -222,6 +236,76 @@ function taxRate(kind) {
     return lawOn(k) && G.budget ? (G.budget.rates[kind] || 0) : 0;
 }
 
+// The extra taxes: revenue (% of GDP per rate point), who it angers per point,
+// growth drag per point, and side effects.
+const indShareOf = k => G.ind[k] ? indValue(k) / G.econ.gdp : 0;
+const TAX_EXTRA = {
+    vat:      { rev: (eff, formal) => 0.42 * eff * (0.45 + 0.55 * formal), p: { people: -0.2, labor: -0.12 }, drag: 0.004 },
+    gains:    { rev: eff => 0.015 * eff * (0.4 + indShareOf("finance") * 10), p: { business: -0.15 }, drag: 0.006 },
+    estate:   { rev: eff => 0.004 * eff, p: { royals: -0.08, business: -0.04, clergy: -0.02 }, drag: 0.001 },
+    sin:      { rev: eff => 0.025 * eff, p: { people: -0.02, clergy: 0.03 }, drag: 0, health: 0.03 },
+    fuel:     { rev: eff => 0.02 * eff * (0.5 + cov("roads") / 100), p: { people: -0.03, business: -0.02, peasants: -0.03 }, drag: 0.004, health: 0.01 },
+    export:   { rev: eff => (indShareOf("agriculture") * 0.5 + indShareOf("mining") * 0.6 + indShareOf("oil") * 0.4) * eff * 1.2, p: { peasants: -0.25, business: -0.1, tribes: -0.1 }, drag: 0.01 },
+    windfall: { rev: () => indShareOf("oil") * 0.5, p: { business: -0.08 }, drag: 0.002 },
+    carbon:   { rev: eff => 0.012 * eff * (0.4 + G.dev.ind / 100), p: { business: -0.08, press: 0.03 }, drag: 0.004, health: 0.03 },
+    stamp:    { rev: eff => 0.25 * eff * (0.4 + indShareOf("finance") * 10), p: { business: -1 }, drag: 0.05 },
+    luxury:   { rev: eff => 0.01 * eff, p: { people: 0.02, business: -0.05, royals: -0.05 }, drag: 0.002 },
+    digital:  { rev: eff => 0.03 * eff * (0.3 + (indShareOf("computing") + indShareOf("ai")) * 15), p: { business: -0.2 }, drag: 0.01 },
+    poll:     { rev: (eff, formal) => 0.15 * eff * (1 - formal * 0.5) * (0.5 + G.econ.taxCap), p: { people: -1.2, peasants: -1, tribes: -1, labor: -0.6 }, drag: 0, stab: -0.6 },
+    tourism:  { rev: eff => indShareOf("tourism") * 0.5 * eff, p: {}, drag: 0 }
+};
+// Taxes not set as a percentage.
+const TAX_UNIT = { carbon: " $/t", poll: " $" };
+
+// What a tax would raise (% of GDP) at a given rate, on today's tax base.
+function taxRevenueAt(k, rate) {
+    const d = LAWS[k], kind = d.tax;
+    const savedLaw = G.laws[k], savedRate = G.budget.rates[kind];
+    const without = (() => { delete G.laws[k]; return taxBase().total; })();
+    G.laws[k] = { level: Math.max(0.01, rate / d.max), since: 0 }; G.budget.rates[kind] = rate;
+    const withIt = taxBase().total;
+    if (savedLaw) G.laws[k] = savedLaw; else delete G.laws[k];
+    G.budget.rates[kind] = savedRate;
+    return withIt - without;
+}
+
+// Industries a tax slows (growth points per rate point).
+const TAX_IND = { export: { agriculture: 0.06, mining: 0.06, oil: 0.04 }, windfall: { oil: 0.04 }, carbon: { steel: 0.015, chemicals: 0.015, mining: 0.01, renewables: -0.06 }, stamp: { finance: 0.4 }, tourism: { tourism: 0.04 }, digital: { computing: 0.03, ai: 0.03 }, fuel: { autos: 0.005 } };
+function taxIndEffect(k) { let r = 0; Object.entries(TAX_IND).forEach(([kind, m]) => { if (m[k]) r -= taxRate(kind) * m[k]; }); return r; }
+function taxHealth() { return Object.entries(TAX_EXTRA).reduce((s, [kind, x]) => s + (x.health || 0) * taxRate(kind), 0); }
+function taxStability() { return Object.entries(TAX_EXTRA).reduce((s, [kind, x]) => s + (x.stab || 0) * taxRate(kind), 0); }
+function extraTaxRevenue(eff, formal) { const out = {}; Object.entries(TAX_EXTRA).forEach(([kind, x]) => { const r = taxRate(kind); out[kind] = r ? r * x.rev(eff, formal) : 0; }); return out; }
+
+// Taxes already on the books in 1950 (rates in % or the law's own units).
+const START_TAXES = {
+    usa: { inheritance: 60, capital_gains: 25, sin_tax: 30, fuel_tax: 15 },
+    uk: { inheritance: 65, stamp_duty: 1, sin_tax: 45, fuel_tax: 50, luxury_tax: 33 },
+    france: { inheritance: 40, sin_tax: 30, fuel_tax: 45, luxury_tax: 15 },
+    germany: { inheritance: 30, sin_tax: 35, fuel_tax: 35 },
+    japan: { inheritance: 50, sin_tax: 35, fuel_tax: 25, luxury_tax: 15, stamp_duty: 0.3 },
+    canada: { inheritance: 30, sin_tax: 30, fuel_tax: 15 },
+    australia: { inheritance: 30, sin_tax: 30, fuel_tax: 15 },
+    newzealand: { inheritance: 30, sin_tax: 30, fuel_tax: 15 },
+    norway: { inheritance: 30, sin_tax: 45, fuel_tax: 25 },
+    switzerland: { inheritance: 20, sin_tax: 20, fuel_tax: 20, stamp_duty: 0.5 },
+    southafrica: { inheritance: 20, sin_tax: 25, fuel_tax: 10, poll_tax: 2 },
+    argentina: { export_duty: 15, sin_tax: 20, inheritance: 15 },
+    brazil: { export_duty: 8, sin_tax: 20 },
+    uruguay: { export_duty: 10, sin_tax: 20, inheritance: 15 },
+    india: { export_duty: 5, sin_tax: 20, stamp_duty: 0.5 },
+    pakistan: { export_duty: 5, sin_tax: 15 },
+    indonesia: { export_duty: 10, sin_tax: 15 },
+    philippines: { export_duty: 5, sin_tax: 15 },
+    nigeria: { export_duty: 10, poll_tax: 3 },
+    ethiopia: { export_duty: 5, poll_tax: 2 },
+    fiji: { export_duty: 5, poll_tax: 2 },
+    cambodia: { export_duty: 5, poll_tax: 2 },
+    barbados: { export_duty: 5, sin_tax: 20 },
+    mexico: { export_duty: 5, sin_tax: 20 },
+    turkey: { sin_tax: 25 }, iran: { sin_tax: 15 }, israel: { sin_tax: 25, fuel_tax: 15 }, southkorea: { sin_tax: 20 }, venezuela: { sin_tax: 20 },
+    china: { sin_tax: 20 }, russia: { sin_tax: 40 }, singapore: { sin_tax: 25, stamp_duty: 0.5 }
+};
+
 function taxPillarEffect(pk) {
     const r = k => taxRate(k);
     const eff = {
@@ -232,11 +316,13 @@ function taxPillarEffect(pk) {
         tribes: -r("land") * 3,
         peasants: -r("land") * 2
     };
-    return eff[pk] || 0;
+    let x = eff[pk] || 0;
+    Object.entries(TAX_EXTRA).forEach(([kind, t]) => { if (t.p[pk]) x += t.p[pk] * r(kind); });
+    return x;
 }
 
 function taxGrowthDrag() {
-    return Math.max(0, taxRate("income") - 22) * 0.02 + Math.max(0, taxRate("corporate") - 35) * 0.025 + taxRate("sales") * 0.008 + taxRate("wealth") * 0.12;
+    return Math.max(0, taxRate("income") - 22) * 0.02 + Math.max(0, taxRate("corporate") - 35) * 0.025 + taxRate("sales") * 0.008 + taxRate("wealth") * 0.12 + Object.entries(TAX_EXTRA).reduce((a, [kind, t]) => a + t.drag * taxRate(kind), 0);
 }
 
 // ── Changing laws ───────────────────────────────────────────────────

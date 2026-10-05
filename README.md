@@ -92,8 +92,26 @@ legislature you work with over weeks, a yearly budget and a capital program.
 
 Nothing exists until it is law. The lawbook holds 60 laws, from public
 clinics, pensions, the minimum wage and the national police to R&D credits, a
-development bank and the six taxes (income, social insurance, corporate,
-sales, land and wealth). Each law has a strength from 10% to 100%, and its
+development bank and 19 taxes. Each tax has its own base, winners and losers:
+
+- **Income and payroll:** income tax and social insurance contributions.
+- **Business and wealth:** corporate tax, capital gains tax, estate and
+  inheritance tax, wealth tax.
+- **Spending:** sales tax, value-added tax (from 1954), tobacco and alcohol
+  excise, fuel tax, luxury goods tax.
+- **Property and people:** land and property tax, the hated poll or hut tax.
+- **Trade and resources:** export duties on crops and ores, windfall profits
+  tax on oil (from 1973), tourist and departure taxes.
+- **Modern:** carbon tax (from 1990), stamp duty and financial transactions
+  tax, digital services tax (from 2019).
+
+Each tax hits its own groups and has its own side effects. Excise taxes lift
+public health, a carbon tax boosts renewables and slows heavy industry, export
+duties slow farming and mining, and a poll tax can cost you stability.
+Countries start with the taxes they really had in 1950: Britain's estate duty
+and purchase tax, Argentina's export duties, the colonial hut tax in Nigeria.
+The Lawbook shows what a tax would raise at any rate, and lists future taxes
+greyed out until their year. Each law has a strength from 10% to 100%, and its
 cost and effects scale with that strength and with its department's funding.
 
 - Once a year the executive may **adjust** a law by ±10% within its authority.

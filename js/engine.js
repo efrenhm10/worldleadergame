@@ -306,6 +306,7 @@ function stabilityTarget() {
     t -= Math.max(0, G.econ.inflation - 8) * 0.8 + Math.max(0, G.econ.unemp - 8) * 0.8 + G.s.weariness * 0.12;
     if (playerAtWarWithRebels()) t -= 10;
     t -= Math.max(0, G.s.crime - 40) * 0.12;
+    t += taxStability();
     if (C().excluded && G.pol.rights === "segregation") t -= 6 + Math.max(0, G.year - 1950) * 0.3;
     if (G.pol.rights === "segregation" && G.ck === "usa") t -= Math.max(0, G.year - 1954) * 0.4;
     if (G.gov.type === "military_junta") t -= 4;
@@ -395,7 +396,7 @@ function indRate(k) {
     r += d.heavy ? covRel("power") * 0.8 + (covRel("rail") + covRel("roads")) * 0.3 : covRel("roads") * 0.3;
     if (k === "agriculture") r += ({ landlords: -0.4, reform: 0.5, collective: -1.6, mechanize: 1.2 }[G.pol.land] || 0) + lawFx("agri") + covRel("irrigation") * 1.5;
     else r += lawFx("indAll");
-    r += sectorBonus(k);
+    r += sectorBonus(k) + taxIndEffect(k);
     if (k === "film") r += { free: 1, restricted: -0.8, state: -2.5 }[G.pol.press] || 0;
     if (["textiles", "autos", "electronics", "finance", "tourism"].includes(k)) r += { trade_free: 1, protection: -0.6, autarky: -2 }[G.pol.trade] || 0;
     if (d.heavy && G.pol.trade === "protection") r += 0.4;

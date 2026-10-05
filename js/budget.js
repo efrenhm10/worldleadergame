@@ -287,7 +287,7 @@ function setDraft(kind, key, v) {
     const b = G.budget;
     if (!b.draft || !isFinite(v)) return;
     if (kind === "dept") b.draft.depts[key] = clamp(Math.round(v * 20) / 20, 0.7, 1.3);
-    if (kind === "rate") { const law = Object.values(LAWS).find(d => d.tax === key); b.draft.rates[key] = clamp(Math.round(v * 2) / 2, 0, law.max); }
+    if (kind === "rate") { const law = Object.values(LAWS).find(d => d.tax === key); const q = law.max <= 10 ? 10 : 2; b.draft.rates[key] = clamp(Math.round(v * q) / q, 0, law.max); }
     if (kind === "capital") b.draft.capital = clamp(Math.round(v * 4) / 4, 0, 5);
 }
 
@@ -300,6 +300,7 @@ function projectBudget(d) {
     Object.assign(G.budget, saved);
     const cut = G.gov.type === "colony" ? 0.6 : 1;
     const taxes = { income: tb.income * cut, payroll: tb.payroll * cut, corporate: tb.corp * cut, sales: tb.sales * cut, land: tb.land * cut, wealth: tb.wealth * cut };
+    Object.keys(TAX_EXTRA).forEach(k => { taxes[k] = (tb[k] || 0) * cut; });
     return { rev, spend: sp.total, lines: sp.lines, net: rev - sp.total, taxes };
 }
 
@@ -349,14 +350,15 @@ function budgetReaction(d) {
     const p = {};
     Object.entries(d.depts).forEach(([k, v]) => { const pk = DEPTS[k].pillar; p[pk] = (p[pk] || 0) + (v - 1) * 20; });
     p.business = (p.business || 0) - (d.rates.corporate - G.budget.rates.corporate) * 0.5;
-    p.people = (p.people || 0) - (d.rates.income - G.budget.rates.income) * 0.4 - (d.rates.sales - G.budget.rates.sales) * 0.4;
+    const dr = k => (d.rates[k] || 0) - (G.budget.rates[k] || 0);
+    p.people = (p.people || 0) - dr("income") * 0.4 - dr("sales") * 0.4 - dr("vat") * 0.3 - dr("fuel") * 0.08 - dr("poll") * 2;
     return p;
 }
 
 // The finance ministry's draft: it tries to keep the deficit near 2% of GDP
 // by moving tax rates toward ordinary levels and trimming overfunded
 // departments, or hands back a surplus. You can change all of it.
-const NORMAL_RATE = { income: 30, payroll: 12, sales: 15, corporate: 35, land: 2, wealth: 0 };
+const NORMAL_RATE = { income: 30, payroll: 12, sales: 15, corporate: 35, land: 2, wealth: 0, vat: 20, sin: 40, fuel: 40 };
 function treasuryDraft(d) {
     const notes = [];
     const law = kind => Object.values(LAWS).find(x => x.tax === kind);
@@ -364,7 +366,7 @@ function treasuryDraft(d) {
     let net = projectBudget(d).net;
     if (net < -2) {
         Object.keys(d.depts).forEach(k => { if (d.depts[k] > 1 && net < -2) { d.depts[k] = Math.max(1, d.depts[k] - 0.1); notes.push(`trim ${DEPTS[k].name.toLowerCase()} to ${Math.round(d.depts[k] * 100)}%`); net = projectBudget(d).net; } });
-        for (const kind of ["sales", "income", "payroll", "corporate"]) {
+        for (const kind of ["vat", "sales", "income", "payroll", "corporate", "sin", "fuel"]) {
             if (net >= -2 || !lawOn(lawKey(kind))) continue;
             const cap = Math.min(law(kind).max, NORMAL_RATE[kind]);
             const before = d.rates[kind] || 0;

@@ -409,7 +409,8 @@ function viewEconomy() {
         ${taxRow("Income tax", tb.income, "Grows with formal (urban, industrial) jobs")}
         ${taxRow("Social insurance contributions", tb.payroll, "Paid on formal wages")}
         ${taxRow("Corporate taxes", tb.corp, "Grows with private and foreign companies")}
-        ${taxRow("Sales & excise taxes", tb.sales)}
+        ${taxRow("Sales tax", tb.sales)}
+        ${Object.values(LAWS).filter(l => l.tax && TAX_EXTRA[l.tax]).map(l => taxRow(l.name, tb[l.tax])).join("")}
         ${taxRow("Land & property tax", tb.land)}
         ${taxRow("Wealth tax", tb.wealth)}
         ${taxRow("State enterprise profits", tb.stateRev)}

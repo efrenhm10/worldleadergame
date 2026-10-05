@@ -132,7 +132,7 @@ function gdpPerCapita(gdp = G.econ.gdp, pop = G.econ.pop) { return gdp * 1000 / 
 function healthTarget() {
     const pc = gdpPerCapita();
     let t = 20 + 28 * Math.log10(Math.max(1, pc / 20)) + (G.dev.lit - 50) * 0.1;
-    t += lawFx("health") + covRel("hospitals") * 4;
+    t += lawFx("health") + covRel("hospitals") * 4 + taxHealth();
     t += minBonus("health") * 1.5 - G.s.weariness * 0.05;
     return clamp(t, 5, 98);
 }
