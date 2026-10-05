@@ -15,7 +15,14 @@ const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 const gauss = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
 const fmt = (v, d = 1) => (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toFixed(d);
 const sgn = v => (v > 0 ? "+" : "") + v;
-const money = bn => bn >= 1000 ? `$${fmt(bn / 1000, 2)}T` : bn >= 1 ? `$${fmt(bn, bn >= 100 ? 0 : 1)}B` : `$${fmt(bn * 1000, 0)}M`;
+const money = bn => {
+    const a = Math.abs(bn), sg = bn < 0 ? "-" : "";
+    if (a >= 1000) return `${sg}$${fmt(a / 1000, 2)}T`;
+    if (a >= 1) return `${sg}$${fmt(a, a >= 100 ? 0 : 1)}B`;
+    if (a * 1000 >= 10 || a === 0) return `${sg}$${fmt(a * 1000, 0)}M`;
+    if (a * 1000 >= 1) return `${sg}$${fmt(a * 1000, 1)}M`;
+    return `${sg}$${Math.max(1, Math.round(a * 1e6))}K`;
+};
 
 // GDP is simulated in constant 1950 dollars; displays convert to nominal
 // dollars with the US price level.
@@ -91,6 +98,7 @@ function newGame(opts) {
     setupWorld();
     initInstitutions();
     G.powerHist = []; powerYearly();
+    G.leader.family = initFamily(!!opts.historical);
     G.econ.rev = taxBase().total; G.econ.spend = governmentSpend().total; G.econ.deficit = G.econ.spend - G.econ.rev;
     setupPillars();
     if (c.status === "colony") initColony(c);
@@ -257,7 +265,7 @@ function pillarTarget(k) {
     });
     if (w) t += s / w * 0.85;
     POLICY_AREAS.forEach(a => { const o = curOpt(a.key); if (o.p && o.p[k]) t += o.p[k] * 0.6; });
-    t += lawPillar(k) * 0.6 + taxPillarEffect(k);
+    t += lawPillar(k) * 0.6 + taxPillarEffect(k) + familyPillar(k);
     const id = IDEOLOGIES[G.leader.ideology];
     if (id && id.p && id.p[k]) t += id.p[k] * 0.5;
     t += G.pmods[k] || 0;
@@ -469,6 +477,7 @@ function yearlyTick() {
     yearlyFirms();
     holidaysEnd();
     powerYearly();
+    familyYearly();
     // Sovereign default when debt spirals out of control.
     const dp = G.econ.debt / G.econ.gdp * 100;
     if (dp > (G.inst && G.inst.program ? 260 : 220)) {
@@ -689,7 +698,7 @@ function capitalIncome() {
     let inc = 5 + avg / 12 + GT().capitalBonus + skill("oratory") * 0.3;
     G.leader.traits.forEach(t => { inc += (TRAITS[t].capital || 0) * 4; });
     if (G.gov.cohabitation) inc -= 3;
-    inc += cabinetCapital();
+    inc += cabinetCapital() + familyCapital();
     return Math.max(2, inc);
 }
 const capitalCap = () => 45 + (trait("charismatic") ? 10 : 0);

@@ -162,7 +162,7 @@ SCENES.party_revolt = () => S("🎗️", `${dateStr()} · Party headquarters`, "
      ch("Step aside gracefully", {}, "", { run: () => fallFromPower("revolt", "The party has chosen a new leader. You step aside.", true) })]);
 
 SCENES.palace_intrigue = () => S("👑", `${dateStr()} · The palace`, "Whispers in the palace",
-    `Your intelligence chief reports that senior members of the royal family are meeting in secret. ${G.leader.heir ? G.leader.heir.name + " is among them." : ""}`,
+    `Your intelligence chief reports that senior members of the royal family are meeting in secret. ${heirOf() && !heirOf().child ? heirOf().name + " is among them." : ""}`,
     [ch("Increase the princes' stipends", { cost: 0.5, p: { royals: 15 }, corruption: 3 }, "The family is soothed."),
      ch("Exile the ringleaders", { p: { royals: -5, security: 5 }, legitimacy: -4 }, "", { run: () => { G.flags.palace_warned = false; return chance(0.7) ? "Two princes leave for Europe. The rest are cowed." : "The exiled princes start plotting from abroad."; } }),
      ch("Ignore it", {}, "", { run: () => { G.flags.palace_warned = true; return "Perhaps it is nothing."; } })]);

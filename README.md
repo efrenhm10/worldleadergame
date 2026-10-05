@@ -276,6 +276,33 @@ showed "+10".
   dollars. Debt can spiral into default, and oil shocks hit importers and
   enrich exporters.
 
+## Family
+
+The Office tab has a Family panel.
+
+- **Real families:** the real 1950 leaders start with their real families:
+  - Truman with Bess and Margaret.
+  - Perón with Evita, who dies in 1952.
+  - Nehru, a widower, with Indira.
+  - The Shah, divorced, with a daughter and no son.
+  - Ibn Saud with Saud, Faisal and Fahd.
+- **Your spouse:** marry by choosing from a short list (a great family, a
+  beloved star, a foreign royal or political dynasty), or divorce.
+  - Beloved: lifts approval.
+  - Political partner: adds political capital.
+  - Philanthropist: adds prestige.
+  - Ambitious or socialite: brings scandals.
+- **Children:** they are born and named, grow up and choose a career
+  (officer, politician, business, scholar or jet-setter), and some cause
+  scandals. A grown child in politics may take over the party when you go.
+- **Monarchs:**
+  - **The heir:** your eldest son inherits, or your eldest child if you open
+    the succession to daughters. You can also name a brother or cousin.
+  - **No heir:** the royal family grows restless as you age, and a
+    succession-crisis risk appears under How you could fall. Dying without
+    an heir means a bitter struggle and a weak successor.
+  - **On succession:** the heir takes the throne.
+
 ## World standing
 
 A power ranking of every sovereign state, in the spirit of real power indexes.
@@ -384,6 +411,7 @@ scandals, disasters, lobbyists, pork demands, investors and more.
 | `js/budget.js` | Infrastructure, the annual budget, the treasury draft, the CIP |
 | `js/develop.js` | Sector fit, conditions, public investments, CEO pitches, homegrown firms, film |
 | `js/impact.js` | Impact snapshots, previews and the "what's moving the country" breakdown |
+| `js/family.js` | Spouse, children, heirs and family events |
 | `js/power.js` | The world power ranking |
 | `js/institutions.js` | The UN, IMF, World Bank and regional banks, GATT/WTO, OECD, G7/G20, debt relief |
 | `js/cabinet.js` | Ministers, health, crime and poverty indicators |

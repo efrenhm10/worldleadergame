@@ -146,7 +146,8 @@ function showSuccessionCreator() {
     cr.party = plan.party;
     cr.ideology = plan.ideology || (party ? party.ideo : G.leader.ideology);
     if (plan.gov === "military_junta") cr.look.attire = 2;
-    if (plan.gov === "monarchy") cr.look.attire = 3;
+    if (plan.gov === "monarchy") { cr.look.attire = 3; cr.look.attireF = 7; cr.look.hairF = 10; }
+    if (plan.heir) { cr.name = plan.heir.name; cr.age = clamp(plan.heir.age || cr.age, 18, 85); cr.gender = plan.heir.gender || "m"; }
     ui.creator = cr;
     ui.mode = "successor";
     renderCreator();
@@ -331,8 +332,9 @@ function viewOffice() {
         <div>
             ${panel("Your leader", `<div class="leader-card">${portraitSVG(L.look, L.gender, 96)}<div><b>${esc(L.name)}</b><br><span class="muted">${esc(L.title)}, age ${L.age}</span><br>${bg ? `${bg.icon} ${bg.name}` : ""}<br><span class="small">${L.traits.map(t => TRAITS[t] ? TRAITS[t].icon + " " + TRAITS[t].name : t).join(" · ")}</span><br><span class="small">${IDEOLOGIES[L.ideology] ? IDEOLOGIES[L.ideology].icon + " " + IDEOLOGIES[L.ideology].name : ""}</span></div></div>
                 ${meter("Health", L.health / 100, true, Math.round(L.health))}
-                ${L.heir ? `<p class="small">Heir: ${esc(L.heir.name)}</p>` : ""}
+
                 <p class="small">In office ${Math.floor((G.t - L.since) / 52)} yrs ${Math.floor(((G.t - L.since) % 52) / 4.3)} mo.${nv ? ` Next vote: ${nv.kind} in ${nv.weeks} weeks.` : ""}</p>`)}
+            ${familyPanel()}
             ${panel("How you could fall", `<p class="small muted">${GOV_TYPES[G.gov.type].name}: ${GOV_TYPES[G.gov.type].fall.join(" · ")}</p>` + threatPanel())}
         </div>
         <div>

@@ -32,7 +32,7 @@ const POWER_ACTIONS = [
       run: () => applyEffects({ cost: 0.3, corruption: 1, p: { royals: 12, people: -2 } }) },
     { k: "majlis", name: "Hold a tribal majlis", icon: "🏜️", cost: 6, types: ["monarchy", "military_junta"], desc: "Meet the chiefs, hear grievances, distribute subsidies.",
       run: () => applyEffects({ cost: 0.15, p: { tribes: 10 } }) },
-    { k: "heir", name: "Name a crown prince", icon: "🤴", cost: 8, types: ["monarchy"], desc: "Settle the succession. Some princes will be disappointed.", req: () => !G.leader.heir,
+    { k: "heir", name: "Name a crown prince", icon: "🤴", cost: 8, types: ["monarchy"], desc: "Settle the succession with a brother or cousin. Some princes will be disappointed.", req: () => !heirOf(),
       run: () => { G.leader.heir = { name: `Crown Prince ${randomLeaderName(G.ck).split(" ")[0]}`, age: Math.max(18, G.leader.age - 25) }; applyEffects({ stability: 5, p: { royals: -4 }, legitimacy: 4 }); } },
     { k: "purge_rivals", name: "Purge a rival faction", icon: "🩸", cost: 14, types: ["one_party", "military_junta"], desc: "Arrest the least loyal faction's leaders. Survivors are loyal, out of fear.",
       run: () => {

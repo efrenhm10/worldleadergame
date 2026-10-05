@@ -230,7 +230,7 @@ function industryPanel(k) {
     const conds = sectorConditions(k);
     const assets = Object.entries(SECTOR_ASSETS[k] || {}).filter(([, a]) => !a.from || G.year >= a.from).map(([ak, a]) => {
         const built = assetBuilt(k, ak), q = assetQueued(k, ak);
-        return `<div class="asset ${built ? "built" : ""}"><span>${built ? "✅" : q ? "🏗️" : "⬜"} <b>${esc(a.name)}</b><div class="tiny muted">${esc(a.desc)}</div></span>${built ? "<span class='tiny good'>Built</span>" : q ? "<span class='tiny'>In the CIP</span>" : `<button class="mini" data-act="assetPropose" data-k="${k}" data-a="${ak}" ${G.capital < 2 ? "disabled" : ""}>Add to CIP · ${nominal(G.econ.gdp * a.cost / 100)}</button>`}</div>`;
+        return `<div class="asset ${built ? "built" : ""}"><span>${built ? "✅" : q ? "🏗️" : "⬜"} <b>${esc(a.name)}</b><div class="tiny muted">${esc(a.desc)}</div></span>${built ? "<span class='tiny good'>Built</span>" : q ? "<span class='tiny'>In the CIP</span>" : `<button class="mini" data-act="assetPropose" data-k="${k}" data-a="${ak}" ${G.capital < 2 ? "disabled" : ""}>Add to CIP · ${nominal(projectCostBn(`asset:${k}:${ak}`))}</button>`}</div>`;
     }).join("");
     const firms = (G.firms || []).filter(f => f.sector === k && !f.closed).map(f => `${f.home && f.home !== G.ck ? flagOf(f.home) : "🏠"} ${esc(f.name)}`).join(", ");
     const ways = Object.entries(LOCAL_WAYS).filter(([, w]) => !w.req || w.req()).map(([wk, w]) => `<button class="mini" data-act="startup" data-k="${k}" data-w="${wk}" title="${esc(w.desc)}" ${G.capital < 6 ? "disabled" : ""}>${w.name} · ${Math.round(localOdds(k, wk) * 100)}%</button>`).join("");
@@ -240,7 +240,7 @@ function industryPanel(k) {
         ${meter("Industry strength", clamp(share / 12), true, `${fmt(share, 1)}%`)}
         <h4>Conditions to flourish</h4><ul class="conds">${conds.map(c => `<li class="${c.met ? "good" : "bad"}">${c.met ? "✔" : "✘"} ${esc(c.label)}${c.met ? "" : ` <span class="tiny muted">${esc(c.fix)}</span>${condButtons(c.go)}`}</li>`).join("")}</ul>
         <h4>Public investments</h4>${assets}
-        <div class="row"><button class="mini" data-act="projectPick" data-k="${k}" ${G.capital < 2 ? "disabled" : ""}>🏗️ Add a ${esc(I.project.toLowerCase())} to the CIP</button></div>
+        <div class="row"><button class="mini" data-act="projectPick" data-k="${k}" ${G.capital < 2 ? "disabled" : ""}>🏗️ Add a ${esc(I.project.toLowerCase())} to the CIP · ${nominal(projectCostBn("ind:" + k))}</button></div>
         <h4>Homegrown firms</h4><p class="tiny muted">Back a local entrepreneur (6 ⚡). Odds shown.</p><div class="row">${ways}</div>
         ${firms ? `<p class="tiny">Firms here: ${firms}</p>` : ""}`);
 }

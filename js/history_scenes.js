@@ -131,7 +131,7 @@ hscene("sk_crisis", () => S("🇰🇷", `${D()} · Busan (wartime capital)`, "Th
      ch("Accept the Assembly's verdict", { legitimacy: 6 }, "", { run: () => { G.campaign.bonus -= 8; } })]));
 hscene("evita", () => S("🕯️", `${D()} · Buenos Aires`, "Evita is dead",
     "Eva Perón has died of cancer at 33. Millions line the streets. The descamisados have lost their Santa Evita.",
-    [ch("A state funeral of unprecedented scale", { cost: 0.2, p: { people: 6, labor: 5, clergy: -3 }, pm: { labor: -6 } }, "Grief binds the movement, for now.")]));
+    [ch("A state funeral of unprecedented scale", { cost: 0.2, p: { people: 6, labor: 5, clergy: -3 }, pm: { labor: -6 } }, "Grief binds the movement, for now.", { run: () => { const f = G.leader.family; if (f && f.spouse && /Eva/.test(f.spouse.name)) { f.widowed = f.spouse.name; f.spouse = null; } } })]));
 hscene("eritrea", () => S("🇪🇷", `${D()} · Addis Ababa`, "The Eritrean federation",
     "The UN has federated Eritrea with Ethiopia under your crown, with its own parliament. Your ministers want to absorb it entirely.",
     [ch("Respect the federation", { prestige: 4, legitimacy: 2 }, "", { run: () => { G.res.includes("coast") || G.res.push("coast"); } }),

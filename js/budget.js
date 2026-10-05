@@ -150,7 +150,8 @@ function projectInfo(type) {
     return INFRA[type];
 }
 
-function projectCostBn(type) { return Math.max(0.005, G.econ.gdp * projectInfo(type).cost / 100); }
+// One price everywhere: a share of GDP, with a small floor for tiny economies.
+function projectCostBn(type) { return Math.max(0.0005, G.econ.gdp * projectInfo(type).cost / 100); }
 
 function proposeProject(type, region, src = "player", free = false) {
     if (!G.cip) initCip();

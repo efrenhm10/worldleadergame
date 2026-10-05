@@ -346,6 +346,8 @@ function govThreats() {
     if (type === "semi_presidential") lv("Cohabitation", G.gov.cohabitation ? 100 : clamp((majority() - govSeats()) * 2 + 30), G.gov.cohabitation ? "The opposition controls the assembly." : "You control the assembly.");
     if (type === "monarchy") {
         lv("Palace coup", (45 - G.pillars.royals.l) * 2.2, `${pillarName("royals")} loyalty ${Math.round(G.pillars.royals.l)}.`);
+        const h = heirOf();
+        lv("Succession crisis", h ? 0 : clamp(20 + (G.leader.age - 35) * 2), h ? `Heir: ${h.name}.` : `No heir to the throne at ${G.leader.age}. See Family.`);
     }
     if (type === "one_party") {
         lv("Politburo purge", (45 - G.pillars.politburo.l) * 2 + (45 - factionLoyaltyAvg(false)) * 1.2, `Politburo loyalty ${Math.round(G.pillars.politburo.l)}.`);
@@ -367,7 +369,7 @@ function govThreats() {
     if (!["directorial"].includes(type)) lv("Revolution", clamp((30 - a) * 2 + (35 - G.s.stability) * 2), `Approval ${Math.round(a)}, stability ${Math.round(G.s.stability)}.`);
     const pl = G.plot && G.plot.found ? G.plot : null;
     lv("Assassination", pl ? 85 * (1 - Math.min(0.95, pl.foiled)) : assassinationYear() * 250, pl ? (pl.foiled > 0 ? `⚠️ A plot is under investigation. Your measures give about a ${Math.round(Math.min(0.95, pl.foiled) * 100)}% chance it is stopped before it strikes${G.flags.protect_until > G.t ? "; your bodyguards improve your odds if it isn't" : ""}.` : "⚠️ The security services are tracking a plot against your life. Act on the warning.") : `About ${Math.round(assassinationYear() * 100)}% chance of a plot this year. Stability ${Math.round(G.s.stability)}; the security services usually catch wind of one first (${Math.round(plotIntel() * 100)}%).${G.flags.protect_until > G.t ? " Extra protection in force." : ""}`);
-    return t.filter(x => x.level > 0 || ["Election", "No-confidence vote", "Military coup", "Politburo purge", "Palace coup", "Assassination"].includes(x.name));
+    return t.filter(x => x.level > 0 || ["Election", "No-confidence vote", "Military coup", "Politburo purge", "Palace coup", "Assassination"].includes(x.name) || (x.name === "Succession crisis" && heirOf()));
 }
 
 function threatCheck() {
@@ -447,10 +449,20 @@ function successionPlan(reason) {
         plan.note = "The old regime is gone. You lead what replaces it.";
     }
     if (reason === "purge") { plan.note = "The faction that removed your predecessor puts you in charge."; plan.bg = "loyalist"; }
-    if (reason === "palace" || (type === "monarchy" && ["natural", "assassinated", "retired"].includes(reason))) { plan.title = G.leader.title; plan.bg = "aristocrat"; plan.note = G.leader.heir ? `${G.leader.heir.name} ascends the throne.` : "The family chooses a new monarch."; }
+    if (reason === "palace" || (type === "monarchy" && ["natural", "assassinated", "retired"].includes(reason))) {
+        const h = heirOf();
+        plan.title = G.leader.title; plan.bg = "aristocrat";
+        plan.note = h ? `${h.name} ascends the throne.` : "There is no heir. Princes fight over the throne before the royal family settles on a cousin.";
+        if (h) plan.heir = { name: h.name.replace(/^Crown Princ(e|ess) /, ""), age: h.age, gender: h.gender }; else plan.noHeir = true;
+    }
     if (reason === "conquered") { plan.gov = "one_party"; plan.title = "Head of the occupation regime"; plan.note = "Your country has been conquered. Play on as the puppet government installed by the victors."; plan.bg = "loyalist"; }
     if (reason === "arrested") { plan.note = "With you in exile, a new leader takes over the movement."; }
     if (["term", "successor_won", "retired", "revolt", "challenge", "natural", "assassinated", "removed", "referendum"].includes(reason) && plan.gov !== "monarchy") plan.note = plan.note || "Your party chooses a new leader.";
+    // A grown child in politics may carry on the family name.
+    if (plan.gov !== "monarchy" && !plan.heir && G.leader.family && ["natural", "assassinated", "retired", "term", "challenge"].includes(reason)) {
+        const pol = G.leader.family.children.find(c => c.alive && c.path === "politics" && G.year - c.born >= 35);
+        if (pol && chance(0.5)) { plan.heir = { name: `${pol.name} ${G.leader.name.split(" ").slice(-1)[0]}`, age: G.year - pol.born, gender: pol.gender }; plan.note = `${plan.note ? plan.note + " " : ""}${plan.heir.name}, your ${pol.gender === "f" ? "daughter" : "son"}, is the party's choice to carry on the family name.`; }
+    }
     return plan;
 }
 
@@ -478,8 +490,10 @@ function applySuccession(opts) {
         name: opts.name, age: opts.age, gender: opts.gender, bg: opts.bg, traits: opts.traits.slice(),
         skills: Object.assign({ oratory: 0, legislation: 0, economics: 0, diplomacy: 0, military: 0, intrigue: 0 }, opts.skills),
         look: opts.look, ideology: opts.ideology, party: plan.party, title: genderTitle(plan.title, opts.gender), health: clamp(95 - Math.max(0, opts.age - 45) * 0.9, 30, 98), since: G.t,
-        heir: G.leader.heir && plan.gov === "monarchy" ? null : G.leader.heir
+        heir: null
     };
+    G.leader.family = initFamily(false);
+    if (plan.noHeir && prevGov === "monarchy") { applyEffects({ stability: -12, legitimacy: -12, p: { royals: -10 } }); log("⚔️ Without an heir, the succession is a bitter family struggle. The new monarch starts weak.", "bad"); }
     if (plan.gov !== prevGov) {
         G.gov.type = plan.gov;
         G.gov.sub = null;
