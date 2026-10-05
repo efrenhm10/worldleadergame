@@ -309,6 +309,21 @@ function coupRisk() {
     return clamp(r, 0, 95);
 }
 
+// Chance, at each four-weekly check, that someone starts a plot against you.
+function assassinationRisk() {
+    let r = 0.0012 + (100 - G.s.stability) / 100 * 0.002 - ({ political: 0.0008, terror: 0.0012 }[G.pol.security] || 0);
+    if (playerWars().length) r += 0.0004;
+    if (approval() < 30) r += 0.0005;
+    if (G.flags.protect_until > G.t) r *= 0.5;
+    return Math.max(0.0003, r);
+}
+// Chance the security services learn of a plot before it strikes.
+function plotIntel() {
+    const sec = G.pillars.security ? G.pillars.security.l : 50;
+    return clamp(0.6 + (sec - 50) / 250 + skill("intrigue") * 0.04 + ({ political: 0.12, terror: 0.18 }[G.pol.security] || 0) + minBonus("interior") * 0.04, 0.35, 0.95);
+}
+function assassinationYear() { return 1 - Math.pow(1 - assassinationRisk(), 13); }   // checked every 4 weeks
+
 function govThreats() {
     const t = [];
     const type = G.gov.type, a = approval();
@@ -350,7 +365,9 @@ function govThreats() {
     }
     if (type !== "colony" && type !== "directorial") lv(type === "military_junta" ? "Counter-coup" : "Military coup", coupRisk() * 1.4, `Armed forces loyalty ${G.pillars.military ? Math.round(G.pillars.military.l) : "n/a"}.`);
     if (!["directorial"].includes(type)) lv("Revolution", clamp((30 - a) * 2 + (35 - G.s.stability) * 2), `Approval ${Math.round(a)}, stability ${Math.round(G.s.stability)}.`);
-    return t.filter(x => x.level > 0 || ["Election", "No-confidence vote", "Military coup", "Politburo purge", "Palace coup"].includes(x.name));
+    const pl = G.plot && G.plot.found ? G.plot : null;
+    lv("Assassination", pl ? 85 * (1 - Math.min(0.95, pl.foiled)) : assassinationYear() * 250, pl ? (pl.foiled > 0 ? `⚠️ A plot is under investigation. Your measures give about a ${Math.round(Math.min(0.95, pl.foiled) * 100)}% chance it is stopped before it strikes${G.flags.protect_until > G.t ? "; your bodyguards improve your odds if it isn't" : ""}.` : "⚠️ The security services are tracking a plot against your life. Act on the warning.") : `About ${Math.round(assassinationYear() * 100)}% chance of a plot this year. Stability ${Math.round(G.s.stability)}; the security services usually catch wind of one first (${Math.round(plotIntel() * 100)}%).${G.flags.protect_until > G.t ? " Extra protection in force." : ""}`);
+    return t.filter(x => x.level > 0 || ["Election", "No-confidence vote", "Military coup", "Politburo purge", "Palace coup", "Assassination"].includes(x.name));
 }
 
 function threatCheck() {
@@ -376,8 +393,16 @@ function threatCheck() {
         queueScene(G.flags.coup_warned && cr > 40 ? "coup_attempt" : "coup_rumors", {});
     }
     if (a < 18 && G.s.stability < 24 && type !== "directorial" && !cool("uprising") && chance(GT().democracy ? 0.08 : 0.2)) { setCool("uprising", 26); queueScene("uprising", {}); }
-    let assn = 0.0012 + (100 - G.s.stability) / 100 * 0.002 - ({ political: 0.0008, terror: 0.0012 }[G.pol.security] || 0);
-    if (chance(Math.max(0.0003, assn)) && !cool("assn")) { setCool("assn", 52); queueScene("assassination", {}); }
+    // Plots against your life: usually the security services find out first.
+    if (!G.plot && !cool("assn") && chance(assassinationRisk())) {
+        G.plot = { t: G.t, until: G.t + 4 + Math.floor(rnd(0, 9)), foiled: 0, found: chance(plotIntel()) };
+        if (G.plot.found) queueScene("plot_warning", {});
+    }
+    if (G.plot && G.t >= G.plot.until) {
+        const p = G.plot; G.plot = null; setCool("assn", 52);
+        if (chance(p.foiled)) { log("🕵️ The security services break up the plot against you. The conspirators are arrested.", "good"); toast("Plot foiled", "The would-be assassins are under arrest.", applyEffects({ p: { security: 3 } })); }
+        else queueScene("assassination", { warned: p.found });
+    }
     if (G.flags.coup_pressure) G.flags.coup_pressure = Math.max(0, G.flags.coup_pressure - 1);
 }
 

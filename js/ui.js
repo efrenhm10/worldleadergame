@@ -237,10 +237,12 @@ function viewsFor() {
     return v;
 }
 
+function closeScene() { const el = $("#scene"); if (el) { el.innerHTML = ""; el.classList.remove("open"); } }
+
 function render() {
     if (!G) return;
-    if (G.over && !G.pendingSuccession) { renderFall(); showScreen("fall"); return; }
-    if (G.pendingSuccession) return;
+    if (G.over && !G.pendingSuccession) { closeScene(); renderFall(); showScreen("fall"); return; }
+    if (G.pendingSuccession) { closeScene(); return; }
     if (!$("#play").classList.contains("active")) showScreen("play");
     renderHud(); renderDock(); renderView(); renderScene();
 }
@@ -290,6 +292,8 @@ function renderView() {
 function advisories() {
     const out = [];
     const a = approval();
+    if (G.plot && G.plot.found) out.push("🕵️ Your security services are tracking a plot against your life. See How you could fall on the Office tab.");
+    else if (assassinationYear() > 0.12) out.push(`🕵️ Unrest makes you a target: about ${Math.round(assassinationYear() * 100)}% chance of a plot this year. Stability and a loyal security service help.`);
     const b = G.budget;
     if (b && ["drafting", "rejected"].includes(b.status)) out.push(b.status === "rejected" ? `💰 The ${G.leg.name} rejected your budget. Revise and resubmit before 1 January (Budget tab).` : `💰 Budget season: the FY${b.fy} draft is waiting on the Budget tab${hasLegislature() ? ". It must pass by 31 December" : ""}.`);
     if (b && b.status === "cr") out.push("⏸️ You are governing on a continuing resolution: no capital money this year.");

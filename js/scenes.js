@@ -245,11 +245,21 @@ SCENES.uprising = () => S("🔥", `${dateStr()} · The capital`, "The people ris
      ch("Make sweeping concessions", { liberty: 10, p: { people: 15, security: -10 }, legitimacy: -5 }, "", { run: () => chance(0.6) ? "The crowds disperse, for now." : (fallFromPower("revolution", "The concessions came too late."), "") }),
      ch("Resign", {}, "", { run: () => fallFromPower("revolution", "You resign in the face of the uprising.", true) })]);
 
-SCENES.assassination = () => {
-    const survive = clamp(0.55 + ({ political: 0.15, terror: 0.25 }[G.pol.security] || 0) + skill("intrigue") * 0.03, 0.3, 0.95);
+SCENES.plot_warning = () => {
+    const sec = pillarName(G.pillars.security ? "security" : "military");
+    return S("🕵️", `${dateStr()} · ${sec}`, "A plot against your life",
+        "Your security chiefs have intercepted word of a conspiracy to kill you in the coming weeks. They don't know who, when or where yet. What do you order?",
+        [ch("Double the bodyguard and vary your routes", { capital: -4 }, "Your movements become unpredictable.", { run: () => { if (G.plot) G.plot.foiled += 0.35; G.flags.protect_until = G.t + 26; return "Extra protection for six months."; } }),
+         ch("Cancel public appearances for a while", { p: { people: -4 } }, "", { run: () => { if (G.plot) G.plot.foiled += 0.5; G.flags.protect_until = G.t + 12; return "You stay behind closed doors. Critics call you a recluse."; } }),
+         ch("Order the security services to round up suspects", { liberty: -4, p: { press: -4, security: 3 } }, "", { run: () => { if (G.plot) G.plot.foiled += clamp(0.35 + (G.pillars.security ? G.pillars.security.l : 50) / 200, 0.4, 0.85); if (chance(0.3)) applyEffects({ scandal: 4 }); return "Dozens are detained. Some, it turns out, are innocent."; } }),
+         ch("Dismiss it as rumor", {}, "You refuse to live in fear.")]);
+};
+
+SCENES.assassination = a => {
+    const survive = clamp(0.55 + ({ political: 0.15, terror: 0.25 }[G.pol.security] || 0) + skill("intrigue") * 0.03 + (G.flags.protect_until > G.t ? 0.2 : 0), 0.3, 0.95);
     return S("🔫", `${dateStr()} · Assassination attempt`, "Shots fired",
-        "An assassin opens fire as you leave a public ceremony.",
-        [ch("…", {}, "", { run: () => {
+        `${a && a.warned ? "The plot your security services warned about strikes. " : "Without warning, "}an assassin opens fire as you leave a public ceremony.${G.flags.protect_until > G.t ? " Your bodyguards react instantly." : ""}`,
+        [ch("Get down!", {}, "", { run: () => {
             if (chance(survive)) { applyEffects({ p: { people: 8 }, health: -10, legitimacy: 4 }); record(`Survived an assassination attempt, ${dateStr()}.`); return "You are wounded but survive. A wave of sympathy follows."; }
             leaderDies("assassinated"); return "";
         } })]);
