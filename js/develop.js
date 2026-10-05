@@ -6,13 +6,13 @@
 // capital program. Meet the conditions and build the investments, and the
 // sector grows faster and attracts companies.
 
-const C_ = (label, ok, fix) => ({ label, ok, fix });
-const covOk = (k, n) => C_(`${INFRA[k].name} coverage ${n}%+ (now ${Math.round(cov(k))}%)`, () => cov(k) >= n, `Build ${INFRA[k].name.toLowerCase()} through the capital program`);
-const litOk = n => C_(`Literacy ${n}%+ (now ${Math.round(G.dev.lit)}%)`, () => G.dev.lit >= n, "Schools, literacy campaigns and school buildings");
-const uniOk = n => C_(`University-educated ${n}%+ (now ${fmt(G.dev.uni, 1)}%)`, () => G.dev.uni >= n, "Public universities and university buildings");
-const techOk = n => C_(`Technology ${n}+ (now ${Math.round(G.dev.tech)})`, () => G.dev.tech >= n, "Research council, national labs, R&D credits");
+const C_ = (label, ok, fix, go) => ({ label, ok, fix, go });
+const covOk = (k, n) => C_(`${INFRA[k].name} coverage ${n}%+ (now ${Math.round(cov(k))}%)`, () => cov(k) >= n, `Build ${INFRA[k].name.toLowerCase()} through the capital program`, { infra: k });
+const litOk = n => C_(`Literacy ${n}%+ (now ${Math.round(G.dev.lit)}%)`, () => G.dev.lit >= n, "Schools, literacy campaigns and school buildings", { law: "literacy_campaign", infra2: "schools" });
+const uniOk = n => C_(`University-educated ${n}%+ (now ${fmt(G.dev.uni, 1)}%)`, () => G.dev.uni >= n, "Public universities and university buildings", { law: "universities", infra2: "universities" });
+const techOk = n => C_(`Technology ${n}+ (now ${Math.round(G.dev.tech)})`, () => G.dev.tech >= n, "Research council, national labs, R&D credits", { law: "research_council" });
 const stabOk = n => C_(`Stability ${n}+ (now ${Math.round(G.s.stability)})`, () => G.s.stability >= n, "Keep order and the economy steady");
-const shareOk = (k, n) => C_(`${INDUSTRIES[k].name} at least ${n}% of GDP (now ${fmt(indShare(k), 1)}%)`, () => indShare(k) >= n, `Grow the ${INDUSTRIES[k].name.toLowerCase()} industry first`);
+const shareOk = (k, n) => C_(`${INDUSTRIES[k].name} at least ${n}% of GDP (now ${fmt(indShare(k), 1)}%)`, () => indShare(k) >= n, `Grow the ${INDUSTRIES[k].name.toLowerCase()} industry first`, { ind: k });
 
 const SECTOR_CONDITIONS = {
     agriculture: () => [covOk("irrigation", 40), covOk("roads", 30), stabOk(40)],

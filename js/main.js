@@ -71,6 +71,8 @@ const ACTIONS = {
     cipMove: d => { cipMove(d.id, +d.d); render(); },
     cipRemove: d => { cipRemove(d.id); render(); },
     cipPropose: () => { const t = $("#cipType"); if (t) openRegionPicker(t.value); render(); },
+    buildInfra: d => { openRegionPicker(d.k); render(); },
+    gotoLaw: d => { view = "lawbook"; ui.law = d.k; ui.lawLevel = null; render(); },
     assetPropose: d => { openRegionPicker(`asset:${d.k}:${d.a}`); render(); },
 
     // Economy

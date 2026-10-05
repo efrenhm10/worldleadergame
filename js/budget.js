@@ -17,14 +17,14 @@ const INFRA = {
     roads:      { name: "Highways & roads", icon: "🛣️", cost: 0.4, weeks: 78, units: 6, desc: "Faster growth; farmers reach markets." },
     rail:       { name: "Railways", icon: "🚆", cost: 0.5, weeks: 104, units: 6, desc: "Moves coal, steel and people. Heavy industry needs it." },
     ports:      { name: "Ports & harbors", icon: "⚓", cost: 0.3, weeks: 78, units: 7, desc: "Trade, shipbuilding and exports.", res: "coast" },
-    airports:   { name: "Airports", icon: "🛫", cost: 0.25, weeks: 78, units: 8, from: 1955, desc: "Tourism, business travel, air freight." },
+    airports:   { name: "Airports", icon: "🛫", cost: 0.25, weeks: 78, units: 8, desc: "Tourism, business travel, air freight. Jet-age runways from the late 1950s." },
     power:      { name: "Power stations & dams", icon: "⚡", cost: 0.5, weeks: 104, units: 6, desc: "Every factory needs electricity." },
     schools:    { name: "Schools", icon: "🏫", cost: 0.3, weeks: 52, units: 7, desc: "Literacy grows faster with enough classrooms." },
     hospitals:  { name: "Hospitals", icon: "🏥", cost: 0.3, weeks: 78, units: 7, desc: "Better health and life expectancy." },
     universities:{ name: "Universities", icon: "🎓", cost: 0.25, weeks: 104, units: 8, desc: "Graduates, research and technology." },
     housing:    { name: "Housing estates", icon: "🏘️", cost: 0.35, weeks: 78, units: 6, desc: "Less poverty and crime in growing cities." },
     irrigation: { name: "Irrigation schemes", icon: "💧", cost: 0.3, weeks: 104, units: 7, desc: "Bigger harvests, fewer famines." },
-    telecom:    { name: "Telephone & data networks", icon: "📡", cost: 0.35, weeks: 78, units: 7, from: 1960, desc: "Finance, computing and modern business." }
+    telecom:    { name: "Telephone & data networks", icon: "📡", cost: 0.35, weeks: 78, units: 7, desc: "Telephone exchanges and trunk lines at first, data networks and fiber later. Finance, computing and modern business need them." }
 };
 
 // What each kind of infrastructure is built by, besides capital projects:

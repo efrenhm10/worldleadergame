@@ -208,6 +208,17 @@ function viewBudget() {
     </div>`;
 }
 
+// Buttons that take you straight to the fix for an unmet condition.
+function condButtons(go) {
+    if (!go) return "";
+    const b = [];
+    if (go.infra) b.push(`<button class="mini" data-act="buildInfra" data-k="${go.infra}" ${G.capital < 2 ? "disabled" : ""}>🏗️ Build ${esc(INFRA[go.infra].name.toLowerCase())} (2 ⚡)</button>`);
+    if (go.infra2) b.push(`<button class="mini" data-act="buildInfra" data-k="${go.infra2}" ${G.capital < 2 ? "disabled" : ""}>🏗️ Build ${esc(INFRA[go.infra2].name.toLowerCase())}</button>`);
+    if (go.law) b.push(`<button class="mini secondary" data-act="gotoLaw" data-k="${go.law}">📚 ${esc(lawDef(go.law).name)}</button>`);
+    if (go.ind) b.push(`<button class="mini secondary" data-act="indSel" data-k="${go.ind}">${INDUSTRIES[go.ind].icon} ${esc(INDUSTRIES[go.ind].name)}</button>`);
+    return b.length ? `<div class="row cond-fix">${b.join("")}</div>` : "";
+}
+
 // ── Industry development panel ──────────────────────────────────────
 
 function industryPanel(k) {
@@ -224,7 +235,7 @@ function industryPanel(k) {
     return panel(`${I.icon} ${I.name}`, `<p class="small">${esc(I.desc)}</p>
         <div class="budget"><div><small>Natural fit</small><b class="stars">${"★".repeat(Math.floor(fit))}${fit % 1 ? "½" : ""}</b></div><div><small>Share of GDP</small><b>${fmt(share, 1)}%</b></div><div><small>Growth</small><b>${fmt(G.ind[k].rate || 0, 1)}%</b></div><div><small>Development bonus</small><b class="${sectorBonus(k) >= 0 ? "good" : "bad"}">${sectorBonus(k) >= 0 ? "+" : ""}${fmt(sectorBonus(k), 1)}</b></div></div>
         ${meter("Industry strength", clamp(share / 12), true, `${fmt(share, 1)}%`)}
-        <h4>Conditions to flourish</h4><ul class="conds">${conds.map(c => `<li class="${c.met ? "good" : "bad"}">${c.met ? "✔" : "✘"} ${esc(c.label)}${c.met ? "" : ` <span class="tiny muted">${esc(c.fix)}</span>`}</li>`).join("")}</ul>
+        <h4>Conditions to flourish</h4><ul class="conds">${conds.map(c => `<li class="${c.met ? "good" : "bad"}">${c.met ? "✔" : "✘"} ${esc(c.label)}${c.met ? "" : ` <span class="tiny muted">${esc(c.fix)}</span>${condButtons(c.go)}`}</li>`).join("")}</ul>
         <h4>Public investments</h4>${assets}
         <div class="row"><button class="mini" data-act="projectPick" data-k="${k}" ${G.capital < 2 ? "disabled" : ""}>🏗️ Add a ${esc(I.project.toLowerCase())} to the CIP</button></div>
         <h4>Homegrown firms</h4><p class="tiny muted">Back a local entrepreneur (6 ⚡). Odds shown.</p><div class="row">${ways}</div>

@@ -354,6 +354,7 @@ table.whip td:last-child { white-space: nowrap; }
 .asset > button { flex-shrink: 0; }
 .conds { list-style: none; padding: 0; margin: 4px 0; font-size: 12.5px; }
 .conds li { padding: 2px 0; }
+.cond-fix { margin: 3px 0 4px 16px; gap: 4px; }
 .conds li.good { color: var(--good); }
 .conds li.bad { color: #d99a92; }
 .stars { color: var(--accent); letter-spacing: 1px; }
