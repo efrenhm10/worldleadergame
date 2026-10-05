@@ -359,6 +359,9 @@ table.whip td:last-child { white-space: nowrap; }
 .link-btn { background: none; border: none; padding: 0; color: var(--accent2); text-decoration: underline; cursor: pointer; font-size: inherit; }
 .ind-table tr.sel td { background: #2a2414; }
 
+.region-row { padding: 6px 0; border-bottom: 1px solid #1d2734; }
+.region-row p { margin: 2px 0 0; }
+
 /* Institutions */
 .inst { padding: 8px 10px; margin: 6px 0; background: var(--bg2); border: 1px solid var(--line); border-radius: 6px; }
 .inst.member { border-color: #2a5c40; }

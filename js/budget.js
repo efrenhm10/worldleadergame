@@ -91,6 +91,66 @@ function proposeProject(type, region, src = "player", free = false) {
     return item;
 }
 
+// ── Choosing where a project goes ───────────────────────────────────
+
+// Region tags that suit each kind of project; "need" means a poor fit without one.
+const PROJECT_FIT = {
+    roads: { tags: ["agrarian", "frontier", "poor", "tribal"], why: "connects farms and remote areas to markets" },
+    rail: { tags: ["mining", "minerals", "industrial"], why: "moves ore, coal and freight" },
+    ports: { tags: ["coast"], need: true, why: "needs a coastline" },
+    airports: { tags: ["finance", "tourism"], why: "serves business travel and tourists" },
+    power: { tags: ["industrial", "mining", "minerals"], why: "powers mines and factories" },
+    schools: { tags: ["poor", "agrarian", "minority", "tribal", "frontier"], why: "reaches children with the fewest schools" },
+    hospitals: { tags: ["poor", "agrarian", "minority", "tribal", "frontier"], why: "reaches people with the least care" },
+    universities: { tags: ["finance", "industrial"], why: "sits near employers and big cities" },
+    housing: { tags: ["industrial", "finance", "poor"], why: "houses crowded city workers" },
+    irrigation: { tags: ["agrarian"], need: true, why: "needs farmland" },
+    telecom: { tags: ["finance", "industrial"], why: "links business centers first" }
+};
+const SECTOR_FIT_TAGS = { agriculture: ["agrarian"], mining: ["mining", "minerals"], oil: ["oil"], textiles: ["textiles", "industrial"], shipbuilding: ["coast", "industrial"], tourism: ["tourism", "coast"], finance: ["finance"], film: ["finance", "industrial"], aerospace: ["aerospace", "industrial"], chemicals: ["chemicals", "industrial"] };
+const NEED_SECTORS = { oil: true, mining: true, shipbuilding: true };
+
+const REGION_TAG_NAMES = { agrarian: "farming", industrial: "industry", finance: "business & finance", coast: "coast & ports", mining: "mining", minerals: "minerals", oil: "oil", tourism: "tourism", frontier: "frontier", poor: "poor", tribal: "tribal areas", minority: "minorities", religious: "religious", textiles: "textile mills", aerospace: "aerospace", chemicals: "chemicals", colonial: "colonial", divided: "divided", segregated: "segregated" };
+
+function projectSector(type) { return type.startsWith("ind:") ? type.slice(4) : type.startsWith("asset:") ? type.split(":")[1] : null; }
+function fitTags(type) { const s = projectSector(type); return s ? (SECTOR_FIT_TAGS[s] || ["industrial"]) : (PROJECT_FIT[type] || { tags: [] }).tags; }
+
+// +1 good fit, 0 neutral, −1 poor fit.
+function regionFit(type, r) {
+    const tags = fitTags(type), s = projectSector(type);
+    if (tags.some(t => r.t.includes(t))) return 1;
+    const need = s ? NEED_SECTORS[s] : (PROJECT_FIT[type] || {}).need;
+    return need ? -1 : 0;
+}
+
+function openRegionPicker(type) {
+    if (!G.cip) initCip();
+    if (G.capital < 2) return toast("Not enough political capital", "Adding a project to the program costs 2.");
+    G.scenes = G.scenes.filter(q => q.id !== "cip_region");
+    G.scenes.unshift({ id: "cip_region", args: { type } });
+}
+
+SCENES.cip_region = a => {
+    const info = projectInfo(a.type);
+    const pf = PROJECT_FIT[a.type], s = projectSector(a.type);
+    const why = pf ? pf.why : s ? `works best where ${INDUSTRIES[s].name.toLowerCase()} already has a base` : "";
+    const here = i => (G.cip.queue.concat(G.cip.active)).filter(p => p.region === i).length;
+    const choices = G.regions.map((r, i) => {
+        const fit = regionFit(a.type, r);
+        const lean = (r.lean[G.leader.party] || 0);
+        const bits = [`${r.pop}% of the people`, `support ${Math.round(regionSupport(r))}%${lean > 3 ? " (your heartland)" : lean < -3 ? " (opposition country)" : ""}`];
+        if (here(i)) bits.push(`${here(i)} project${here(i) > 1 ? "s" : ""} already here`);
+        const fitTxt = fit > 0 ? "★ Good fit: +25% benefit. " : fit < 0 ? "⚠ Poor fit: −40% benefit. " : "";
+        return ch(`${r.n}${fit > 0 ? " ★" : fit < 0 ? " ⚠" : ""}`, {}, "", {
+            hint: `${fitTxt}${r.d ? r.d + " " : ""}${bits.join(" · ")}`,
+            run: () => { const it = proposeProject(a.type, i); return it ? `${info.name} goes to ${r.n}. ${G.cip.active.includes(it) ? "Funded: construction begins." : "It joins the queue."}` : ""; }
+        });
+    });
+    choices.push(ch("Cancel", {}, "No project added."));
+    return S(info.icon, `${dateStr()} · Capital program`, `Where should the ${info.name.toLowerCase()} go?`,
+        `${nominal(projectCostBn(a.type))} from the capital budget · 2 ⚡. ${info.desc || ""}${why ? ` It ${why}.` : ""} The region gets jobs and a political boost when it opens.`, choices);
+};
+
 function initCip() {
     G.cip = { queue: [], active: [], pool: G.econ.gdp * G.budget.capital / 100 * 0.5, spentFY: 0 };
 }
@@ -144,19 +204,21 @@ function cipTick() {
         if (p.left > 0) return;
         p.done = true;
         const info = projectInfo(p.type), r = G.regions[p.region];
+        // A project in a region that suits it does more good.
+        const fit = r ? regionFit(p.type, r) : 0, m = fit > 0 ? 1.25 : fit < 0 ? 0.6 : 1;
         if (p.type.startsWith("ind:")) {
             const k = p.type.slice(4), i = G.ind[k], before = i.out;
-            i.out += p.cost * (k === "oil" ? 0.6 : 0.4);
+            i.out += p.cost * (k === "oil" ? 0.6 : 0.4) * m;
             if (i.out0 === 0) i.out0 = before || i.out * 0.5;
-            addJobs(jobsFor(p.cost * 0.4, k) * 1.5);
+            addJobs(jobsFor(p.cost * 0.4, k) * 1.5 * m);
         } else if (p.type.startsWith("asset:")) {
             const [, sec, a] = p.type.split(":");
             G.assets = G.assets || {};
             G.assets[`${sec}:${a}`] = true;
-            addJobs(jobsFor(p.cost * 0.2, sec));
-        } else G.infra[p.type] = clamp(G.infra[p.type] + info.units * (G.econ.pop > 100 ? 0.7 : 1));
-        if (r) r.mod += 5;
-        log(`✂️ ${info.name} opens in ${r ? r.n : "the country"}.`, "good");
+            addJobs(jobsFor(p.cost * 0.2, sec) * m);
+        } else G.infra[p.type] = clamp(G.infra[p.type] + info.units * (G.econ.pop > 100 ? 0.7 : 1) * m);
+        if (r) r.mod += 5 + (fit > 0 ? 2 : 0);
+        log(`✂️ ${info.name} opens in ${r ? r.n : "the country"}${fit > 0 ? ", where it suits the local economy" : fit < 0 ? ", though the region is a poor fit for it" : ""}.`, "good");
         if (chance(0.35)) queueScene("ribbon", { name: info.name, region: r ? r.n : "" });
     });
     G.cip.active = G.cip.active.filter(p => !p.done);

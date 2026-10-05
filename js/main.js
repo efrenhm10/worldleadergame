@@ -70,8 +70,8 @@ const ACTIONS = {
     submitBudget: () => { submitBudget(); render(); },
     cipMove: d => { cipMove(d.id, +d.d); render(); },
     cipRemove: d => { cipRemove(d.id); render(); },
-    cipPropose: () => { const t = $("#cipType"), r = $("#cipRegion"); if (t && r) proposeProject(t.value, +r.value); render(); },
-    assetPropose: d => { proposeProject(`asset:${d.k}:${d.a}`, bestRegionFor(d.k)); render(); },
+    cipPropose: () => { const t = $("#cipType"); if (t) openRegionPicker(t.value); render(); },
+    assetPropose: d => { openRegionPicker(`asset:${d.k}:${d.a}`); render(); },
 
     // Economy
     indSel: d => { ui.ind = ui.ind === d.k ? null : d.k; render(); },
@@ -84,7 +84,7 @@ const ACTIONS = {
     ceoTalk: d => { startCeoTalk(+d.i); render(); },
     offer: d => { makeOffer(+d.i); render(); },
     startup: d => { backEntrepreneur(d.k, d.w); render(); },
-    projectPick: d => { ui.projInd = d.k; render(); },
+    projectPick: d => { openRegionPicker("ind:" + d.k); render(); },
     projectCancel: () => { ui.projInd = null; render(); },
     project: d => { ui.projInd = null; proposeProject("ind:" + d.k, +d.i); render(); },
 

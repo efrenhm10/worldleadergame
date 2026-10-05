@@ -170,6 +170,15 @@ projects funded in order:
 - **Faction requests:** factions ask for projects in their districts and
   resent waiting.
 
+Every project asks **which region** it goes to. The picker shows each region's
+description, share of the population, your support there and how well it
+suits the project. A port needs a coast, rail suits mining and industrial
+regions, schools and clinics do most good in poor rural areas, and a plant
+belongs where its industry already has a base. A good fit (★) gives 25% more
+benefit and a poor fit (⚠) 40% less. The region also gets jobs and a
+political boost when the project opens. The Budget tab lists every region with
+a short description.
+
 Infrastructure coverage tracks what a country at your level normally has.
 Projects push it higher, which boosts growth, literacy and health, and
 underfunding lets it slide.
