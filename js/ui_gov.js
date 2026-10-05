@@ -87,6 +87,8 @@ function builderPanel() {
             <p class="small">${esc(def.desc)}</p>
             <p class="small"><b>Cost:</b> ${fmt(def.cost, 2)}% of GDP a year (${money(G.econ.gdp * cpi() * def.cost / 100)})${def.years ? ` for ${def.years} years` : ", permanent"}</p>
             <p class="small"><b>Effects while in force:</b> ${effSummary(def.eff) || "<span class='muted'>negligible</span>"}</p>
+            <p class="small"><b>Expected impact once in force:</b> ${chipsHtml(programPreview(def), 12) || "<span class='muted'>little measurable change</span>"}</p>
+            ${PROGRAM_INFRA[def.cat] ? `<p class="small"><b>Builds coverage (target):</b> ${Object.entries(PROGRAM_INFRA[def.cat]).map(([ik, w]) => `<span class="good">${INFRA[ik].icon} ${INFRA[ik].name} +${Math.round(Math.min(20, def.cost / 0.5 * 8) * w * (def.region != null ? 0.5 : 1))}</span> <span class="tiny muted">(now ${Math.round(cov(ik))}%)</span>`).join(" · ")}</p>` : ""}
             <p class="small"><b class="good">Supporters:</b> ${esc(def.supporters.join(", ") || "none")}</p>
             <p class="small"><b class="bad">Opponents:</b> ${esc(def.opponents.join(", ") || "none")}</p>
             ${def.risks.length ? `<p class="small"><b class="warn">Risks:</b> ${esc(def.risks.join(". "))}.</p>` : ""}
@@ -106,11 +108,13 @@ function lawControls(k) {
     const slider = d.tax
         ? `<label class="small">Rate: <b>${fmt(target * d.max, 1)}${TAX_UNIT[d.tax] || "%"}</b> · would raise about <b>${fmt(taxRevenueAt(k, target * d.max), 2)}% of GDP</b> (${money(G.econ.gdp * cpi() * taxRevenueAt(k, target * d.max) / 100)}) a year<input type="range" min="0.05" max="1" step="0.05" value="${target}" data-change="lawLevel"></label>`
         : `<label class="small">Level: <b>${pct(target)}</b><input type="range" min="0.1" max="1" step="0.1" value="${target}" data-change="lawLevel"></label>`;
-    if (!demo) return `${slider}<div class="row"><button class="primary" data-act="lawDecree" data-k="${k}">${lvl ? "Decree new level" : "Enact by decree"} (${d.tax ? 8 : 6} ⚡)</button>${lvl ? `<button class="secondary" data-act="lawDecree" data-k="${k}" data-repeal="1">Repeal (6 ⚡)</button>` : ""}</div>`;
-    if (!lvl) return `<p class="small">This law does not exist yet. Draft it, choose how strong it starts, and pass it.</p>${slider}<div class="row"><button class="primary" data-act="lawBill" data-k="${k}">Draft the ${esc(d.name)} Act (4 ⚡)</button></div>`;
+    const pv = lawPreview(k, target);
+    const preview = `<p class="tiny">${lvl ? `At ${d.tax ? fmt(target * d.max, 1) + (TAX_UNIT[d.tax] || "%") : pct(target)} instead` : `If it passes at ${d.tax ? fmt(target * d.max, 1) + (TAX_UNIT[d.tax] || "%") : pct(target)}`}: ${pv.length ? chipsHtml(pv) : "<span class='muted'>little measurable change</span>"}</p>`;
+    if (!demo) return `${slider}${preview}<div class="row"><button class="primary" data-act="lawDecree" data-k="${k}">${lvl ? "Decree new level" : "Enact by decree"} (${d.tax ? 8 : 6} ⚡)</button>${lvl ? `<button class="secondary" data-act="lawDecree" data-k="${k}" data-repeal="1">Repeal (6 ⚡)</button>` : ""}</div>`;
+    if (!lvl) return `<p class="small">This law does not exist yet. Draft it, choose how strong it starts, and pass it.</p>${slider}${preview}<div class="row"><button class="primary" data-act="lawBill" data-k="${k}">Draft the ${esc(d.name)} Act (4 ⚡)</button></div>`;
     const adj = canAdjust(k);
     return `${!d.tax ? `<h4>Executive adjustment</h4><p class="tiny muted">Once a year, within the law's authority: ±10%.${adj ? "" : " Used this year."}</p><div class="row"><button class="secondary" data-act="lawAdj" data-k="${k}" data-d="-1" ${!adj || G.capital < 3 ? "disabled" : ""}>− 10% (3 ⚡)</button><button class="secondary" data-act="lawAdj" data-k="${k}" data-d="1" ${!adj || G.capital < 3 ? "disabled" : ""}>+ 10% (3 ⚡)</button></div>` : `<p class="tiny muted">The rate is set in the annual budget. Amend or repeal the tax itself here.</p>`}
-        <h4>Amend or repeal</h4>${slider}<div class="row"><button class="secondary" data-act="lawBill" data-k="${k}">Propose amendment (4 ⚡)</button><button class="secondary danger" data-act="lawBill" data-k="${k}" data-repeal="1">Propose repeal (4 ⚡)</button></div>`;
+        <h4>Amend or repeal</h4>${slider}${preview}<p class="tiny">Repealing it: ${chipsHtml(lawPreview(k, 0)) || "<span class='muted'>little measurable change</span>"}</p><div class="row"><button class="secondary" data-act="lawBill" data-k="${k}">Propose amendment (4 ⚡)</button><button class="secondary danger" data-act="lawBill" data-k="${k}" data-repeal="1">Propose repeal (4 ⚡)</button></div>`;
 }
 
 function lawEffectsAt(d, lvl) {
@@ -119,7 +123,19 @@ function lawEffectsAt(d, lvl) {
     const eff = {};
     Object.entries(d.fx || {}).forEach(([k, v]) => { eff[k] = v * m; });
     const ps = Object.entries(d.p || {}).filter(([k]) => G.pillars[k]).map(([k, v]) => `<span class="${v > 0 ? "good" : "bad"}">${pillarName(k)} ${v > 0 ? "▲" : "▼"}</span>`).join(" · ");
-    return `${effSummary(eff)}${d.cost ? ` · <span class="muted">${fmt(d.cost * m, 2)}% of GDP</span>` : ""}${ps ? " · " + ps : ""}`;
+    const builds = Object.entries(INFRA_LAWS).filter(([, m2]) => m2[d.key]).map(([ik, m2]) => `<span class="good">${INFRA[ik].icon} ${INFRA[ik].name} +${Math.round(m2[d.key] * m)}</span>`).join(" · ");
+    return `${effSummary(eff)}${d.cost ? ` · <span class="muted">${fmt(d.cost * m, 2)}% of GDP</span>` : ""}${ps ? " · " + ps : ""}${builds ? `<br>Builds coverage (target): ${builds}` : ""}`;
+}
+
+// One infrastructure line: coverage, the past year's change, where it is
+// heading and everything pushing it there.
+function infraRow(k) {
+    const x = INFRA[k], c = cov(k), t = infraTarget(k), ch = Math.round(infraChange(k));
+    const parts = infraParts(k).map(([l, v]) => `${esc(l)} <b class="${v >= 0 ? "good" : "bad"}">${v >= 0 ? "+" : ""}${Math.round(v)}</b>`);
+    const proj = (G.cip ? G.cip.active : []).filter(p => p.type === k);
+    const head = Math.abs(t - c) >= 1 ? ` · heading ${t > c ? "up" : "down"} to ${Math.round(t)}%` : "";
+    return `<div class="infra-row">${meter(`${x.icon} ${x.name}`, c / 100, true, `${Math.round(c)}%${ch ? ` <span class="${ch > 0 ? "good" : "bad"}">${ch > 0 ? "+" : ""}${ch}</span>` : ""}`, x.desc)}
+        <p class="tiny muted">Normal for your level ${Math.round(infraNormal(k))}%${parts.length ? " · " + parts.join(" · ") : ""}${head}${proj.length ? ` · <span class="good">${proj.length} project${proj.length > 1 ? "s" : ""} under construction (+${Math.round(proj.reduce((s2, p) => s2 + projectGain(k, p.region), 0))})</span>` : ""}</p></div>`;
 }
 
 function viewLawbook() {
@@ -147,7 +163,7 @@ function frameworkDetail(area) {
     const pending = (G.bills || []).some(b => b.area === area && ["committee", "floor", "stuck"].includes(b.stage));
     const opts = a.options.map(o => {
         const allowed = !o.req || o.req(G.gov.type, G), cur = G.pol[area] === o.k;
-        return `<div class="opt ${cur ? "cur" : ""}"><div><b>${esc(optName(o))}</b>${cur ? ` <span class="badge small">Current</span>` : ""}${o.desc ? `<p class="small">${esc(o.desc)}</p>` : ""}<p class="tiny">${optEffects(o)}</p></div>
+        return `<div class="opt ${cur ? "cur" : ""}"><div><b>${esc(optName(o))}</b>${cur ? ` <span class="badge small">Current</span>` : ""}${o.desc ? `<p class="small">${esc(o.desc)}</p>` : ""}<p class="tiny">${optEffects(o)}</p>${!cur && allowed ? `<p class="tiny">${chipsHtml(frameworkPreview(area, o.k), 8)}</p>` : ""}</div>
             ${cur || !allowed || m.m === "blocked" || pending ? (allowed ? "" : `<span class="tiny muted">Not under your system</span>`) : m.m === "bill" ? `<div class="col-btns"><button data-act="fwBill" data-a="${area}" data-k="${o.k}" ${G.capital < policyCost(area) ? "disabled" : ""}>Reform bill (${policyCost(area)} ⚡)</button>${m.eo ? `<button class="secondary" data-act="fwEO" data-a="${area}" data-k="${o.k}">Executive order</button>` : ""}</div>` : `<button data-act="fwDecree" data-a="${area}" data-k="${o.k}" ${G.capital < policyCost(area) ? "disabled" : ""}>Decree (${policyCost(area)} ⚡)</button>`}</div>`;
     }).join("");
     return panel(`${a.icon} ${a.name}`, `<p class="small muted">${esc(m.why)}${pending ? " <b>A reform bill is already before the legislature.</b>" : ""}</p>${opts}`);
@@ -167,14 +183,15 @@ function viewBudget() {
     const regionName = i => G.regions[i] ? G.regions[i].n : "";
     const srcTag = s => s.startsWith("fac:") ? `<span class="tiny warn">requested by ${esc(factionName(s.slice(4)))}</span>` : s === "event" ? "<span class='tiny muted'>emergency</span>" : "";
     let running = cip.pool;
-    const queue = cip.queue.map((p, i) => { const info = projectInfo(p.type); const fits = p.cost <= running; return `<div class="cip-row ${fits ? "" : "unfunded"}"><span>${info.icon} ${esc(info.name)} <span class="tiny muted">${esc(regionName(p.region))}${G.regions[p.region] && regionFit(p.type, G.regions[p.region]) > 0 ? " ★" : ""}</span> ${srcTag(p.src)}</span><span class="tiny">${nominal(p.cost)}${p.fin ? ` · <span class="warn">appraisal: ${esc(LENDERS[p.fin.lender].name)}</span>` : ""}</span><span>${!p.fin && G.inst && bestLender(p.type) ? `<button class="mini" data-act="finProject" data-id="${p.id}" title="Ask ${esc(LENDERS[bestLender(p.type)].name)} to finance it (2 ⚡)">🏦</button>` : ""}<button class="mini" data-act="cipMove" data-id="${p.id}" data-d="-1" ${i === 0 ? "disabled" : ""}>▲</button><button class="mini" data-act="cipMove" data-id="${p.id}" data-d="1" ${i === cip.queue.length - 1 ? "disabled" : ""}>▼</button><button class="mini danger" data-act="cipRemove" data-id="${p.id}">✕</button></span></div>`; }).join("") || "<p class='tiny muted'>The queue is empty. Propose projects below, or from an industry's page.</p>";
+    const queue = cip.queue.map((p, i) => { const info = projectInfo(p.type); const fits = p.cost <= running; return `<div class="cip-row ${fits ? "" : "unfunded"}"><span>${info.icon} ${esc(info.name)} <span class="tiny muted">${esc(regionName(p.region))}${G.regions[p.region] && regionFit(p.type, G.regions[p.region]) > 0 ? " ★" : ""}</span> ${srcTag(p.src)}</span><span class="tiny">${INFRA[p.type] ? `<span class="good">+${Math.round(projectGain(p.type, p.region))}</span> · ` : ""}${nominal(p.cost)}${p.fin ? ` · <span class="warn">appraisal: ${esc(LENDERS[p.fin.lender].name)}</span>` : ""}</span><span>${!p.fin && G.inst && bestLender(p.type) ? `<button class="mini" data-act="finProject" data-id="${p.id}" title="Ask ${esc(LENDERS[bestLender(p.type)].name)} to finance it (2 ⚡)">🏦</button>` : ""}<button class="mini" data-act="cipMove" data-id="${p.id}" data-d="-1" ${i === 0 ? "disabled" : ""}>▲</button><button class="mini" data-act="cipMove" data-id="${p.id}" data-d="1" ${i === cip.queue.length - 1 ? "disabled" : ""}>▼</button><button class="mini danger" data-act="cipRemove" data-id="${p.id}">✕</button></span></div>`; }).join("") || "<p class='tiny muted'>The queue is empty. Propose projects below, or from an industry's page.</p>";
     const active = cip.active.map(p => { const info = projectInfo(p.type); return `<div class="cip-row"><span>${info.icon} ${esc(info.name)} <span class="tiny muted">${esc(regionName(p.region))}</span></span><span class="tiny">${Math.round((1 - p.left / p.total) * 100)}% built · ${Math.max(1, Math.round(p.left / 4.3))} mo left</span></div>`; }).join("") || "<p class='tiny muted'>Nothing under construction.</p>";
-    const infra = Object.entries(INFRA).filter(([, x]) => (!x.from || G.year >= x.from) && (!x.res || G.res.includes(x.res))).map(([k, x]) => meter(`${x.icon} ${x.name}`, cov(k) / 100, true, `${Math.round(cov(k))}%`, x.desc)).join("");
+    const infra = Object.entries(INFRA).filter(([, x]) => (!x.from || G.year >= x.from) && (!x.res || G.res.includes(x.res))).map(([k]) => infraRow(k)).join("");
     const types = Object.entries(INFRA).filter(([, x]) => (!x.from || G.year >= x.from) && (!x.res || G.res.includes(x.res))).map(([k, x]) => `<option value="${k}">${x.icon} ${x.name} (${nominal(projectCostBn(k))})</option>`).join("");
     return `<div class="cols2">
         <div>${panel(`Budget ${editing ? `· draft FY${b.fy}` : ""}`, `<p class="small"><b>${statusText}</b></p>
             <div class="budget"><div><small>Revenue</small><b>${fmt(pr.rev, 1)}%</b><span class="tiny muted">${money(gdpN * pr.rev / 100)}</span></div><div><small>Spending</small><b>${fmt(pr.spend, 1)}%</b><span class="tiny muted">${money(gdpN * pr.spend / 100)}</span></div><div class="${pr.net < 0 ? "bad" : "good"}"><small>${pr.net < 0 ? "Deficit" : "Surplus"}</small><b>${fmt(Math.abs(pr.net), 1)}%</b></div><div><small>Debt</small><b>${Math.round(G.econ.debt / G.econ.gdp * 100)}%</b></div></div>
             <h4>Department funding <span class="tiny muted">(70–130%: weaker or stronger laws)</span></h4>${deptRows}
+            ${editing ? `<p class="tiny"><b>If this draft is adopted:</b> ${chipsHtml(budgetPreview(d), 12) || "<span class='muted'>no measurable change from this year's budget</span>"}</p>` : ""}
             <div class="budget-row"><span>Administration, interest & war</span><span></span><b></b><span class="tiny muted">${fmt((pr.lines.admin || 0) + (pr.lines.interest || 0) + (pr.lines.war || 0), 1)}%</span></div>
             <h4>Tax rates <span class="tiny muted">(rate · revenue, % of GDP)</span></h4>${taxRows}
             <h4>Capital budget (funds the CIP)</h4><div class="budget-row"><span>Capital projects</span>${editing ? `<input type="range" min="0" max="5" step="0.25" value="${d.capital}" data-change="draft" data-kind="capital">` : "<span></span>"}<b>${fmt(d.capital, 2)}%</b><span class="tiny muted">${money(gdpN * d.capital / 100)}/yr</span></div>

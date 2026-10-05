@@ -456,6 +456,8 @@ function monthlyTick(newYear) {
     worldMonthTick();
     goalsCheck();
     institutionsMonth();
+    infraMonthly();
+    statsMonthly();
     if (G.colony) colonyMonth();
     if (G.gov.cohabitation && chance(0.15)) log("Cohabitation: the opposition-led government blocks your domestic agenda.", "warn");
 }
@@ -463,7 +465,6 @@ function monthlyTick(newYear) {
 function yearlyTick() {
     budgetNewYear();
     programsYearly();
-    infraYearly();
     yearlyFirms();
     // Sovereign default when debt spirals out of control.
     const dp = G.econ.debt / G.econ.gdp * 100;
@@ -567,23 +568,30 @@ function economyTick() {
     let infT = 3 + policyFx("inflation") + Math.max(0, e.deficit) * 0.45 + Math.max(0, e.growth - 6) * 0.4 + (G.oilPrice - 1) * oilImp * 0.6 + Math.min(15, Math.max(0, debtPct - 100) * 0.03) + war * 0.4;
     if (G.year >= 1971 && G.year <= 1982) infT += 3;
     e.inflation += (clamp(infT, -3, 60) - e.inflation) * 0.035;
-    const agriShare = G.ind.agriculture.out / e.gdp;
     e.jobsAdded = (e.jobsAdded || 0) * 0.9985;
-    let unT = 5.5 + policyFx("unemp") - (e.growth - 3) * 0.5 + agriShare * 4 - e.jobsAdded * 0.7;
-    e.unemp += (clamp(unT, 1, 28) - e.unemp) * 0.04;
+    e.unemp += (unempTarget() - e.unemp) * 0.04;
 }
 
-function devTick() {
-    const litRate = (0.2 + lawFx("lit")) * (1 + covRel("schools") * 0.4);
-    const uniRate = (0.02 + lawFx("uni")) * (1 + covRel("universities") * 0.4);
-    const colony = G.gov.type === "colony" ? 0.5 : 1;
-    G.dev.lit = clamp(G.dev.lit + litRate * 2.2 * (1 - G.dev.lit / 100) / 52 * colony * (1 + minBonus("education") * 0.1), 0, 99.5);
-    G.dev.uni = clamp(G.dev.uni + uniRate * 2 * (1 - G.dev.uni / 55) / 52 * colony, 0, 55);
+// Targets the weekly simulation drifts toward (also used to show the player
+// what each decision moves).
+function unempTarget() { const e = G.econ; return clamp(5.5 + policyFx("unemp") - (e.growth - 3) * 0.5 + G.ind.agriculture.out / e.gdp * 4 - (e.jobsAdded || 0) * 0.7, 1, 28); }
+function libertyTarget() { return clamp(50 + policyFx("liberty")); }
+function corruptionTarget() { return clamp(C().econ.corruption + policyFx("corruption") + (trait("honest") ? -8 : 0) + (trait("corrupt") ? 8 : 0) + (G.s.liberty < 30 ? 5 : 0) - (G.pol.press === "free" ? 4 : 0) + (G.pmods.corruption || 0), 1, 95); }
+// Literacy points a year at today's level.
+function literacyRate() { return (0.2 + lawFx("lit")) * (1 + covRel("schools") * 0.4) * 2.2 * (1 - G.dev.lit / 100) * (G.gov.type === "colony" ? 0.5 : 1) * (1 + minBonus("education") * 0.1); }
+function techRate() {
     const frontier = Math.max(...Object.values(G.nations).filter(n => n.tech != null).map(n => n.tech), G.dev.tech);
     const openness = { trade_free: 1.5, managed: 1, protection: 0.7, autarky: 0.3 }[G.pol.trade] || 1;
     const fdi = Object.values(G.ind).filter(i => i.own === "foreign" && i.out > 0).length * 0.1;
-    let r = lawFx("tech") + covEff("telecom") * 0.2 + G.dev.uni * 0.05 + (frontier - G.dev.tech) * 0.025 * (openness + fdi) + (trait("intellectual") ? 0.3 : 0) + minBonus("education") * 0.15;
-    G.dev.tech = clamp(G.dev.tech + r / 52, 0, 200);
+    return lawFx("tech") + covEff("telecom") * 0.2 + G.dev.uni * 0.05 + (frontier - G.dev.tech) * 0.025 * (openness + fdi) + (trait("intellectual") ? 0.3 : 0) + minBonus("education") * 0.15;
+}
+
+function devTick() {
+    const uniRate = (0.02 + lawFx("uni")) * (1 + covRel("universities") * 0.4);
+    const colony = G.gov.type === "colony" ? 0.5 : 1;
+    G.dev.lit = clamp(G.dev.lit + literacyRate() / 52, 0, 99.5);
+    G.dev.uni = clamp(G.dev.uni + uniRate * 2 * (1 - G.dev.uni / 55) / 52 * colony, 0, 55);
+    G.dev.tech = clamp(G.dev.tech + techRate() / 52, 0, 200);
     const target = 12 + G.dev.ind * 0.55 + (G.econ.services / G.econ.gdp) * 25;
     G.dev.urban = clamp(G.dev.urban + (target - G.dev.urban) * 0.03 / 52 * 4, 0, 100);
 }
@@ -591,9 +599,8 @@ function devTick() {
 function statsTick() {
     const s = G.s;
     s.stability += (stabilityTarget() - s.stability) * 0.02;
-    s.liberty += (clamp(50 + policyFx("liberty")) - s.liberty) * 0.025;
-    let corrT = C().econ.corruption + policyFx("corruption") + (trait("honest") ? -8 : 0) + (trait("corrupt") ? 8 : 0) + (s.liberty < 30 ? 5 : 0) - (G.pol.press === "free" ? 4 : 0) + (G.pmods.corruption || 0);
-    s.corruption += (clamp(corrT, 1, 95) - s.corruption) * 0.01;
+    s.liberty += (libertyTarget() - s.liberty) * 0.025;
+    s.corruption += (corruptionTarget() - s.corruption) * 0.01;
     s.legitimacy += (legitimacyTarget() - s.legitimacy) * 0.015;
     s.prestige += (prestigeTarget() - s.prestige) * 0.01;
     const mo = curOpt("military"), dr = curOpt("draft");

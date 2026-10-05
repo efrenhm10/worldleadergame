@@ -15,9 +15,11 @@ function sceneChoose(i) {
     const c = sc.choices[i];
     if (!c || c.req === false) return;
     G.scenes.shift();
+    const before = impactSnapshot();
     const changes = applyEffects(c.fx || {});
     let res = c.res || "";
     if (c.run) { const r = c.run(); if (typeof r === "string") res = r; }
+    if (q.id !== "cip_region") changes.push(...impactDiff(before, null, true));
     if (!G.over && !G.pendingSuccession) toast(sc.title, res, changes);
     save();
     render();

@@ -162,9 +162,8 @@ function holdVote(b) {
     if (passed) {
         if (b.sponsor !== "player" && GT().execOrders && b.position <= 0 && b.kind !== "budget") { b.stage = "desk"; queueScene("sign_or_veto", { id: b.id }); return; }
         b.stage = "law";
-        enactBill(b);
-        const mine = b.sponsor === "player" || b.position > 0;
-        toast(mine ? "Bill passes" : "Bill passes", `The ${b.title} passes, ${yes}–${b.result.no}.`);
+        const chg = enactBill(b);
+        toast("Bill passes", `The ${b.title} passes, ${yes}–${b.result.no}.`, chg);
         if (b.sponsor === "player") record(`Passed the ${b.title}, ${yes}–${b.result.no} (${G.year}).`);
     } else {
         b.stage = "failed";
@@ -178,12 +177,12 @@ function holdVote(b) {
 function enactBill(b) {
     if (b.kind === "law") {
         const d = lawDef(b.lawKey);
-        if (d.tax && b.level > 0 && !G.budget.rates[d.tax]) G.budget.rates[d.tax] = Math.round(d.max * b.level);
         if (d.tax && b.level > 0) G.budget.rates[d.tax] = Math.round(d.max * b.level * 10) / 10;
-        setLaw(b.lawKey, b.level, `${G.leg.name} passes`);
-    } else if (b.kind === "framework") enactPolicy(b.area, b.k, `${G.leg.name} passes`);
+        return setLaw(b.lawKey, b.level, `${G.leg.name} passes`) || [];
+    } else if (b.kind === "framework") return enactPolicy(b.area, b.k, `${G.leg.name} passes`) || [];
     else if (b.kind === "program") enactProgram(b.def, b);
     else if (b.kind === "budget") budgetPassed(b);
+    return [];
 }
 
 // ── Player actions on bills ─────────────────────────────────────────
@@ -293,8 +292,9 @@ function enactProgram(def, b) {
     const key = `prog_${G.t}_${Math.floor(Math.random() * 1e4)}`;
     const cat = { health: "health", environment: "health", education: "education", universities: "education", culture: "society", housing: "welfare", jobs: "welfare", poverty: "welfare",
                   farms: "farms", industry: "economy", transport: "infra", energy: "infra", police: "order", rights: "society", defense: "defense", veterans: "defense" }[def.cat] || "society";
+    const infraBefore = impactSnapshot();
     G.customLaws[key] = {
-        key, cat, name: def.title, custom: true, cost: def.cost, fx: def.eff, p: def.g, st: def.stance, desc: def.desc,
+        key, cat, issue: def.cat, name: def.title, custom: true, cost: def.cost, fx: def.eff, p: def.g, st: def.stance, desc: def.desc,
         dept: ISSUES[def.cat].dept, until: def.years ? G.year + def.years : null, risks: def.riskKeys || [], fund: def.spec.fund, region: def.region
     };
     G.laws[key] = { level: 1, since: G.t };
@@ -311,6 +311,7 @@ function enactProgram(def, b) {
     Object.entries(def.g || {}).forEach(([k, v]) => { p[k] = v * 0.6; });
     applyEffects({ p });
     log(`📜 New law: ${def.title}.`, "policy");
+    if (infraBefore) { const d = impactDiff(infraBefore, def.title); if (d.length) toast("New program", def.title, d); }
     record(`Enacted the ${def.title}, ${G.year}.`);
 }
 

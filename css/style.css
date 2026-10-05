@@ -360,6 +360,11 @@ table.whip td:last-child { white-space: nowrap; }
 .link-btn { background: none; border: none; padding: 0; color: var(--accent2); text-decoration: underline; cursor: pointer; font-size: inherit; }
 .ind-table tr.sel td { background: #2a2414; }
 
+.driver { padding: 4px 0 6px; border-bottom: 1px solid #1d2734; }
+.driver p { margin: 2px 0 0; line-height: 1.35; }
+.infra-row { margin-bottom: 4px; }
+.infra-row .meter { margin-bottom: 0; }
+.infra-row p { margin: 1px 0 6px; line-height: 1.35; }
 .region-row { padding: 6px 0; border-bottom: 1px solid #1d2734; }
 .region-row p { margin: 2px 0 0; }
 

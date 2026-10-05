@@ -54,6 +54,7 @@ function bumpCooldown(area) { G.polCool[area] = G.t + 12; }
 function onCooldown(area) { return G.polCool[area] && G.polCool[area] > G.t; }
 
 function enactPolicy(area, k, how) {
+    const impactBefore = impactSnapshot();
     const reaction = changeReaction(area, k);
     const p = {};
     Object.entries(reaction).forEach(([pk, v]) => { p[pk] = v * 0.5; });
@@ -72,6 +73,7 @@ function enactPolicy(area, k, how) {
     log(`${POLICY[area].icon} ${how}: ${POLICY[area].name} changed from "${optName(old)}" to "${optName(o)}".`, "policy");
     if (area === "nuclear" && k === "weapons" && G.mil.nukes < 2) G.tension = clamp(G.tension + 2);
     if (area === "resources" && k === "nationalized" && C().res.includes("oil") && G.year < 1975) queueScene("nationalization_backlash", {});
+    ch.push(...impactDiff(impactBefore, `${POLICY[area].name}: ${optName(o)}`));
     return ch;
 }
 

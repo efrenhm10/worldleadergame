@@ -101,8 +101,10 @@ function setSupport(k, lvl) {
     const i = G.ind[k];
     if (!i || lvl === i.sup) return;
     if (lvl > i.sup) { if (!spend(3, () => {})) return; }
+    const before = impactSnapshot();
     i.sup = clamp(lvl, 0, 3);
     log(`${INDUSTRIES[k].icon} ${INDUSTRIES[k].name}: ${SUPPORT_LEVELS[i.sup].name}.`, "policy");
+    toast(`${INDUSTRIES[k].name}: ${SUPPORT_LEVELS[i.sup].name}`, "", impactDiff(before, `${INDUSTRIES[k].name} support`));
 }
 
 function setOwnership(k, own) {
@@ -111,7 +113,9 @@ function setOwnership(k, own) {
     const cost = 8;
     spend(cost, () => {
         const was = i.own;
+        const before = impactSnapshot();
         i.own = own;
+        setTimeout(() => toast(`${INDUSTRIES[k].name}: ${OWNERSHIP[own].name.toLowerCase()}`, "", impactDiff(before, `${INDUSTRIES[k].name} ownership`)), 0);
         if (own === "state") applyEffects({ p: { business: -8, labor: 4, cadres: 3 }, rel: was === "foreign" ? { usa: -6, uk: -6 } : {} });
         if (own === "private") applyEffects({ p: { business: 6, labor: -4 } });
         if (own === "foreign") applyEffects({ p: { business: 2, people: -3 }, cash: 0.3 });

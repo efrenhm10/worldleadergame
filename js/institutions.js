@@ -109,13 +109,15 @@ function joinAttempt(k) {
 }
 
 function joinInst(k, quiet) {
+    const before = impactSnapshot();
     G.inst.m[k] = true;
     const fx = { un: { prestige: 5 }, imf: { p: { business: 3 } }, wb: {}, gatt: { p: { business: 4, labor: -2 } }, oecd: { prestige: 4, p: { business: 4 } }, g7: { prestige: 6 }, g20: { prestige: 4 } }[k];
     applyEffects(fx);
     if (["imf", "wb"].includes(k) && G.align < -40 && G.ck !== "russia") addRel(G.ck, "russia", -8);
     log(`${INST[k].icon} ${C().name} joins the ${instName(k)}.`, "major");
     record(`Joined the ${instName(k)}, ${G.year}.`);
-    if (!quiet) toast("Membership", `You join the ${instName(k)}.`);
+    const chips = impactDiff(before, `Joining the ${instName(k)}`);
+    if (!quiet) toast("Membership", `You join the ${instName(k)}.`, chips);
 }
 
 function leaveInst(k) {
@@ -197,6 +199,7 @@ function requestImf() {
 }
 
 function startImf(offer) {
+    const before = impactSnapshot();
     const o = offer || { conds: imfConditions(), amount: 3, kind: imfKind() };
     const long = /Extended|Structural/.test(o.kind);
     G.inst.program = { start: G.t, amount: o.amount, kind: o.kind, conds: o.conds, reviews: long ? [26, 52, 78, 104, 130] : [26, 52, 78], next: 0, waivers: 1, rioted: false };
@@ -206,6 +209,8 @@ function startImf(offer) {
     if (o.conds.some(c => c.k === "devalue")) applyEffects({ inflation: 4, growth: 0.4, p: { people: -3 } });
     log(`💵 You sign an IMF ${o.kind}: ${fmt(o.amount, 1)}% of GDP over ${long ? "two and a half years" : "eighteen months"}. Conditions: ${o.conds.map(c => c.t.toLowerCase()).join("; ")}.`, "major");
     record(`Signed an IMF ${o.kind}, ${G.year}.`);
+    ch.push(...impactDiff(before, "IMF program"));
+    toast("IMF program signed", o.kind, ch);
     return ch;
 }
 

@@ -91,8 +91,8 @@ const ACTIONS = {
     // Power
     power: d => { doPowerAction(d.k); render(); },
     woo: d => { wooFaction(d.k); render(); },
-    sack: d => { sackMinister(d.k); render(); },
-    appoint: d => { appointMinister(d.k, +d.i); render(); },
+    sack: d => { const r = withImpact("Cabinet change", () => sackMinister(d.k)); if (r.chips.length) toast("Cabinet change", "", r.chips); render(); },
+    appoint: d => { const r = withImpact("New minister", () => appointMinister(d.k, +d.i)); if (r.chips.length) toast("New minister", "", r.chips); render(); },
     newCands: d => { G.reshuffle = G.reshuffle || {}; G.reshuffle[d.k] = cabinetCandidates(d.k); render(); },
     reform: d => { attemptReform(d.k, d.r); render(); },
     rally: d => { campaignRally(+d.i); render(); },

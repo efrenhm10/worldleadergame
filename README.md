@@ -210,6 +210,32 @@ underfunding lets it slide.
   real seat allocation (FPTP or proportional representation), with hung
   parliaments and coalition building.
 
+## Everything is connected
+
+Every decision reports what it moves, the way funding roads in *Galactic Senate*
+showed "+10".
+
+- **Before you decide:** the Lawbook, the Bill Builder, each national-policy
+  option and the budget draft preview the effect. Examples: "Poverty −2 ·
+  Spending +0.4% of GDP · Housing estates target +7", "Business +4 · Labor −4
+  · Agriculture growth +0.5".
+- **After you decide:** the notice and the log (📊) list the changes. This
+  covers laws, repeals, executive adjustments, programs, policy changes,
+  budgets, industry support and ownership, new companies, ministers, the IMF,
+  institutions, finished capital projects and event choices. A finished road
+  shows "Highways & roads coverage +8 · Support in Orange Free State +7".
+- **Infrastructure:** each line shows its change over the past year and where
+  it is heading, plus what builds it. Example: "Normal for your level 43% ·
+  National road fund +12 · Public works program +3 · heading up to 57%". Laws
+  and programs raise the target, capital projects add coverage directly, and
+  department funding moves it up or down.
+- **The Office panel "What's moving the country":** shows health, poverty,
+  crime, unemployment, stability, liberty, corruption, literacy and growth,
+  each with its change over the past year and the laws, policies, coverage,
+  taxes and ministers pushing it.
+- **Industries:** conditions show current values ("Railways coverage 50%+, now
+  39%"), and you are told when one becomes met.
+
 ## The economy: companies → jobs → tax base → living standards
 
 - **17 industries:** agriculture, mining, oil, textiles, steel, machinery,
@@ -330,6 +356,7 @@ scandals, disasters, lobbyists, pork demands, investors and more.
 | `js/legislature.js` | Bills, committees, floor votes, factions' bills, programs |
 | `js/budget.js` | Infrastructure, the annual budget, the treasury draft, the CIP |
 | `js/develop.js` | Sector fit, conditions, public investments, CEO pitches, homegrown firms, film |
+| `js/impact.js` | Impact snapshots, previews and the "what's moving the country" breakdown |
 | `js/institutions.js` | The UN, IMF, World Bank and regional banks, GATT/WTO, OECD, G7/G20, debt relief |
 | `js/cabinet.js` | Ministers, health, crime and poverty indicators |
 | `js/companies.js` | The investment desk, jobs, tax base, living standards |

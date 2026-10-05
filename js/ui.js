@@ -332,6 +332,7 @@ function viewOffice() {
         </div>
         <div>
             ${panel("Key indicators", indicatorBars(liveProfile()))}
+            ${panel("What's moving the country", viewDrivers())}
             ${panel("Trends (last 6 years)", `<div class="spark-row"><span>Approval</span>${sparkline("a", "#7bd88f")}</div><div class="spark-row"><span>Growth</span>${sparkline("g", "#6fb3ff")}</div><div class="spark-row"><span>Stability</span>${sparkline("s", "#f0c05a")}</div><div class="spark-row"><span>GDP</span>${sparkline("gdp", "#c39bff")}</div>`)}
         </div>
         <div>
@@ -633,7 +634,7 @@ function toast(title, text, changes = []) {
     if (!box) return;
     const el = document.createElement("div");
     el.className = "toast";
-    const chips = (changes || []).slice(0, 8).map(c => `<span class="chg ${c.good ? "good" : "bad"}">${esc(c.label)} ${c.raw ? c.v : (c.v > 0 ? "+" : "") + c.v}</span>`).join("");
+    const chips = (changes || []).slice(0, 10).map(c => `<span class="chg ${c.good ? "good" : "bad"}">${esc(c.label)} ${c.raw ? c.v : (c.v > 0 ? "+" : "") + c.v}</span>`).join("");
     el.innerHTML = `<b>${esc(title)}</b>${text ? `<p>${esc(text)}</p>` : ""}${chips ? `<div>${chips}</div>` : ""}`;
     box.appendChild(el);
     setTimeout(() => el.classList.add("out"), 5200);

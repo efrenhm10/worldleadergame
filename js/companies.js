@@ -160,6 +160,7 @@ function bestRegionFor(sector) {
 }
 
 function openFirm(f) {
+    const before = impactSnapshot();
     G.firms = G.firms || [];
     f.since = G.t;
     G.firms.push(f);
@@ -173,7 +174,7 @@ function openFirm(f) {
     const where = r ? r.n : "the country";
     log(`🏢 ${f.name} opens a ${INDUSTRIES[f.sector].name.toLowerCase()} plant in ${where}: ${fmtJobs(f.jobs)} jobs.`, "good");
     record(`Brought ${f.name} to ${where} (${fmtJobs(f.jobs)} jobs), ${G.year}.`);
-    toast(`${f.name} is coming!`, `A new ${INDUSTRIES[f.sector].name.toLowerCase()} plant in ${where}. ${fmtJobs(f.jobs)} jobs${f.holidayUntil > G.year ? `; taxes from ${f.holidayUntil}` : "; pays taxes from day one"}.`);
+    toast(`${f.name} is coming!`, `A new ${INDUSTRIES[f.sector].name.toLowerCase()} plant in ${where}. ${fmtJobs(f.jobs)} jobs${f.holidayUntil > G.year ? `; taxes from ${f.holidayUntil}` : "; pays taxes from day one"}.`, [{ label: "Jobs", v: fmtJobs(f.jobs), good: true, raw: true }].concat(impactDiff(before, f.name)));
 }
 
 function addJobs(thousands) {

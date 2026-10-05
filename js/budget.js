@@ -27,43 +27,118 @@ const INFRA = {
     telecom:    { name: "Telephone & data networks", icon: "📡", cost: 0.35, weeks: 78, units: 7, from: 1960, desc: "Finance, computing and modern business." }
 };
 
+// What each kind of infrastructure is built by, besides capital projects:
+// laws in force (target points at 100% strength and full funding) and Bill
+// Builder programs on that issue (points per 0.5% of GDP a year).
+const INFRA_LAWS = {
+    roads: { road_fund: 12, public_works: 5, urban_transit: 2 },
+    rail: { public_works: 4, urban_transit: 6 },
+    ports: { export_board: 4 },
+    airports: {},
+    power: { electrification: 12, public_works: 3 },
+    schools: { primary_schools: 8, secondary_schools: 5, literacy_campaign: 3, religious_schools: 2 },
+    hospitals: { public_clinics: 8, nhs: 9, nhi: 5 },
+    universities: { universities: 10, technical_schools: 4 },
+    housing: { public_housing: 12, public_works: 3 },
+    irrigation: { green_revolution: 6, mechanization: 5, extension: 3, rural_credit: 3 },
+    telecom: {}
+};
+const PROGRAM_INFRA = { transport: { roads: 1, rail: 0.5 }, energy: { power: 1 }, housing: { housing: 1 }, education: { schools: 1 }, universities: { universities: 1 }, health: { hospitals: 1 }, farms: { irrigation: 0.8 }, industry: { power: 0.3 } };
+const INFRA_DEPT = k => ({ schools: "education", universities: "education", hospitals: "health", housing: "welfare", irrigation: "agriculture" }[k] || "infra");
+
 // The coverage a country of this development level keeps up through routine
-// department spending. Capital projects push coverage above it; underfunding
-// a department lets it slide below.
-function infraTarget(k) {
+// department spending (before laws and programs).
+function infraNormal(k) {
     const d = G.dev, coast = G.res.includes("coast");
     const agri = G.ind.agriculture ? G.ind.agriculture.out / G.econ.gdp : 0.3;
     const pc = clamp(Math.log(Math.max(1, gdpPerCapita() / 300)) * 18, 0, 60);
-    const t = {
+    return clamp({
         roads: d.urban * 0.5 + d.ind * 0.4 + pc * 0.3, rail: d.ind * 0.6 + d.urban * 0.2, ports: coast ? 25 + d.ind * 0.5 + pc * 0.2 : 0,
         airports: G.year < 1955 ? d.urban * 0.2 : d.urban * 0.3 + pc * 0.5, power: d.ind * 0.7 + d.urban * 0.3 + pc * 0.2, schools: d.lit * 0.9,
         hospitals: G.s.health * 0.9, universities: d.uni * 5, housing: 100 - G.s.poverty, irrigation: 20 + agri * 60 + pc * 0.2,
         telecom: G.year < 1960 ? d.urban * 0.3 + d.ind * 0.2 - 10 : d.urban * 0.3 + d.ind * 0.2 + pc * 0.6 - 10
-    }[k];
-    const dept = { schools: "education", universities: "education", hospitals: "health", housing: "welfare", irrigation: "agriculture" }[k] || "infra";
-    return clamp(t * (0.85 + 0.15 * fundMult(dept)));
+    }[k]);
+}
+function infraBase(k) { return clamp(infraNormal(k) * (0.85 + 0.15 * fundMult(INFRA_DEPT(k)))); }
+
+// Everything that moves the target, for display: [label, points].
+function infraParts(k) {
+    const parts = [];
+    const n = infraNormal(k), base = infraBase(k);
+    if (Math.abs(base - n) >= 0.5) parts.push([`${DEPTS[INFRA_DEPT(k)].name} funding ${Math.round(fundMult(INFRA_DEPT(k)) * 100)}%`, base - n]);
+    Object.entries(INFRA_LAWS[k] || {}).forEach(([lk, pts]) => { if (lawOn(lk)) parts.push([lawDef(lk).name, pts * lawMult(lk)]); });
+    Object.entries(G.customLaws || {}).forEach(([lk, d]) => {
+        const w = d.issue && PROGRAM_INFRA[d.issue] && PROGRAM_INFRA[d.issue][k];
+        if (w && lawOn(lk)) parts.push([d.name, Math.min(20, (d.cost || 0) / 0.5 * 8) * w * lawMult(lk) * (d.region != null ? 0.5 : 1)]);
+    });
+    return parts;
+}
+function infraTarget(k) {
+    return clamp(infraBase(k) + infraParts(k).filter(([l]) => !/ funding /.test(l)).reduce((s, [, v]) => s + v, 0));
 }
 
 function initInfra() {
     G.infra = {};
     Object.keys(INFRA).forEach(k => { G.infra[k] = infraTarget(k); });
+    G.infraHist = [Object.assign({}, G.infra)];
 }
 
 const cov = k => (G.infra && G.infra[k] != null) ? G.infra[k] : 50;
 const covEff = (k, mid = 50) => (cov(k) - mid) / 50;   // −1..+1
-// Coverage relative to what a country at this level normally has.
-const covRel = k => !G.infra ? 0 : clamp((cov(k) - infraTarget(k)) / 30, -1, 1);
+// Coverage relative to what a country at this level normally has: what your
+// laws, programs and projects add on top pays off in growth, literacy and health.
+const covRel = k => !G.infra ? 0 : clamp((cov(k) - infraBase(k)) / 30, -1, 1);
 
 function infraGrowth() {
     return (covRel("roads") + covRel("rail") + covRel("ports") * 0.5 + covRel("airports") * 0.3 + covRel("power") * 1.5 + covRel("telecom") * 0.5) * 0.3;
 }
 
-function infraYearly() {
-    // Routine spending keeps coverage near the normal level for the country's
-    // development; anything above it wears down without new investment.
+// Monthly: coverage climbs toward the target as laws and budgets build it,
+// and anything above it wears down without new investment.
+function infraMonthly() {
+    if (!G.infra) return;
     Object.keys(INFRA).forEach(k => {
         const t = infraTarget(k), c = G.infra[k];
-        G.infra[k] = clamp(c < t ? c + (t - c) * 0.15 : c - Math.min(1.5, (c - t) * 0.08));
+        G.infra[k] = clamp(c < t ? c + (t - c) * 0.025 : c - Math.min(0.15, (c - t) * 0.008));
+    });
+    G.infraHist = (G.infraHist || []).concat([Object.assign({}, G.infra)]).slice(-13);
+    conditionsWatch();
+}
+// Change in the past year (from monthly snapshots).
+const infraChange = k => G.infraHist && G.infraHist.length ? cov(k) - (G.infraHist[0][k] != null ? G.infraHist[0][k] : cov(k)) : 0;
+
+// How much a capital project adds to coverage on completion.
+function projectGain(type, region) {
+    if (!INFRA[type]) return 0;
+    const r = G.regions[region], fit = r ? regionFit(type, r) : 0;
+    return INFRA[type].units * (G.econ.pop > 100 ? 0.7 : 1) * (fit > 0 ? 1.25 : fit < 0 ? 0.6 : 1);
+}
+
+// Target changes caused by a decision, as toast chips and a log line.
+function infraSnapshot() { const o = {}; Object.keys(INFRA).forEach(k => { o[k] = infraTarget(k); }); return o; }
+function infraDiff(before, why) {
+    const out = [];
+    Object.keys(INFRA).forEach(k => {
+        const d = infraTarget(k) - before[k];
+        if (Math.abs(d) >= 0.5) out.push({ label: `${INFRA[k].name} (target)`, v: Math.round(d), good: d > 0 });
+    });
+    if (out.length && why) log(`📐 ${why}: ${out.map(c => `${c.label.replace(" (target)", "")} ${c.v > 0 ? "+" : ""}${c.v}`).join(", ")} on the coverage target. Coverage will move toward it over the coming months.`, "policy");
+    return out;
+}
+
+// Tell the player when an industry's condition is newly met or lost.
+function conditionsWatch() {
+    G.condState = G.condState || {};
+    Object.keys(SECTOR_CONDITIONS).forEach(sk => {
+        if (!indAvailable(sk)) return;
+        const now = sectorConditions(sk).map(c => c.met);
+        const was = G.condState[sk];
+        G.condState[sk] = now;
+        if (!was || was.length !== now.length) return;
+        sectorConditions(sk).forEach((c, i) => {
+            if (now[i] && !was[i]) { log(`✅ ${INDUSTRIES[sk].icon} ${INDUSTRIES[sk].name}: "${c.label}" is now met. Development bonus +0.4.`, "good"); if (G.ind[sk].out > 0) toast(`${INDUSTRIES[sk].name}: condition met`, c.label, [{ label: "Development bonus", v: 0.4, good: true }]); }
+            if (!now[i] && was[i]) log(`⚠️ ${INDUSTRIES[sk].icon} ${INDUSTRIES[sk].name}: "${c.label}" is no longer met.`, "warn");
+        });
     });
 }
 
@@ -140,7 +215,7 @@ SCENES.cip_region = a => {
         const lean = (r.lean[G.leader.party] || 0);
         const bits = [`${r.pop}% of the people`, `support ${Math.round(regionSupport(r))}%${lean > 3 ? " (your heartland)" : lean < -3 ? " (opposition country)" : ""}`];
         if (here(i)) bits.push(`${here(i)} project${here(i) > 1 ? "s" : ""} already here`);
-        const fitTxt = fit > 0 ? "★ Good fit: +25% benefit. " : fit < 0 ? "⚠ Poor fit: −40% benefit. " : "";
+        const fitTxt = (fit > 0 ? "★ Good fit: +25% benefit. " : fit < 0 ? "⚠ Poor fit: −40% benefit. " : "") + (INFRA[a.type] ? `Coverage +${Math.round(projectGain(a.type, i))}. ` : "");
         return ch(`${r.n}${fit > 0 ? " ★" : fit < 0 ? " ⚠" : ""}`, {}, "", {
             hint: `${fitTxt}${r.d ? r.d + " " : ""}${bits.join(" · ")}`,
             run: () => { const it = proposeProject(a.type, i); return it ? `${info.name} goes to ${r.n}. ${G.cip.active.includes(it) ? "Funded: construction begins." : "It joins the queue."}` : ""; }
@@ -148,7 +223,7 @@ SCENES.cip_region = a => {
     });
     choices.push(ch("Cancel", {}, "No project added."));
     return S(info.icon, `${dateStr()} · Capital program`, `Where should the ${info.name.toLowerCase()} go?`,
-        `${nominal(projectCostBn(a.type))} from the capital budget · 2 ⚡. ${info.desc || ""}${why ? ` It ${why}.` : ""} The region gets jobs and a political boost when it opens.`, choices);
+        `${nominal(projectCostBn(a.type))} from the capital budget · 2 ⚡. ${info.desc || ""}${why ? ` It ${why}.` : ""}${INFRA[a.type] ? ` National ${info.name.toLowerCase()} coverage is ${Math.round(cov(a.type))}% now.` : ""} The region gets jobs and a political boost when it opens.`, choices);
 };
 
 function initCip() {
@@ -203,6 +278,7 @@ function cipTick() {
         p.left--;
         if (p.left > 0) return;
         p.done = true;
+        const before = impactSnapshot();
         const info = projectInfo(p.type), r = G.regions[p.region];
         // A project in a region that suits it does more good.
         const fit = r ? regionFit(p.type, r) : 0, m = fit > 0 ? 1.25 : fit < 0 ? 0.6 : 1;
@@ -216,9 +292,20 @@ function cipTick() {
             G.assets = G.assets || {};
             G.assets[`${sec}:${a}`] = true;
             addJobs(jobsFor(p.cost * 0.2, sec) * m);
-        } else G.infra[p.type] = clamp(G.infra[p.type] + info.units * (G.econ.pop > 100 ? 0.7 : 1) * m);
-        if (r) r.mod += 5 + (fit > 0 ? 2 : 0);
-        log(`✂️ ${info.name} opens in ${r ? r.n : "the country"}${fit > 0 ? ", where it suits the local economy" : fit < 0 ? ", though the region is a poor fit for it" : ""}.`, "good");
+        }
+        let gain = "";
+        const chips = [];
+        if (INFRA[p.type]) {
+            const before = G.infra[p.type];
+            G.infra[p.type] = clamp(before + projectGain(p.type, p.region));
+            const d = Math.round(G.infra[p.type] - before);
+            gain = ` ${info.name} coverage ${Math.round(before)}% → ${Math.round(G.infra[p.type])}% (+${d}).`;
+            chips.push({ label: `${info.name} coverage`, v: d, good: true });
+        }
+        if (r) { r.mod += 5 + (fit > 0 ? 2 : 0); chips.push({ label: `Support in ${r.n}`, v: 5 + (fit > 0 ? 2 : 0), good: true }); }
+        log(`✂️ ${info.name} opens in ${r ? r.n : "the country"}${fit > 0 ? ", where it suits the local economy" : fit < 0 ? ", though the region is a poor fit for it" : ""}.${gain}`, "good");
+        toast(`${info.name} opens`, `${r ? r.n : ""}${fit > 0 ? " · a good fit" : ""}`, chips.concat(impactDiff(before, `${info.name} in ${r ? r.n : "the country"}`).filter(c => c.kind !== "infra")));
+        conditionsWatch();
         if (chance(0.35)) queueScene("ribbon", { name: info.name, region: r ? r.n : "" });
     });
     G.cip.active = G.cip.active.filter(p => !p.done);
@@ -278,7 +365,9 @@ function adoptDraft() {
         const diff = v - b.depts[k];
         if (Math.abs(diff) > 0.01 && G.pillars[DEPTS[k].pillar]) G.pillars[DEPTS[k].pillar].l = clamp(G.pillars[DEPTS[k].pillar].l + diff * 25, 1, 99);
     });
+    const infraBefore = impactSnapshot();
     b.depts = d.depts; b.rates = d.rates; b.capital = d.capital;
+    if (infraBefore) impactDiff(infraBefore, "New department funding");
     b.status = "adopted"; b.draft = null;
     log(`💰 The FY${G.year} budget takes effect.`, "policy");
 }

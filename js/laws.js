@@ -345,10 +345,12 @@ function adjustLaw(k, dir) {
     G.capital -= 3;
     l.adj = G.t;
     const d = nl - l.level;
+    const infraBefore = impactSnapshot();
     l.level = nl;
-    lawReaction(k, d);
+    const ch = lawReaction(k, d);
     log(`📜 Executive adjustment: ${lawDef(k).name} ${d > 0 ? "strengthened" : "scaled back"} to ${Math.round(nl * 100)}%.`, "policy");
-    toast("Executive adjustment", `${lawDef(k).name} is now at ${Math.round(nl * 100)}%.`);
+    if (infraBefore) ch.push(...impactDiff(infraBefore, lawDef(k).name));
+    toast("Executive adjustment", `${lawDef(k).name} is now at ${Math.round(nl * 100)}%.`, ch);
 }
 
 // Immediate reaction of power bases and your party to a change of level d.
@@ -368,6 +370,7 @@ function lawReaction(k, d) {
 
 function setLaw(k, level, how) {
     const prev = lawLevel(k);
+    const infraBefore = impactSnapshot();
     level = Math.round(clamp(level, 0, 1) * 100) / 100;
     if (level <= 0) delete G.laws[k];
     else G.laws[k] = Object.assign(G.laws[k] || { since: G.t }, { level });
@@ -377,6 +380,7 @@ function setLaw(k, level, how) {
     log(`📜 ${how}: ${def.name} ${verb}${level > 0 ? ` at ${Math.round(level * 100)}%` : ""}.`, "policy");
     if (prev === 0 && level > 0) record(`Enacted ${def.name}, ${G.year}.`);
     if (level === 0 && prev > 0) record(`Repealed ${def.name}, ${G.year}.`);
+    if (infraBefore) ch.push(...impactDiff(infraBefore, def.name));
     return ch;
 }
 
