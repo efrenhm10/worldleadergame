@@ -46,7 +46,7 @@ function ensureRebels(of, name, mil) {
 }
 
 function startWar(o) {
-    const w = Object.assign({ id: WAR_ID++ + "_" + G.t, front: 0, weeks: 0, cas: { a: 0, b: 0 }, mom: 0, commit: {}, over: false }, o);
+    const w = Object.assign({ id: WAR_ID++ + "_" + G.t, start: G.t, front: 0, weeks: 0, cas: { a: 0, b: 0 }, mom: 0, commit: {}, over: false }, o);
     if (G.wars.some(x => !x.over && x.name === w.name)) return null;
     G.wars.push(w);
     if (w.a.includes(G.ck) || w.b.includes(G.ck)) {

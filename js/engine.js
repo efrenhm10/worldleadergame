@@ -70,7 +70,7 @@ function newGame(opts) {
         leader: {
             name: opts.name, age: opts.age, gender: opts.gender || "m", bg: opts.bg, traits: opts.traits.slice(),
             skills: Object.assign({ oratory: 0, legislation: 0, economics: 0, diplomacy: 0, military: 0, intrigue: 0 }, opts.skills),
-            look: opts.look, ideology: opts.ideology, party: opts.party, title: c.leader.title, health: 80, since: 0, historical: !!opts.historical,
+            look: opts.look, ideology: opts.ideology, party: opts.party, title: genderTitle(c.leader.title, opts.gender), health: 80, since: 0, historical: !!opts.historical,
             heir: c.heir ? deep(c.heir) : null
         },
         gov: { type: c.gov, sub: c.monarchy || null },
@@ -89,6 +89,7 @@ function newGame(opts) {
     G.ref = { health: G.s.health, poverty: G.s.poverty, crime: G.s.crime, pc: gdpPerCapita() };
     recomputeDerived(); initInfra(); initCip();
     setupWorld();
+    initInstitutions();
     G.econ.rev = taxBase().total; G.econ.spend = governmentSpend().total; G.econ.deficit = G.econ.spend - G.econ.rev;
     setupPillars();
     if (c.status === "colony") initColony(c);
@@ -385,7 +386,7 @@ function indRate(k) {
     const d = INDUSTRIES[k], i = G.ind[k];
     let r = industryTrend(k, G.year) * 0.72;
     r += policyFx("growth") * 0.9;
-    r += SUPPORT_LEVELS[i.sup].bonus;
+    r += SUPPORT_LEVELS[i.sup].bonus * wtoSupportMult() + gattIndBonus(k);
     r -= Math.min(9, indGap(k));
     const econ = G.pol.economy;
     if (i.own === "state") r += (econ === "planned" || econ === "collectivized") ? (d.heavy ? 1.2 : -0.5) : -0.8;
@@ -453,6 +454,7 @@ function monthlyTick(newYear) {
     histEventsTick();
     worldMonthTick();
     goalsCheck();
+    institutionsMonth();
     if (G.colony) colonyMonth();
     if (G.gov.cohabitation && chance(0.15)) log("Cohabitation: the opposition-led government blocks your domestic agenda.", "warn");
 }
@@ -464,8 +466,9 @@ function yearlyTick() {
     yearlyFirms();
     // Sovereign default when debt spirals out of control.
     const dp = G.econ.debt / G.econ.gdp * 100;
-    if (dp > 220) {
+    if (dp > (G.inst && G.inst.program ? 260 : 220)) {
         G.econ.debt *= 0.45;
+        G.flags.defaulted_year = G.year;
         applyEffects({ prestige: -10, growth: -3, inflation: 5, p: { business: -10, people: -6 } });
         log(`💥 ${C().name} defaults on its debts. Creditors take a 55% haircut.`, "major");
         record(`Defaulted on the national debt, ${G.year}.`);
@@ -506,6 +509,7 @@ function potentialGrowth() {
     if (playerWars().some(w => commitOf(w) >= 3)) g -= 1;
     if (G.gov.type === "colony") g -= 0.5;
     if (G.year >= 1974) g -= 0.5;
+    g -= instGrowthDrag();
     return clamp(g, -15, 14);
 }
 

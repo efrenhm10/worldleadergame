@@ -106,6 +106,7 @@ function prospectOdds(p) {
     if (p.home && G.nations[p.home]) o += getRel(G.ck, p.home) / 400;
     o += skill("economics") * 0.015 + minBonus("industry") * 0.03 + (p.known ? 0.05 : 0);
     if (G.gov.type === "colony") o -= 0.1;
+    o += instInvestBonus();
     return clamp(o, 0.02, 0.95);
 }
 
@@ -226,7 +227,7 @@ function taxBase() {
     const stateRev = ({ planned: 8, collectivized: 12 }[G.pol.economy] || 0) * Math.min(1, e.taxCap + 0.3);
     const royalty = { concessions: 0.15, partnership: 0.45, nationalized: 0.7 }[G.pol.resources] || 0.15;
     const resources = (indValue("oil") * royalty + indValue("mining") * royalty * 0.3) / e.gdp * 100;
-    const tariffs = ({ protection: 1.5, managed: 0.8, trade_free: 0.2, autarky: 0.5 }[G.pol.trade] || 0.8) * eff;
+    const tariffs = ({ protection: 1.5, managed: 0.8, trade_free: 0.2, autarky: 0.5 }[G.pol.trade] || 0.8) * eff * gattTariffMult();
     const colonyCut = G.gov.type === "colony" ? 0.6 : 1;
     const total = (income + payroll + sales + land + wealth + corp + stateRev + resources + tariffs) * colonyCut;
     return { income, payroll, sales, land, wealth, corp, stateRev, resources, tariffs, holidayLoss, total, formal };

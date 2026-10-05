@@ -23,8 +23,8 @@ const ACTIONS = {
     crBg: d => { readCreatorInputs(); ui.creator.bg = d.k; renderCreator(); },
     crTrait: d => { readCreatorInputs(); const t = ui.creator.traits; const i = t.indexOf(d.k); if (i >= 0) t.splice(i, 1); else { if (t.length >= 2) t.shift(); t.push(d.k); } renderCreator(); },
     crSkill: d => { readCreatorInputs(); const s = ui.creator.skills; const v = (s[d.k] || 0) + (+d.d); if (v < 0 || v > 5) return; if (+d.d > 0 && skillTotal() >= SKILL_POINTS) return; s[d.k] = v; renderCreator(); },
-    crLook: d => { readCreatorInputs(); const opts = LOOK_OPTIONS[d.k]; ui.creator.look[d.k] = (ui.creator.look[d.k] + (+d.d) + opts.length) % opts.length; renderCreator(); },
-    crRandName: () => { readCreatorInputs(); ui.creator.name = randomLeaderName(ui.setupCk); ui.creator.historical = false; renderCreator(); },
+    crLook: d => { readCreatorInputs(); const opts = LOOK_OPTIONS[d.k]; ui.creator.look[d.k] = ((ui.creator.look[d.k] || 0) + (+d.d) + opts.length) % opts.length; renderCreator(); },
+    crRandName: () => { readCreatorInputs(); ui.creator.name = randomLeaderName(ui.setupCk, ui.creator.gender); ui.creator.historical = false; renderCreator(); },
     crBegin: () => {
         readCreatorInputs();
         const cr = ui.creator;
@@ -75,6 +75,12 @@ const ACTIONS = {
 
     // Economy
     indSel: d => { ui.ind = ui.ind === d.k ? null : d.k; render(); },
+    instJoin: d => { applyToInst(d.k); render(); },
+    instLeave: d => { leaveInst(d.k); render(); },
+    imfRequest: () => { requestImf(); render(); },
+    finProject: d => { askFinancing(d.id); render(); },
+    parisClub: () => { parisClub(); render(); },
+    hipc: () => { hipcApply(); render(); },
     ceoTalk: d => { startCeoTalk(+d.i); render(); },
     offer: d => { makeOffer(+d.i); render(); },
     startup: d => { backEntrepreneur(d.k, d.w); render(); },
@@ -122,6 +128,13 @@ document.addEventListener("change", e => {
     if (el.dataset.change === "lawLevel") { ui.lawLevel = +el.value; render(); }
     if (el.dataset.change === "builder") { const f = el.dataset.f; ui.builder[f] = ["amount", "years"].includes(f) ? +el.value : el.value; render(); }
     if (el.dataset.change === "builderProv") { const k = el.dataset.k, p = ui.builder.provs; const i = p.indexOf(k); if (el.checked && i < 0) p.push(k); if (!el.checked && i >= 0) p.splice(i, 1); render(); }
+    if (el.id === "crGender" && ui.creator) {
+        const cr = ui.creator, was = cr.gender;
+        readCreatorInputs();
+        // A woman can't keep a man's name (and vice versa): offer a fitting one.
+        if (cr.gender !== was) { cr.name = randomLeaderName(cr.ck || ui.setupCk, cr.gender); cr.historical = false; }
+        renderCreator();
+    }
     if (el.dataset.change === "draft") { setDraft(el.dataset.kind, el.dataset.k, +el.value); render(); }
 });
 

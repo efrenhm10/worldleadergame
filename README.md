@@ -33,7 +33,10 @@ Keys: **Space** advances one week, **1–9** pick a decision option.
    industries and national goals.
 3. **Build your leader.** Keep the real 1950 leader or make your own: name, age,
    gender, look (with a live portrait), party, ideology, backstory, two traits
-   and 10 skill points. Every party and ideology has a plain-language
+   and 10 skill points. Women leaders get their own portrait, hairstyles
+   (from 1950s set curls and a bob to a dupatta or hijab), clothes (skirt suit
+   and pearls, sari, kimono, kebaya, abaya, uniform, robes), names from their
+   country's culture and titles to match (Queen, Empress, Chairwoman). Every party and ideology has a plain-language
    explanation. Your **backstory** (former senator, war hero, party loyalist,
    union leader, revolutionary, general and others) sets your starting allies,
    enemies and approval.
@@ -215,6 +218,48 @@ underfunding lets it slide.
   dollars. Debt can spiral into default, and oil shocks hit importers and
   enrich exporters.
 
+## International institutions (Institutions tab)
+
+The postwar order as it actually worked. Countries join on their real dates
+(the IMF and World Bank in 1945–46, West Germany and Japan in 1952, Beijing
+taking China's UN seat in 1971, Switzerland joining the UN in 2002) unless you
+change history. You can also apply, decline or withdraw yourself.
+
+- **IMF:** lends to members in a debt, inflation or balance-of-payments
+  crisis, on conditions that change with the era:
+  - 1950s–70s: devaluation and credit ceilings.
+  - 1980s–90s: structural adjustment (end food subsidies and price controls,
+    privatize, free trade, a VAT).
+  - From 2000: social-spending floors, anti-corruption and revenue.
+
+  Reviews every six months release the next tranche. Miss conditions and the
+  program is suspended and capital flees. Subsidy cuts can bring riots.
+  Crisis events (the Asian crisis, debt crises, India in 1991) now run through
+  real IMF programs.
+- **World Bank, IDA and the regional banks:** finance infrastructure projects
+  in your capital program. Each lender has its own rules:
+  - **IDA (from 1960):** near-grant loans for the poorest countries.
+  - **Regional banks:** the Inter-American (1960), African (1967), Asian
+    (1967) and European (EBRD, 1991) development banks, and the AIIB (2016).
+
+  Each lender has a yearly envelope and graduates you as you get richer.
+  Loans depend on relations with its main shareholder and on corruption.
+  Contracts go to international tender, and dams face resettlement protests.
+- **GATT, then the WTO (1995):** cuts tariffs (less tariff revenue, faster
+  export industries) through the Kennedy, Tokyo and Uruguay rounds. The WTO
+  also limits industrial subsidies. Joining after 1995 takes years of
+  accession talks.
+- **The UN:** address the General Assembly every September. Start a war and
+  the Security Council takes it up; the five permanent members can veto, and
+  friends may veto for you. Sanctions cut growth and investment, and close
+  the development banks to you. Apartheid South Africa faces the 1977 arms
+  embargo.
+- **The OECD, G7 and G20:** the rich democracies' club, and annual summits for
+  the biggest economies (the G20 leaders' summits begin in 2008).
+- **Debt relief:** the Paris Club reschedules debts alongside an IMF program.
+  HIPC (from 1996) cancels most of the debt of the poorest countries that keep
+  a poverty-reduction strategy for three years.
+
 ## The world
 
 Every other country is simulated. They grow, change leaders on the historical
@@ -258,6 +303,7 @@ scandals, disasters, lobbyists, pork demands, investors and more.
 | `js/legislature.js` | Bills, committees, floor votes, factions' bills, programs |
 | `js/budget.js` | Infrastructure, the annual budget, the treasury draft, the CIP |
 | `js/develop.js` | Sector fit, conditions, public investments, CEO pitches, homegrown firms, film |
+| `js/institutions.js` | The UN, IMF, World Bank and regional banks, GATT/WTO, OECD, G7/G20, debt relief |
 | `js/cabinet.js` | Ministers, health, crime and poverty indicators |
 | `js/companies.js` | The investment desk, jobs, tax base, living standards |
 | `js/world.js` | AI nations, relations, wars |

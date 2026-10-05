@@ -144,7 +144,7 @@ HIST.push(
 
 hscene("india91", () => S("💱", `${dateStr()} · Balance-of-payments crisis`, "India has two weeks of imports left",
     "Foreign exchange reserves have collapsed. The IMF offers a loan if you open the economy: cut tariffs, end the 'License Raj', welcome foreign investment.",
-    [ch("Liberalize", { growth: 1, p: { business: 12, labor: -6 } }, "Growth takes off within a few years.", { run: () => { G.pol.economy = "market"; G.pol.trade = "trade_free"; } }),
+    [ch("Liberalize", { growth: 1, p: { business: 12, labor: -6 } }, "Growth takes off within a few years.", { run: () => { G.pol.economy = "market"; G.pol.trade = "trade_free"; return imfFromEvent(); } }),
      ch("Muddle through with emergency borrowing", { cost: 1, inflation: 2 }, "")]));
 
 hscene("oslo", () => S("🕊️", `${dateStr()} · Oslo`, "A secret peace channel",
@@ -159,7 +159,7 @@ hscene("nafta", () => S("🤝", `${dateStr()} · North America`, "NAFTA",
 
 hscene("asian_crisis", () => S("📉", `${dateStr()} · Markets`, "The Asian financial crisis hits",
     "Your currency is in free fall as foreign capital flees. The IMF offers a rescue package with harsh conditions.",
-    [ch("Accept the IMF program", { growth: -3, unemp: 3, p: { people: -10, business: 5 }, cash: 3 }, "Painful austerity; markets stabilize."),
+    [ch("Accept the IMF program", { growth: -3, unemp: 3, p: { people: -10, business: 5 } }, "Painful austerity; markets stabilize.", { run: () => imfFromEvent() }),
      ch("Impose capital controls", { growth: -2, p: { business: -8, people: 2 }, prestige: -2 }, "Malaysia-style defiance."),
      ch("Let it burn", { growth: -5, unemp: 5, stability: -12, p: { people: -15 } }, "")]));
 

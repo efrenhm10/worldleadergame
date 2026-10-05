@@ -117,8 +117,47 @@ const LOOK_OPTIONS = {
     hair: ["bald", "receding", "short", "side part", "slicked", "wavy", "long", "bun", "turban", "keffiyeh", "military cap", "crown"],
     facial: ["none", "mustache", "goatee", "full beard", "stubble"],
     glasses: ["none", "round", "horn-rimmed"],
-    attire: ["dark suit", "grey suit", "military uniform", "royal robes", "Mao suit", "thobe", "traditional dress", "safari suit"]
+    attire: ["dark suit", "grey suit", "military uniform", "royal robes", "Mao suit", "thobe", "traditional dress", "safari suit"],
+    // Women leaders get their own hairstyles and clothes.
+    hairF: ["set curls", "bob", "chignon", "long", "bun", "pixie", "headscarf", "hijab", "dupatta", "military cap", "tiara"],
+    attireF: ["skirt suit & pearls", "tailored jacket", "day dress", "sari", "abaya", "kimono", "military uniform", "royal robes", "Mao suit", "kebaya"]
 };
+
+const LOOK_KEYS = { m: ["skin", "hairColor", "hair", "facial", "glasses", "attire"], f: ["skin", "hairColor", "hairF", "glasses", "attireF"] };
+const LOOK_LABELS = { skin: "Skin", hairColor: "Hair color", hair: "Hair / headwear", facial: "Facial hair", glasses: "Glasses", attire: "Attire", hairF: "Hair / headwear", attireF: "Attire" };
+
+// Women's names for each naming culture (fictional, era-appropriate).
+const NAME_POOLS_F = {
+    anglo: ["Margaret Lowell", "Helen Ashby", "Ruth Calder", "Eleanor Whitfield", "Dorothy Hargrave", "Catherine Byrne", "Joan Mercer", "Patricia Holloway"],
+    slavic: ["Valentina Orlova", "Yekaterina Belova", "Nina Sokolova", "Galina Volkova", "Tatiana Morozova"],
+    chinese: ["Liu Xiulan", "Chen Huifang", "Wang Yuying", "Zhang Lihua", "Zhou Meifeng"],
+    hindi: ["Kamala Iyer", "Sarojini Rao", "Lakshmi Menon", "Vijaya Kulkarni", "Aruna Sethi"],
+    french: ["Simone Marchand", "Hélène Duval", "Geneviève Mercier", "Madeleine Fontaine", "Claire Lefebvre"],
+    german: ["Gerda Vogel", "Hildegard Becker", "Ursula Hartmann", "Elisabeth Neumann", "Ingrid Scholz"],
+    japanese: ["Fusae Morita", "Michiko Sakamoto", "Takako Kondo", "Yoshiko Hara", "Kazuko Murata"],
+    iberian: ["Ana Duarte", "María Elena Roca", "Beatriz Ferreira", "Isabel Medina", "Lucía Salgado"],
+    arabic: ["Noura bint Khalid", "Fatima al-Rashid", "Huda al-Nahyan", "Lubna bint Mansour", "Amal al-Qasimi"],
+    persian: ["Mahnaz Shirazi", "Shirin Farzan", "Parvin Ghaffari", "Leila Amini", "Roya Ala"],
+    turkish: ["Ayşe Aydın", "Nermin Arslan", "Fatma Yılmaz", "Leyla Demir"],
+    hebrew: ["Golda Halevi", "Miriam Avidan", "Ruth Shapira", "Shulamit Ben-Ami"],
+    african: ["Funmilayo Adeyemi", "Ngozi Okafor", "Aisha Bello", "Tsehay Wolde", "Nomvula Nkosi", "Amina Abubakar"],
+    afrikaans: ["Johanna Botha", "Elsabé van Wyk", "Marieke du Plessis", "Anna Strijdom"],
+    malay: ["Siti Hashim", "Lim Mei Ling", "Dewi Suryo", "Teresita Reyes", "Rahmah Nasution"],
+    nordic: ["Kari Haugland", "Gro Lund", "Ruth Keller", "Ingrid Borten", "Elisabeth Rüegg"],
+    khmer: ["Norodom Kanthi", "Chea Sophea", "Sok Malis", "Son Sreymom"],
+    pacific: ["Adi Litia Kamisese", "Mere Tora", "Mia Walcott", "Aroha Tane", "Merewai Reddy"]
+};
+
+// Titles follow whoever holds the office.
+const TITLE_PAIRS = [["King", "Queen"], ["Emperor", "Empress"], ["Prince", "Princess"], ["Shah", "Shahbanu"], ["Sultan", "Sultana"], ["Emir", "Emira"], ["Sheikh", "Sheikha"], ["Chairman", "Chairwoman"], ["chairman", "chairwoman"]];
+function genderTitle(title, gender) {
+    if (!title) return title;
+    TITLE_PAIRS.forEach(([m, f]) => {
+        const re = new RegExp(`\\b${gender === "f" ? m : f}\\b`, "g");
+        title = title.replace(re, gender === "f" ? f : m);
+    });
+    return title;
+}
 
 function defaultLook(ck) {
     const c = COUNTRIES[ck];
@@ -146,10 +185,21 @@ function defaultLook(ck) {
     if (ck === "ethiopia") { look.facial = 3; look.hairColor = 1; }
     if (ck === "israel") { look.hair = 1; look.hairColor = 6; }
     if (ck === "pakistan") { look.glasses = 2; }
+    // A woman in the same office: hair and clothes that fit the country and era.
+    look.hairF = 0; look.attireF = 0;
+    if (["india", "pakistan"].includes(ck)) { look.hairF = 8; look.attireF = 3; }
+    if (["saudi", "uae"].includes(ck)) { look.hairF = 7; look.attireF = 4; }
+    if (["indonesia", "cambodia"].includes(ck)) { look.hairF = 4; look.attireF = 9; }
+    if (ck === "japan") { look.hairF = 2; look.attireF = 1; }
+    if (ck === "china") { look.hairF = 1; look.attireF = 8; }
+    if (["venezuela", "brazil"].includes(ck)) { look.hairF = 9; look.attireF = 6; }
+    if (c.gov === "monarchy" && !["saudi"].includes(ck)) { look.hairF = 10; look.attireF = 7; }
+    if (age >= 65) look.hairF = look.hairF === 0 ? 1 : look.hairF;
     return look;
 }
 
 function portraitSVG(look, gender = "m", size = 120) {
+    if (gender === "f") return portraitF(look || {}, size);
     const L = look || {};
     const skin = LOOK_OPTIONS.skin[L.skin || 0];
     const hc = LOOK_OPTIONS.hairColor[L.hairColor || 0];
@@ -197,7 +247,63 @@ function portraitSVG(look, gender = "m", size = 120) {
     return `<svg viewBox="0 0 120 120" width="${size}" height="${size}" class="portrait" aria-hidden="true">${back}${body}${neck}${face}${eyes}${nose}${mouth}${fac}${gl}${hairSvg}</svg>`;
 }
 
-function randomLeaderName(ck) {
-    const pool = NAME_POOLS[COUNTRIES[ck] ? COUNTRIES[ck].names : "anglo"] || NAME_POOLS.anglo;
+function randomLeaderName(ck, gender) {
+    const culture = COUNTRIES[ck] ? COUNTRIES[ck].names : "anglo";
+    const women = NAME_POOLS_F[culture] || NAME_POOLS_F.anglo;
+    let pool = NAME_POOLS[culture] || NAME_POOLS.anglo;
+    if (gender === "f") pool = women;
+    else if (gender === "m") pool = pool.filter(n => !women.includes(n));
     return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// ── A woman's portrait ──────────────────────────────────────────────
+
+function portraitF(L, size) {
+    const skin = LOOK_OPTIONS.skin[L.skin || 0];
+    const hc = LOOK_OPTIONS.hairColor[L.hairColor || 0];
+    const hair = LOOK_OPTIONS.hairF[L.hairF || 0];
+    const glasses = LOOK_OPTIONS.glasses[L.glasses || 0];
+    const attire = LOOK_OPTIONS.attireF[L.attireF || 0];
+    const shade = "rgba(0,0,0,.16)";
+    const torso = (c, extra = "") => `<path d="M18 120 C21 95 40 86 60 86 C80 86 99 95 102 120 Z" fill="${c}"/>${extra}`;
+    const pearls = [[50, 88], [53.5, 91], [57.5, 92.6], [62.5, 92.6], [66.5, 91], [70, 88]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.7" fill="#f7f3ea" stroke="#cdbfa3" stroke-width=".5"/>`).join("");
+    const scarfC = { headscarf: "#7b3f5e", hijab: "#34445e", dupatta: "#d4a64a" }[hair];
+    let body = "";
+    if (attire === "skirt suit & pearls") body = torso("#24324a", `<path d="M50 86 L60 103 L70 86 Z" fill="#f3efe6"/><path d="M50 86 L56 108 M70 86 L64 108" stroke="#1a2436" stroke-width="2"/>${pearls}`);
+    else if (attire === "tailored jacket") body = torso("#6a6f7a", `<path d="M51 86 L60 100 L69 86 Z" fill="#f4f0ea"/><path d="M55 88 L60 92 L65 88 L60 90 Z" fill="#8a2f3c"/><circle cx="79" cy="98" r="3" fill="#d8b44a" stroke="#a9862a"/>`);
+    else if (attire === "day dress") body = torso("#3d6b8f", `<path d="M49 85 Q60 96 71 85 Z" fill="${skin}"/><path d="M30 106 C50 110 70 110 90 106" stroke="#2f5674" stroke-width="2" fill="none"/>`);
+    else if (attire === "sari") body = torso("#a8323f", `<path d="M50 86 Q60 93 70 86 Z" fill="${skin}"/><path d="M38 90 C58 94 82 104 98 120 L72 120 C64 108 52 98 38 90 Z" fill="#d9a441"/><path d="M38 90 C58 94 82 104 98 120" stroke="#f1d58a" stroke-width="1.5" fill="none"/>`);
+    else if (attire === "abaya") body = torso("#18181d", `<path d="M58 88 L60 120" stroke="#2a2a31" stroke-width="1.5"/>`);
+    else if (attire === "kimono") body = torso("#7a2e45", `<path d="M46 86 L66 114" stroke="#f2ede4" stroke-width="4"/><path d="M74 86 L58 104" stroke="#f2ede4" stroke-width="4"/><rect x="20" y="110" width="80" height="8" fill="#d9b25a"/>`);
+    else if (attire === "military uniform") body = torso("#4d5a3a", `<path d="M49 86 L60 97 L71 86" stroke="#c8a64b" stroke-width="3" fill="none"/><rect x="30" y="99" width="13" height="4.5" fill="#c33"/><rect x="30" y="104" width="13" height="4.5" fill="#36c"/><rect x="22" y="92" width="13" height="4" fill="#c8a64b"/><rect x="85" y="92" width="13" height="4" fill="#c8a64b"/>`);
+    else if (attire === "royal robes") body = torso("#6b1d3a", `<path d="M42 87 C50 96 70 96 78 87 L82 120 L38 120 Z" fill="#f4efe6"/><path d="M40 92 L80 116" stroke="#2a4f9e" stroke-width="6"/><circle cx="66" cy="104" r="4" fill="#c8a64b"/>${pearls}`);
+    else if (attire === "Mao suit") body = torso("#59605a", `<path d="M49 86 L60 92 L71 86" stroke="#3a3f3b" stroke-width="3" fill="none"/><path d="M60 92 L60 120" stroke="#3a3f3b" stroke-width="2"/><circle cx="60" cy="101" r="1.8" fill="#222"/><circle cx="60" cy="111" r="1.8" fill="#222"/>`);
+    else body = torso("#2f6b5a", `<path d="M50 86 L60 98 L70 86 Z" fill="${skin}"/><path d="M44 88 L60 112 L76 88" stroke="#e8d9a8" stroke-width="2" fill="none"/><circle cx="60" cy="104" r="2.2" fill="#d8b44a"/>`);
+    const neck = `<rect x="53" y="70" width="14" height="18" rx="6" fill="${skin}"/>`;
+    const covered = ["headscarf", "hijab"].includes(hair);
+    const ears = covered ? "" : `<ellipse cx="38.5" cy="54" rx="3.5" ry="5.5" fill="${skin}"/><ellipse cx="81.5" cy="54" rx="3.5" ry="5.5" fill="${skin}"/>`;
+    const face = `${ears}<path d="M39 50 C39 33 48 26 60 26 C72 26 81 33 81 50 C81 66 72 79 60 79 C48 79 39 66 39 50 Z" fill="${skin}"/>`;
+    const earrings = covered ? "" : `<circle cx="38.5" cy="61" r="1.8" fill="#e9d38a"/><circle cx="81.5" cy="61" r="1.8" fill="#e9d38a"/>`;
+    const eyes = `<path d="M46.5 52 Q51 47.6 55.5 52 Q51 55.2 46.5 52 Z M64.5 52 Q69 47.6 73.5 52 Q69 55.2 64.5 52 Z" fill="#f7f4ef"/><circle cx="51" cy="51.8" r="2.1" fill="#2b1d14"/><circle cx="69" cy="51.8" r="2.1" fill="#2b1d14"/><circle cx="51.7" cy="51.1" r=".6" fill="#fff"/><circle cx="69.7" cy="51.1" r=".6" fill="#fff"/><path d="M46.2 52 Q51 47.2 55.8 51.6 M64.2 51.6 Q69 47.2 73.8 52" stroke="#1a1a1a" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M46.4 51.6 L44.9 50.2 M55.6 51.3 L57 49.9 M64.4 51.3 L63 49.9 M73.6 51.6 L75.1 50.2" stroke="#1a1a1a" stroke-width="1" stroke-linecap="round"/><path d="M45.5 46 Q51 42.5 56 45 M64 45 Q69 42.5 74.5 46" stroke="${hc}" stroke-width="1.5" fill="none" stroke-linecap="round"/>`;
+    const blush = `<ellipse cx="47" cy="62" rx="5" ry="3" fill="#e0707a" opacity=".18"/><ellipse cx="73" cy="62" rx="5" ry="3" fill="#e0707a" opacity=".18"/>`;
+    const nose = `<path d="M60 55 L58 62 L61.5 62" stroke="${shade}" stroke-width="1.4" fill="none"/>`;
+    const mouth = `<path d="M53.5 68.5 Q56.8 66.6 60 68 Q63.2 66.6 66.5 68.5 Q60 73.5 53.5 68.5 Z" fill="#b8434f"/><path d="M54 68.6 Q60 70 66 68.6" stroke="#8e2f3a" stroke-width=".8" fill="none"/>`;
+    let back = "", front = "";
+    const curls = `<circle cx="37" cy="56" r="6.5" fill="${hc}"/><circle cx="83" cy="56" r="6.5" fill="${hc}"/><circle cx="38" cy="64" r="5" fill="${hc}"/><circle cx="82" cy="64" r="5" fill="${hc}"/>`;
+    const setFront = `<path d="M37 50 C34 30 46 20 60 20 C74 20 86 30 83 50 C81 42 78 36 72 34 C68 38 64 33 60 35 C56 33 52 38 48 34 C42 36 39 42 37 50 Z" fill="${hc}"/>`;
+    if (hair === "set curls") { back = `<ellipse cx="60" cy="46" rx="29" ry="27" fill="${hc}"/>`; front = setFront + curls; }
+    else if (hair === "bob") { back = `<path d="M32 74 C27 40 40 18 60 18 C80 18 93 40 88 74 C80 76 76 70 76 64 L44 64 C44 70 40 76 32 74 Z" fill="${hc}"/>`; front = `<path d="M38 47 C38 28 50 22 60 22 C70 22 82 28 82 47 C76 37 68 34 60 34 C52 34 44 37 38 47 Z" fill="${hc}"/>`; }
+    else if (hair === "chignon") { back = `<circle cx="83" cy="34" r="8" fill="${hc}"/>`; front = `<path d="M38 47 C35 26 48 20 60 20 C72 20 85 26 82 47 C79 35 72 29 60 29 C48 29 41 35 38 47 Z" fill="${hc}"/>`; }
+    else if (hair === "long") { back = `<path d="M31 98 C24 52 36 16 60 16 C84 16 96 52 89 98 Z" fill="${hc}"/>`; front = `<path d="M38 52 C35 29 46 20 60 20 C74 20 85 29 82 52 C80 39 72 31 61 29 L59 29 C48 31 40 39 38 52 Z" fill="${hc}"/>`; }
+    else if (hair === "bun") front = `<circle cx="60" cy="17" r="9" fill="${hc}"/><path d="M38 49 C35 28 48 22 60 22 C72 22 85 28 82 49 C80 37 73 30 60 30 C47 30 40 37 38 49 Z" fill="${hc}"/>`;
+    else if (hair === "pixie") front = `<path d="M38 49 C35 26 50 18 62 20 C76 22 87 30 82 50 C79 40 74 34 66 33 C60 37 51 36 45 38 C41 41 39 45 38 49 Z" fill="${hc}"/>`;
+    else if (hair === "headscarf") { back = `<path d="M31 66 C27 34 40 14 60 14 C80 14 93 34 89 66 C87 78 80 84 76 84 L44 84 C40 84 33 78 31 66 Z" fill="${scarfC}"/>`; front = `<path d="M38 44 C41 27 50 23 60 23 C70 23 79 27 82 44 C75 35 68 33 60 33 C52 33 45 35 38 44 Z" fill="${hc}"/><path d="M36 42 C40 24 50 19 60 19 C70 19 80 24 84 42 C78 30 70 26 60 26 C50 26 42 30 36 42 Z" fill="${scarfC}"/><path d="M52 82 L60 90 L68 82" stroke="${scarfC}" stroke-width="5" fill="none"/>`; }
+    else if (hair === "hijab") { back = `<path d="M28 104 C21 52 36 14 60 14 C84 14 99 52 92 104 Z" fill="${scarfC}"/>`; front = `<path d="M37 46 C39 27 50 22 60 22 C70 22 81 27 83 46 C77 37 69 34 60 34 C51 34 43 37 37 46 Z" fill="${scarfC}"/><path d="M39 58 C41 79 50 85 60 85 C70 85 79 79 81 58 C84 84 72 95 60 95 C48 95 36 84 39 58 Z" fill="${scarfC}"/>`; }
+    else if (hair === "dupatta") { back = `<path d="M28 98 C22 50 34 12 60 12 C86 12 98 50 92 98 L85 98 C89 58 82 27 60 27 C38 27 31 58 35 98 Z" fill="${scarfC}" opacity=".92"/>`; front = `<path d="M39 50 C37 30 47 24 60 24 C73 24 83 30 81 50 C78 38 70 32 61 31 L59 31 C50 32 42 38 39 50 Z" fill="${hc}"/><path d="M34 40 C40 20 52 15 60 15 C68 15 80 20 86 40 C78 27 70 23 60 23 C50 23 42 27 34 40 Z" fill="${scarfC}" opacity=".92"/>`; }
+    else if (hair === "military cap") { back = `<path d="M33 72 C28 42 40 22 60 22 C80 22 92 42 87 72 C80 74 77 68 77 62 L43 62 C43 68 40 74 33 72 Z" fill="${hc}"/>`; front = `<path d="M33 38 C35 24 48 16 60 16 C72 16 85 24 87 38 Z" fill="#4d5a3a"/><path d="M31 38 L89 38 L83 44 L37 44 Z" fill="#1d1d1d"/><circle cx="60" cy="28" r="4" fill="#c8a64b"/>`; }
+    else if (hair === "tiara") { back = `<ellipse cx="60" cy="46" rx="29" ry="27" fill="${hc}"/>`; front = setFront + curls + `<path d="M44 30 L48 21 L54 27 L60 17 L66 27 L72 21 L76 30 Z" fill="#e3c35a" stroke="#a9862a"/><circle cx="60" cy="23" r="2.2" fill="#3a7bd5"/>`; }
+    let gl = "";
+    if (glasses === "round") gl = `<circle cx="51" cy="52" r="6" stroke="#333" stroke-width="1.5" fill="none"/><circle cx="69" cy="52" r="6" stroke="#333" stroke-width="1.5" fill="none"/><path d="M57 52 L63 52" stroke="#333" stroke-width="1.5"/>`;
+    else if (glasses === "horn-rimmed") gl = `<path d="M43 48 Q50 45 58 48 L57 56 Q50 58 44 55 Z M62 48 Q70 45 77 48 L76 55 Q70 58 63 56 Z" stroke="#222" stroke-width="2.2" fill="none"/><path d="M58 50 L62 50" stroke="#222" stroke-width="1.8"/>`;
+    return `<svg viewBox="0 0 120 120" width="${size}" height="${size}" class="portrait" aria-hidden="true">${back}${body}${neck}${face}${blush}${eyes}${nose}${mouth}${earrings}${gl}${front}</svg>`;
 }

@@ -450,7 +450,7 @@ function applySuccession(opts) {
     G.leader = {
         name: opts.name, age: opts.age, gender: opts.gender, bg: opts.bg, traits: opts.traits.slice(),
         skills: Object.assign({ oratory: 0, legislation: 0, economics: 0, diplomacy: 0, military: 0, intrigue: 0 }, opts.skills),
-        look: opts.look, ideology: opts.ideology, party: plan.party, title: plan.title, health: clamp(95 - Math.max(0, opts.age - 45) * 0.9, 30, 98), since: G.t,
+        look: opts.look, ideology: opts.ideology, party: plan.party, title: genderTitle(plan.title, opts.gender), health: clamp(95 - Math.max(0, opts.age - 45) * 0.9, 30, 98), since: G.t,
         heir: G.leader.heir && plan.gov === "monarchy" ? null : G.leader.heir
     };
     if (plan.gov !== prevGov) {

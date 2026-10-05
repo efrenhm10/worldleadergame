@@ -359,6 +359,13 @@ table.whip td:last-child { white-space: nowrap; }
 .link-btn { background: none; border: none; padding: 0; color: var(--accent2); text-decoration: underline; cursor: pointer; font-size: inherit; }
 .ind-table tr.sel td { background: #2a2414; }
 
+/* Institutions */
+.inst { padding: 8px 10px; margin: 6px 0; background: var(--bg2); border: 1px solid var(--line); border-radius: 6px; }
+.inst.member { border-color: #2a5c40; }
+.inst-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.inst-head > span, .inst-head > button { flex-shrink: 0; }
+.inst p { margin: 4px 0 0; }
+
 @media (max-width: 780px) {
     .builder-grid { grid-template-columns: 1fr; }
     .budget-row { grid-template-columns: 1fr 1fr 46px; }

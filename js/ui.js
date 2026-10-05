@@ -171,7 +171,7 @@ function renderCreator() {
     const traits = Object.entries(TRAITS).map(([k, t]) => `<button class="chip-btn ${cr.traits.includes(k) ? "on" : ""}" data-act="crTrait" data-k="${k}" title="${esc(t.desc)}">${t.icon} ${t.name}</button>`).join("");
     const left = SKILL_POINTS - skillTotal();
     const skills = Object.entries(SKILLS).map(([k, s]) => `<div class="skill-row"><span title="${esc(s.desc)}">${s.icon} ${s.name}</span><div><button class="mini" data-act="crSkill" data-k="${k}" data-d="-1">−</button><b>${cr.skills[k] || 0}</b><button class="mini" data-act="crSkill" data-k="${k}" data-d="1" ${left <= 0 ? "disabled" : ""}>+</button></div></div>`).join("");
-    const looks = Object.entries(LOOK_OPTIONS).map(([k, opts]) => `<div class="look-row"><span>${{ skin: "Skin", hairColor: "Hair color", hair: "Hair / headwear", facial: "Facial hair", glasses: "Glasses", attire: "Attire" }[k]}</span><div><button class="mini" data-act="crLook" data-k="${k}" data-d="-1">‹</button><small>${k === "skin" || k === "hairColor" ? `<i class="swatch" style="background:${opts[cr.look[k]]}"></i>` : esc(opts[cr.look[k]])}</small><button class="mini" data-act="crLook" data-k="${k}" data-d="1">›</button></div></div>`).join("");
+    const looks = LOOK_KEYS[cr.gender === "f" ? "f" : "m"].map(k => [k, LOOK_OPTIONS[k]]).map(([k, opts]) => `<div class="look-row"><span>${LOOK_LABELS[k]}</span><div><button class="mini" data-act="crLook" data-k="${k}" data-d="-1">‹</button><small>${k === "skin" || k === "hairColor" ? `<i class="swatch" style="background:${opts[cr.look[k] || 0]}"></i>` : esc(opts[cr.look[k] || 0])}</small><button class="mini" data-act="crLook" data-k="${k}" data-d="1">›</button></div></div>`).join("");
     $("#creatorBody").innerHTML = `
         <div class="setup-head">
             <div><div class="kicker">${c.flag} ${esc(c.name)} · ${succ ? "A new leader" : "Step 2 of 3: who you are"}</div><h1>${succ ? esc(plan.note || "Succession") : "Build your leader"}</h1>
@@ -233,7 +233,7 @@ function renderCabinetSetup() {
 function viewsFor() {
     const v = [["office", "🏛️", "Office"]];
     if (G.gov.type === "colony") v.push(["movement", "✊", "Movement"]);
-    v.push([ "legislature", "📜", hasLegislature() ? "Legislature" : "Decrees"], ["lawbook", "📚", "Lawbook"], ["budget", "💰", "Budget"], ["economy", "🏭", "Economy"], ["power", "⚖️", "Power"], ["world", "🌍", "World"], ["military", "🎖️", "Military"], ["record", "📖", "Record"]);
+    v.push([ "legislature", "📜", hasLegislature() ? "Legislature" : "Decrees"], ["lawbook", "📚", "Lawbook"], ["budget", "💰", "Budget"], ["economy", "🏭", "Economy"], ["power", "⚖️", "Power"], ["world", "🌍", "World"], ["institutions", "🌐", "Institutions"], ["military", "🎖️", "Military"], ["record", "📖", "Record"]);
     return v;
 }
 
@@ -280,7 +280,7 @@ function renderDock() {
 }
 
 function renderView() {
-    const fn = { office: viewOffice, movement: viewMovement, legislature: viewLegislature, lawbook: viewLawbook, budget: viewBudget, economy: viewEconomy, power: viewPower, world: viewWorld, military: viewMilitary, record: viewRecord }[view] || viewOffice;
+    const fn = { office: viewOffice, movement: viewMovement, legislature: viewLegislature, lawbook: viewLawbook, budget: viewBudget, economy: viewEconomy, power: viewPower, world: viewWorld, institutions: viewInstitutions, military: viewMilitary, record: viewRecord }[view] || viewOffice;
     $("#view").innerHTML = fn();
 }
 
@@ -296,6 +296,9 @@ function advisories() {
     const desk = (G.bills || []).find(x => x.stage === "desk");
     if (desk) out.push(`🖋️ The ${desk.title} is on your desk awaiting signature.`);
     if (G.cip && G.cip.queue.length && !G.cip.active.length && G.cip.pool < G.cip.queue[0].cost) out.push("🏗️ Your capital program has projects waiting for money. Raise the capital budget next budget season.");
+    if (G.inst && G.inst.program) { const pr = G.inst.program, miss = pr.conds.filter(c => !IMF_CHECK[c.k](c)).length, due = Math.round((pr.start + pr.reviews[pr.next] - G.t) / 4.3); if (miss) out.push(`💵 IMF review in ${Math.max(0, due)} months: ${miss} condition${miss > 1 ? "s" : ""} not yet met (Institutions tab).`); }
+    else if (G.inst && G.inst.m.imf && imfCrisis()) out.push(`💵 ${imfCrisis()}. You could ask the IMF for a program (Institutions tab).`);
+    if (G.inst && G.inst.sanctions) out.push(`🚫 ${G.inst.sanctions.why}.`);
     if (G.cip && !G.cip.queue.length && !G.cip.active.length && G.cip.pool > 0) out.push("🏗️ Capital money is sitting unused. Add projects to the CIP (Budget tab).");
     if (G.capital >= capitalCap() - 2) out.push("💡 Your political capital is maxed out. Spend it on policy, projects or diplomacy.");
     if (a < 40) out.push("⚠️ Your approval is low. Consider a popular policy, a speech, or fixing the economy.");

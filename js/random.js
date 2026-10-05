@@ -159,7 +159,7 @@ SCENES.r_inflation = () => S("📈", dateStr(), "Runaway prices",
 
 SCENES.r_debt = () => S("🏦", dateStr(), "Debt crisis",
     `Public debt is ${Math.round(G.econ.debt / G.econ.gdp * 100)}% of GDP and creditors are nervous.`,
-    [ch("IMF program: austerity", { cash: 4, growth: -1.5, p: { people: -8, labor: -6, business: 4 } }, ""),
+    [ch("IMF program: austerity", { growth: -1.5, p: { people: -8, labor: -6, business: 4 } }, "", { run: () => imfFromEvent() }),
      ch("Default on foreign debts", { cash: 10, prestige: -10, growth: -2, rel: { usa: -15, uk: -10 } }, ""),
      ch("Inflate it away", { inflation: 6, cash: 3 }, "")]);
 

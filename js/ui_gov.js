@@ -167,7 +167,7 @@ function viewBudget() {
     const regionName = i => G.regions[i] ? G.regions[i].n : "";
     const srcTag = s => s.startsWith("fac:") ? `<span class="tiny warn">requested by ${esc(factionName(s.slice(4)))}</span>` : s === "event" ? "<span class='tiny muted'>emergency</span>" : "";
     let running = cip.pool;
-    const queue = cip.queue.map((p, i) => { const info = projectInfo(p.type); const fits = p.cost <= running; return `<div class="cip-row ${fits ? "" : "unfunded"}"><span>${info.icon} ${esc(info.name)} <span class="tiny muted">${esc(regionName(p.region))}</span> ${srcTag(p.src)}</span><span class="tiny">${nominal(p.cost)}</span><span><button class="mini" data-act="cipMove" data-id="${p.id}" data-d="-1" ${i === 0 ? "disabled" : ""}>▲</button><button class="mini" data-act="cipMove" data-id="${p.id}" data-d="1" ${i === cip.queue.length - 1 ? "disabled" : ""}>▼</button><button class="mini danger" data-act="cipRemove" data-id="${p.id}">✕</button></span></div>`; }).join("") || "<p class='tiny muted'>The queue is empty. Propose projects below, or from an industry's page.</p>";
+    const queue = cip.queue.map((p, i) => { const info = projectInfo(p.type); const fits = p.cost <= running; return `<div class="cip-row ${fits ? "" : "unfunded"}"><span>${info.icon} ${esc(info.name)} <span class="tiny muted">${esc(regionName(p.region))}</span> ${srcTag(p.src)}</span><span class="tiny">${nominal(p.cost)}${p.fin ? ` · <span class="warn">appraisal: ${esc(LENDERS[p.fin.lender].name)}</span>` : ""}</span><span>${!p.fin && G.inst && bestLender(p.type) ? `<button class="mini" data-act="finProject" data-id="${p.id}" title="Ask ${esc(LENDERS[bestLender(p.type)].name)} to finance it (2 ⚡)">🏦</button>` : ""}<button class="mini" data-act="cipMove" data-id="${p.id}" data-d="-1" ${i === 0 ? "disabled" : ""}>▲</button><button class="mini" data-act="cipMove" data-id="${p.id}" data-d="1" ${i === cip.queue.length - 1 ? "disabled" : ""}>▼</button><button class="mini danger" data-act="cipRemove" data-id="${p.id}">✕</button></span></div>`; }).join("") || "<p class='tiny muted'>The queue is empty. Propose projects below, or from an industry's page.</p>";
     const active = cip.active.map(p => { const info = projectInfo(p.type); return `<div class="cip-row"><span>${info.icon} ${esc(info.name)} <span class="tiny muted">${esc(regionName(p.region))}</span></span><span class="tiny">${Math.round((1 - p.left / p.total) * 100)}% built · ${Math.max(1, Math.round(p.left / 4.3))} mo left</span></div>`; }).join("") || "<p class='tiny muted'>Nothing under construction.</p>";
     const infra = Object.entries(INFRA).filter(([, x]) => (!x.from || G.year >= x.from) && (!x.res || G.res.includes(x.res))).map(([k, x]) => meter(`${x.icon} ${x.name}`, cov(k) / 100, true, `${Math.round(cov(k))}%`, x.desc)).join("");
     const types = Object.entries(INFRA).filter(([, x]) => (!x.from || G.year >= x.from) && (!x.res || G.res.includes(x.res))).map(([k, x]) => `<option value="${k}">${x.icon} ${x.name} (${nominal(projectCostBn(k))})</option>`).join("");
@@ -211,4 +211,56 @@ function industryPanel(k) {
         <div class="row"><button class="mini" data-act="projectPick" data-k="${k}" ${G.capital < 2 ? "disabled" : ""}>🏗️ Add a ${esc(I.project.toLowerCase())} to the CIP</button></div>
         <h4>Homegrown firms</h4><p class="tiny muted">Back a local entrepreneur (6 ⚡). Odds shown.</p><div class="row">${ways}</div>
         ${firms ? `<p class="tiny">Firms here: ${firms}</p>` : ""}`);
+}
+
+// ── International institutions ──────────────────────────────────────
+
+function viewInstitutions() {
+    if (!G.inst) initInstitutions();
+    const I = G.inst;
+    const cards = Object.entries(INST).map(([k, x]) => {
+        const member = I.m[k], why = instEligible(k), hist = (INST_JOIN[k] || {})[G.ck];
+        const talks = I.talks && I.talks.k === k;
+        let action = "";
+        if (member) action = x.invite ? `<span class="tiny good">Member</span>` : `<span class="tiny good">Member</span> <button class="mini secondary danger" data-act="instLeave" data-k="${k}">Withdraw (6 ⚡)</button>`;
+        else if (talks) action = `<span class="tiny warn">Accession talks: about ${Math.max(1, Math.round((I.talks.until - G.t) / 4.3))} months left</span>`;
+        else if (!instFounded(k)) action = `<span class="tiny muted">Founded in ${x.from}</span>`;
+        else if (x.invite) action = `<span class="tiny muted">${why || "By invitation"}</span>`;
+        else action = why ? `<span class="tiny muted">${esc(why)}</span>` : `<button class="mini" data-act="instJoin" data-k="${k}" ${G.capital < 5 ? "disabled" : ""}>Apply to join (5 ⚡)</button>`;
+        return `<div class="inst ${member ? "member" : ""}"><div class="inst-head"><b>${x.icon} ${esc(instName(k))}</b>${action}</div><p class="tiny muted">${esc(x.desc)}</p>${hist && !member && instFounded(k) ? `<p class="tiny">Historically joined: ${hist}</p>` : hist === undefined && !member && !x.invite && k !== "oecd" ? "" : ""}</div>`;
+    }).join("");
+    // IMF
+    const pr = I.program, crisis = imfCrisis();
+    let imf;
+    if (!I.m.imf) imf = `<p class="small muted">You are not an IMF member${INST_JOIN.imf[G.ck] ? ` (historically joined ${INST_JOIN.imf[G.ck]})` : ""}.</p>`;
+    else if (pr) {
+        const due = pr.reviews[pr.next] + pr.start - G.t;
+        imf = `<p class="small"><b>${esc(pr.kind)}</b>: ${fmt(pr.amount, 1)}% of GDP. Review ${pr.next + 1} of ${pr.reviews.length} in <b>${Math.max(0, Math.round(due / 4.3))} months</b>. Waivers left: ${pr.waivers}. Interest saved: ${fmt(imfRelief(), 2)}% of GDP a year.</p>
+            <ul class="conds">${pr.conds.map(c => { const ok = IMF_CHECK[c.k](c); return `<li class="${ok ? "good" : "bad"}">${ok ? "✔" : "✘"} ${esc(c.t)}</li>`; }).join("")}</ul>
+            <p class="tiny muted">Meet every condition by the review (one miss can be waived) or the program is suspended and capital flees. Deficit now ${fmt(G.econ.deficit, 1)}%, inflation ${fmt(G.econ.inflation, 1)}%, revenue ${fmt(G.econ.rev, 1)}% of GDP.</p>`;
+    } else imf = `<p class="small">${crisis ? `<b class="warn">${esc(crisis)}.</b> You qualify for Fund support.` : "No crisis: the Fund only lends to countries in balance-of-payments or debt trouble."}</p>
+        <p class="tiny muted">Conditions follow the era: devaluation and credit limits before 1980, structural adjustment (subsidies, privatization, free trade, VAT) in the 1980s–90s, social-spending floors and governance from 2000.</p>
+        <div class="row"><button data-act="imfRequest" ${!crisis || G.capital < 4 ? "disabled" : ""}>Request an IMF program (4 ⚡)</button></div>`;
+    // Lenders
+    const lenders = Object.entries(LENDERS).filter(([, l]) => G.year >= l.from).map(([k, l]) => {
+        const ok = sovereignNow() && l.ok() && !I.sanctions;
+        const used = I.lent.year === G.year ? (I.lent[k] || 0) : 0, cap = G.econ.gdp * l.env / 100;
+        return `<div class="cip-row"><span>${esc(l.name)} <span class="tiny muted">${l.share < 0.5 ? "near-grant terms" : `you repay ${Math.round(l.share * 100)}%`}</span></span><span class="tiny ${ok ? "good" : "muted"}">${ok ? `${nominal(Math.max(0, cap - used))} left this year` : "not eligible"}</span></div>`;
+    }).join("");
+    const queued = (G.cip ? G.cip.queue : []).filter(it => WB_TYPES.includes(it.type)).map(it => {
+        const info = projectInfo(it.type), lk = bestLender(it.type);
+        return `<div class="cip-row"><span>${info.icon} ${esc(info.name)} <span class="tiny muted">${nominal(it.cost)}</span></span>${it.fin ? `<span class="tiny warn">Appraisal by ${esc(LENDERS[it.fin.lender].name)}</span>` : lk ? `<button class="mini" data-act="finProject" data-id="${it.id}" ${G.capital < 2 ? "disabled" : ""}>Ask ${esc(LENDERS[lk].name)} (2 ⚡)</button>` : `<span class="tiny muted">no lender</span>`}</div>`;
+    }).join("") || "<p class='tiny muted'>No infrastructure projects in your capital program queue. Add some on the Budget tab.</p>";
+    // Debt relief and the UN
+    const dp = Math.round(G.econ.debt / G.econ.gdp * 100);
+    const relief = `<p class="small">Debt: <b>${dp}% of GDP</b>.</p>
+        <div class="row"><button class="mini" data-act="parisClub" ${!parisClubOk() ? "disabled" : ""}>Paris Club rescheduling (4 ⚡)</button>${G.year >= 1996 ? `<button class="mini" data-act="hipc" ${!hipcOk() ? "disabled" : ""}>Apply for HIPC debt relief (5 ⚡)</button>` : ""}</div>
+        <p class="tiny muted">The Paris Club (from 1956) reschedules debts owed to creditor governments, but only alongside an IMF program. HIPC (from 1996) cancels most debt of the poorest countries that follow a poverty-reduction strategy for three years.${I.hipc ? ` Your HIPC completion point: ${I.hipc.done ? "reached" : I.hipc.completion}.` : ""}</p>`;
+    const un = `<p class="small">${I.m.un ? `Member${P5().includes(G.ck) ? ", <b>permanent member of the Security Council with a veto</b>" : ""}. You address the General Assembly each September.` : "Not a UN member."}</p>
+        ${I.sanctions ? `<p class="small bad">🚫 ${esc(I.sanctions.why)}. Lifted in about ${Math.max(1, Math.round((I.sanctions.until - G.t) / 52))} year(s). Development banks won't lend; growth and investment suffer.</p>` : ""}
+        <p class="tiny muted">Start a war and the victim will take you to the Security Council. Permanent members can veto; friends may veto for you.</p>`;
+    return `<div class="cols2">
+        <div>${panel("Membership", cards)}</div>
+        <div>${panel("💵 IMF", imf)}${panel("🏦 Development banks", `${lenders}<h4>Finance projects from your capital program</h4>${queued}<p class="tiny muted">An approved loan starts construction at once, outside your capital budget. Contracts go to international tender. Big dams need environmental and resettlement reviews after 1990.</p>`)}${panel("⚖️ Debt relief", relief)}${panel("🇺🇳 United Nations", un)}</div>
+    </div>`;
 }

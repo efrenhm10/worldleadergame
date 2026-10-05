@@ -102,20 +102,25 @@ function fundQueue() {
         changed = false;
         for (let i = 0; i < G.cip.queue.length; i++) {
             const it = G.cip.queue[i];
-            if (it.cost <= G.cip.pool) {
+            if (it.cost <= G.cip.pool && !it.fin) {
                 G.cip.pool -= it.cost; G.cip.spentFY += it.cost;
                 G.cip.queue.splice(i, 1);
-                const info = projectInfo(it.type);
-                const weeks = Math.round(info.weeks * rnd(0.85, 1.25) + (it.type.startsWith("ind:") ? indGap(it.type.slice(4)) * 6 : 0));
-                G.cip.active.push(Object.assign(it, { left: weeks, total: weeks, start: G.t }));
-                addJobs(jobsFor(it.cost * 0.3, "machinery") * 0.5);
-                if (it.src.startsWith("fac:")) { const f = G.factions.find(x => x.k === it.src.slice(4)); if (f) { f.loyalty = clamp(f.loyalty + 6); } }
-                if (G.regions[it.region]) G.regions[it.region].mod += 2;
+                activateProject(it);
                 changed = true;
                 break;
             }
         }
     }
+}
+
+// Construction starts (funded from the capital pool or by a development bank).
+function activateProject(it) {
+    const info = projectInfo(it.type);
+    const weeks = Math.round(info.weeks * rnd(0.85, 1.25) + (it.type.startsWith("ind:") ? indGap(it.type.slice(4)) * 6 : 0));
+    G.cip.active.push(Object.assign(it, { left: weeks, total: weeks, start: G.t }));
+    addJobs(jobsFor(it.cost * 0.3, "machinery") * 0.5);
+    if (it.src.startsWith("fac:")) { const f = G.factions.find(x => x.k === it.src.slice(4)); if (f) { f.loyalty = clamp(f.loyalty + 6); } }
+    if (G.regions[it.region]) G.regions[it.region].mod += 2;
 }
 
 function cipMove(id, d) {
@@ -254,7 +259,7 @@ function governmentSpend() {
     Object.values(G.ind).forEach(i => { lines.industry += SUPPORT_LEVELS[i.sup].spend * 0.5 * fundMult("industry"); });
     lines.capital = G.budget.status === "cr" ? 0 : G.budget.capital;
     lines.war = playerWars().reduce((s, w) => s + [0, 0.6, 2, 5][commitOf(w)], 0);
-    lines.interest = Math.min(e.debt / e.gdp * 100, 250) * 0.03;
+    lines.interest = Math.max(0, Math.min(e.debt / e.gdp * 100, 250) * 0.03 - imfRelief());
     const total = Object.values(lines).reduce((a, b) => a + b, 0) - minBonus("finance") * 0.2;
     return { lines, total };
 }
