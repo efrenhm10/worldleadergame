@@ -20,6 +20,7 @@ function sceneChoose(i) {
     let res = c.res || "";
     if (c.run) { const r = c.run(); if (typeof r === "string") res = r; }
     if (q.id !== "cip_region") changes.push(...impactDiff(before, null, true));
+    else G.scenes = G.scenes.filter(x => x.id !== "cip_region");
     if (!G.over && !G.pendingSuccession) toast(sc.title, res, changes);
     save();
     render();

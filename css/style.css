@@ -346,6 +346,7 @@ table.whip td:last-child { white-space: nowrap; }
 .cip-row > span:first-child { flex: 1; min-width: 0; }
 .cip-row > span:last-child { white-space: nowrap; }
 .cip-row.unfunded { opacity: .6; }
+.cip-row.fresh { background: #1d2a1d; border-radius: 4px; padding-left: 4px; }
 .cip-row.unfunded > span:first-child::after { content: " · waiting for money"; font-size: 11px; color: var(--warn); }
 
 /* Industry development */

@@ -218,7 +218,7 @@ SCENES.cip_region = a => {
         const fitTxt = (fit > 0 ? "★ Good fit: +25% benefit. " : fit < 0 ? "⚠ Poor fit: −40% benefit. " : "") + (INFRA[a.type] ? `Coverage +${Math.round(projectGain(a.type, i))}. ` : "");
         return ch(`${r.n}${fit > 0 ? " ★" : fit < 0 ? " ⚠" : ""}`, {}, "", {
             hint: `${fitTxt}${r.d ? r.d + " " : ""}${bits.join(" · ")}`,
-            run: () => { const it = proposeProject(a.type, i); return it ? `${info.name} goes to ${r.n}. ${G.cip.active.includes(it) ? "Funded: construction begins." : "It joins the queue."}` : ""; }
+            run: () => { const it = proposeProject(a.type, i); if (it) it.fresh = G.t; return it ? `${info.name} → ${r.n}. ${G.cip.active.includes(it) ? "Funded at once: it's under construction now (see Under construction on the Budget tab)." : "It joins the queue and waits for capital money."}` : ""; }
         });
     });
     choices.push(ch("Cancel", {}, "No project added."));

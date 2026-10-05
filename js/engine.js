@@ -786,6 +786,10 @@ function goalsCheck() {
 
 function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(G)); } catch (e) { /* storage unavailable */ } }
 function load() {
-    try { const s = localStorage.getItem(SAVE_KEY); if (!s) return false; G = JSON.parse(s); return !!G && G.v === 1; } catch (e) { return false; }
+    try {
+        const s = localStorage.getItem(SAVE_KEY); if (!s) return false; G = JSON.parse(s);
+        if (G && G.scenes) G.scenes = G.scenes.filter(q => q.id !== "cip_region");   // pickers never outlive a session
+        return !!G && G.v === 1;
+    } catch (e) { return false; }
 }
 function hasSave() { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } }
