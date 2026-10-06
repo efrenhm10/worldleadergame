@@ -92,7 +92,7 @@ function warWeekTick(w) {
     if (w.type === "insurgency") {
         const govK = w.b[0], reb = G.nations[w.a[0]];
         const stab = govK === G.ck ? G.s.stability : (G.nations[govK] ? G.nations[govK].stab : 50);
-        reb.mil = Math.max(0.2, reb.mil * (1 + (50 - stab) * 0.0006));
+        reb.mil = Math.max(0.2, reb.mil * (1 + (50 - stab) * (w.secession ? 0.00015 : 0.0006)));   // separatists recruit only in their region
     }
     if (w.a.includes(G.ck) || w.b.includes(G.ck)) {
         const mine = w.a.includes(G.ck) ? d : -d;
@@ -130,7 +130,8 @@ function endWar(w, winner, quiet) {
         if (G.nations[loser] && loser !== G.ck) { G.nations[loser].status = "annexed"; G.nations[loser].diverged = true; }
         if (loser === G.ck) { fallFromPower("conquered", `${nationName(win)} has overrun the country. Your government has fallen.`); return; }
     }
-    if (w.type === "insurgency") {
+    if (w.type === "insurgency" && w.secession) identityWarEnd(w, winner);
+    else if (w.type === "insurgency") {
         if (winner === "a") {
             if (loser === G.ck) { fallFromPower("revolution", `The insurgents have taken the capital.`); return; }
             const n = G.nations[loser];

@@ -198,5 +198,5 @@ function viewPopulation() {
         ${p.stockOut > 0.0005 ? `<p class="tiny">🌍 Citizens living abroad: ${fmtPeople(p.stockOut)}. ${remittancePoverty() < -0.4 ? `Money they send home cuts poverty by ${fmt(-remittancePoverty(), 1)} points.` : ""}</p>` : ""}`);
     const rows = p.hist.slice(-10).reverse().map(h => `<tr><td>${h.y}</td><td>${fmtPeople(h.pop)}</td><td>${fmtPeople(h.births)}</td><td>${fmtPeople(h.deaths)}</td><td class="good">${fmtPeople(h.imm)}</td><td class="bad">${fmtPeople(h.emi)}</td></tr>`).join("");
     const histPanel = rows ? panel("Year by year", `<div class="table-wrap"><table><tr><th>Year</th><th>People</th><th>Births</th><th>Deaths</th><th>Arrived</th><th>Left</th></tr>${rows}</table></div>`) : "";
-    return `<div class="cols2"><div>${peoplePanel}${regionsPanel}${histPanel}</div><div>${migPanel}${frameworkDetail("immigration")}</div></div>`;
+    return `<div class="cols2"><div>${peoplePanel}${peoplesPanel()}${histPanel}</div><div>${migPanel}${frameworkDetail("immigration")}</div></div>`;
 }

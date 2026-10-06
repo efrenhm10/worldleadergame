@@ -99,7 +99,7 @@ function newGame(opts) {
     initInstitutions();
     G.powerHist = []; powerYearly();
     G.leader.family = initFamily(!!opts.historical);
-    tre(); treasuryYearly(); popl(); mon();
+    tre(); treasuryYearly(); popl(); mon(); peoples();
     G.econ.rev = taxBase().total; G.econ.spend = governmentSpend().total; G.econ.deficit = G.econ.spend - G.econ.rev;
     setupPillars();
     if (c.status === "colony") initColony(c);
@@ -312,7 +312,7 @@ function mySeats() { return G.factions.filter(f => f.mine).reduce((s, f) => s + 
 function majority() { return Math.floor(G.leg.total / 2) + 1; }
 
 function stabilityTarget() {
-    let t = 50 + policyFx("stability") + (approval() - 50) * 0.3 + (G.econ.growth - 3) * 1.2;
+    let t = 50 + policyFx("stability") + (approval() - 50) * 0.3 + (G.econ.growth - 3) * 1.2 + identityStability();
     t -= Math.max(0, G.econ.inflation - 8) * 0.8 + Math.max(0, G.econ.unemp - 8) * 0.8 + G.s.weariness * 0.12;
     if (playerAtWarWithRebels()) t -= 10;
     t -= Math.max(0, G.s.crime - 40) * 0.12;
@@ -472,6 +472,7 @@ function monthlyTick(newYear) {
     treasuryMonthly();
     populationMonthly();
     megaMonthly();
+    identityMonthly();
     infraMonthly();
     statsMonthly();
     if (G.colony) colonyMonth();
@@ -534,7 +535,7 @@ function potentialGrowth() {
     if (G.gov.type === "colony") g -= 0.5;
     if (G.year >= 1974) g -= 0.5;
     g -= instGrowthDrag();
-    g += tradeGrowth() + migrationGrowth() + moneyGrowth() + megaFx("growth");
+    g += tradeGrowth() + migrationGrowth() + moneyGrowth() + megaFx("growth") + identityGrowth();
     return clamp(g, -15, 14);
 }
 
@@ -709,7 +710,7 @@ function regionAffinity(r) {
 }
 
 function regionSupport(r) {
-    return clamp(approval() + (r.lean[G.leader.party] || 0) + r.mod + regionAffinity(r), 2, 98);
+    return clamp(approval() + (r.lean[G.leader.party] || 0) + r.mod + regionAffinity(r) + identitySupport(r), 2, 98);
 }
 
 function regionsTick() { G.regions.forEach(r => { r.mod *= 0.992; }); }

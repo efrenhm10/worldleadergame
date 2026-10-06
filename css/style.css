@@ -430,3 +430,4 @@ ul.family li { padding: 2px 0; }
 .fin-bar .f-loan { background: #6fb3ff; border-right: 1px solid var(--bg); }
 .fin-bar .f-cash { background: #7bd88f; }
 .fin-bar .f-dom { background: #e0a85f; }
+.idn-row { padding: 6px 0 8px; border-bottom: 1px solid var(--line); } .idn-row p { margin: 3px 0; }

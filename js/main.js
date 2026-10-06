@@ -89,6 +89,7 @@ const ACTIONS = {
     cipTreasury: d => { payProjectFromTreasury(d.id); render(); },
     treCapital: d => { treasuryToCapital(+d.f); render(); },
     treRepay: d => { treasuryRepay(+d.f); render(); },
+    idn: d => { idnAct(d.r, d.k); render(); },
     megaStudy: d => { startStudy(d.k); render(); },
     megaPick: d => { megaToggle(+d.id, d.k); render(); },
     megaBid: d => { megaBid(+d.id); render(); },

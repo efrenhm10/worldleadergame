@@ -353,7 +353,7 @@ const HIST = [
   fire: () => { const w = warNamed("Six-Day War"); endWar(w, w.front > 0 ? "a" : "b"); G.flags.occupied_territories = true; } },
 { id: "biafra", y: 1967, m: 7, cond: () => alive("nigeria") && G.nations.nigeria.status === "sovereign" && (isP("nigeria") ? true : !G.nations.nigeria.diverged),
   fire: () => {
-      if (isP("nigeria")) { if (G.gov.type === "colony") return; const east = G.regions.find(r => r.n.startsWith("Eastern")); if (east && regionSupport(east) > 55 && G.flags.civil_war_averted !== false && chance(0.6)) { log("🇳🇬 Ethnic tension eases. The East stays in the federation.", "good"); return; } return hq("biafra"); }
+      if (isP("nigeria")) { if (G.gov.type === "colony") return; const east = G.regions.find(r => r.n.startsWith("Eastern")); if (!east) return; if ( regionSupport(east) > 55 && G.flags.civil_war_averted !== false && chance(0.6)) { log("🇳🇬 Ethnic tension eases. The East stays in the federation.", "good"); return; } return hq("biafra"); }
       const reb = ensureRebels("nigeria", "Republic of Biafra", 5);
       startWar({ name: "Nigerian Civil War", a: [reb], b: ["nigeria"], type: "insurgency", front: -10, onEnd: "biafra" });
       W("🇳🇬 The Eastern Region secedes as Biafra. Civil war begins.");
@@ -372,7 +372,7 @@ const HIST = [
   fire: () => { const reb = ensureRebels("cambodia", "Khmer Rouge", isP("cambodia") ? 2 : 3); startWar({ name: "Cambodian Civil War", a: [reb], b: ["cambodia"], type: "insurgency", front: isP("cambodia") ? -30 : 0 }); W("🇰🇭 The Khmer Rouge begin an armed insurgency in Cambodia."); } },
 { id: "bangladesh", y: 1971, m: 3, cond: () => alive("pakistan") && !G.flags.bangladesh,
   fire: () => {
-      if (isP("pakistan")) return hq("bangladesh");
+      if (isP("pakistan")) return G.regions.some(r => r.n.includes("Bengal")) ? hq("bangladesh") : undefined;
       const reb = ensureRebels("pakistan", "Mukti Bahini (Bangladesh)", 4);
       const w = startWar({ name: "Bangladesh Liberation War", a: [reb, "india"], b: ["pakistan"], type: "insurgency", front: 20, onEnd: "bangladesh" });
       if (w) w.mom = 6;
