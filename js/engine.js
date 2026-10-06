@@ -827,6 +827,7 @@ function load() {
     try {
         const s = localStorage.getItem(SAVE_KEY); if (!s) return false; G = JSON.parse(s);
         if (G && G.scenes) G.scenes = G.scenes.filter(q => q.id !== "cip_region");   // pickers never outlive a session
+        if (G && G.econ && !G.annual) { try { G.annual = [yearSnap()]; } catch (e) { /* first report a year later */ } }
         if (G && G.firms) G.firms.forEach(f => { if (f.foreign && !f.home) { const c = COMPANIES.find(x => x.name === f.name); if (c) f.home = c.home; } });
         return !!G && G.v === 1;
     } catch (e) { return false; }
