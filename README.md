@@ -300,6 +300,25 @@ showed "+10".
   from 1955". Literacy and
   urbanization raise **state capacity**, the ability to collect taxes. Revenue
   pays for the laws that raise health, education and living standards.
+- **Building the state:** the Lawbook's 🏛️ State & administration section
+  raises state capacity directly:
+  - National revenue authority
+  - Merit civil service
+  - Census & statistics office
+  - Land registry & cadastre
+  - National ID & civil registration
+  - School of public administration
+  - Digital government (from 1998)
+  - Anti-corruption commission
+
+  Capacity matters twice:
+  - It sets how much tax you actually collect.
+  - It sets how well programs work: from about 60% strength in a weak state
+    to 100% in a capable one, while costs rise with it.
+
+  The Economy tab shows where capacity is heading and why. Under Education,
+  the Department of Education (inspectors and teacher colleges) makes
+  schooling more effective.
 - **Development tracks:** industrialization (from agrarian to advanced; heavy
   industry's share of the economy, discounted while most people farm),
   technology, literacy, university education and urbanization. Population

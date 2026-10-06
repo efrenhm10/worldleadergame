@@ -534,6 +534,11 @@ function potentialGrowth() {
     return clamp(g, -15, 14);
 }
 
+// State capacity: what literacy and cities make possible, plus the institutions you build.
+const capacityFromSociety = () => 0.25 + 0.75 * clamp(G.dev.lit / 100 * 0.6 + G.dev.urban / 100 * 0.4, 0, 1);
+const capacityFromInstitutions = () => lawFx("cap") / 100;
+const capacityTarget = () => clamp(capacityFromSociety() + capacityFromInstitutions(), 0.1, 1);
+
 function economyTick() {
     const e = G.econ;
     const before = e.gdp;
@@ -577,7 +582,7 @@ function economyTick() {
     // Revenue comes from the tax base: formal wages, company profits,
     // resource royalties and tariffs. Industry and jobs widen it.
     e.rev = taxBase().total + programRevenue();
-    const capT = 0.25 + 0.75 * clamp(G.dev.lit / 100 * 0.6 + G.dev.urban / 100 * 0.4, 0, 1);
+    const capT = capacityTarget();
     if (capT > e.taxCap) e.taxCap += (capT - e.taxCap) * 0.004;
     const war = playerWars().reduce((s, w) => s + [0, 0.6, 2, 5][commitOf(w)], 0);
     const debtPct = e.debt / e.gdp * 100;

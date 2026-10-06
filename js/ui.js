@@ -455,7 +455,8 @@ function viewEconomy() {
         ${taxRow("Program taxes, fees & aid", programRevenue())}
         ${tb.holidayLoss > 0.01 ? `<tr class="bad"><td>Lost to tax holidays</td><td>−${fmt(tb.holidayLoss, 1)}%</td><td>−${money(gdpN * tb.holidayLoss / 100)}</td></tr>` : ""}
         <tr><td><b>Total revenue</b></td><td><b>${fmt(e.rev, 1)}%</b></td><td><b>${money(gdpN * e.rev / 100)}</b></td></tr></table>
-        ${meter("State capacity (ability to collect taxes)", e.taxCap, true, Math.round(e.taxCap * 100) + "%", "Rises with literacy and urbanization")}
+        ${meter("State capacity (ability to collect taxes)", e.taxCap, true, Math.round(e.taxCap * 100) + "%", "How much of what's owed the state actually collects, and how well its programs are delivered")}
+        <p class="tiny">${(() => { const t = capacityTarget(), soc = capacityFromSociety(), inst = capacityFromInstitutions(); return `Heading ${t > e.taxCap + 0.005 ? "up" : t < e.taxCap - 0.005 ? "down" : ""} to <b>${Math.round(t * 100)}%</b>: literacy & cities give ${Math.round(Math.min(1, soc) * 100)}%, institutions ${inst > 0 ? `<b class="good">+${Math.round(inst * 100)}%</b>` : "+0%"}. Your programs run at <b>${Math.round(delivery() * 100)}%</b> strength: a more capable state delivers more of what its laws promise. ${inst < 0.2 && e.taxCap < 0.9 ? "Build more: a revenue authority, merit civil service, census, land registry and ID cards (Lawbook → 🏛️ State & administration)." : ""}`; })()} <button class="mini" data-act="lawCat" data-k="state">🏛️ State institutions</button></p>
         <p class="tiny muted">Tax rates are set in the annual budget. The chain: companies and projects create jobs, formal jobs and profits widen the tax base, revenue pays for schools and clinics, and health, education and living standards rise.</p>`);
     const pros = refreshProspects();
     const prospects = pros.map((p, i) => {

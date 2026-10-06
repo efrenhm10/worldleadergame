@@ -17,6 +17,7 @@ const IMPACT_STATS = [
     ["corruption", "Corruption", () => corruptionTarget(), true, 0.5, ""],
     ["legitimacy", "Legitimacy", () => legitimacyTarget(), false, 0.5, ""],
     ["prestige", "Prestige", () => prestigeTarget(), false, 0.5, ""],
+    ["cap", "State capacity", () => capacityTarget() * 100, false, 0.5, ""],
     ["lit", "Literacy", () => literacyRate(), false, 0.05, "/yr"],
     ["tech", "Technology", () => techRate(), false, 0.05, "/yr"],
     ["growth", "Growth", () => potentialGrowth(), false, 0.05, "%/yr"],
@@ -99,7 +100,7 @@ function statParts(k) {
     const parts = [];
     const usesPolicy = ["stability", "liberty", "corruption", "legitimacy", "unemp"].includes(k);
     if (usesPolicy) POLICY_AREAS.forEach(a => { const o = curOpt(a.key); if (o.fx && o.fx[k]) parts.push([optName(o), o.fx[k]]); });
-    Object.keys(G.laws).forEach(lk => { const d = lawDef(lk); if (d && d.fx && d.fx[k] && !d.tax) parts.push([d.name, d.fx[k] * lawMult(lk) * (k === "poverty" && d.fx[k] < 0 ? povertyReach() : 1)]); });
+    Object.keys(G.laws).forEach(lk => { const d = lawDef(lk); if (d && d.fx && d.fx[k] && !d.tax) parts.push([d.name, d.fx[k] * lawMult(lk) * lawDelivery(d, k) * (k === "poverty" && d.fx[k] < 0 ? povertyReach() : 1)]); });
     if (k === "health") { parts.push(["Hospitals coverage", covRel("hospitals") * 4], ["Excise & green taxes", taxHealth()], ["Health minister", minBonus("health") * 1.5]); }
     if (k === "poverty") { parts.push(["Housing coverage", -covRel("housing") * 3], ["Unemployment", (G.econ.unemp - 6) * 0.8], ["Rural roads & irrigation", ruralPoverty()], ["Land reform", G.pol.land === "reform" ? -3 * povertyReach() : 0]); }
     if (k === "crime") { parts.push(["Housing coverage", -covRel("housing") * 1.5], ["Unemployment", G.econ.unemp * 1.2 - 7], ["Interior minister", -minBonus("interior") * 2]); }

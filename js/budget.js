@@ -394,9 +394,15 @@ function projectBudget(d) {
     return { rev, spend: sp.total, lines: sp.lines, net: rev - sp.total, taxes };
 }
 
+// How much of its programs the state can actually run (and so pays for).
+function deliveryCap() { return clamp(G.econ.taxCap * (0.6 + 0.4 * formalShare()) + ({ planned: 0.25, collectivized: 0.35 }[G.pol.economy] || 0), 0.25, 1); }
+// Programs with a budget work better the more capable the state that runs them.
+const delivery = () => 0.5 + 0.5 * deliveryCap();
+const lawDelivery = (d, key) => d && d.cost > 0 && key !== "cap" ? delivery() : 1;
+
 function governmentSpend() {
     const e = G.econ;
-    const stateCap = clamp(e.taxCap * (0.6 + 0.4 * formalShare()) + ({ planned: 0.25, collectivized: 0.35 }[G.pol.economy] || 0), 0.25, 1);
+    const stateCap = deliveryCap();
     const lines = {};
     lines.admin = 3 * stateCap;
     Object.keys(DEPTS).forEach(k => { lines[k] = 0; });

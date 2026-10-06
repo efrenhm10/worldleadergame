@@ -139,7 +139,7 @@ function compileBill(spec) {
     };
 }
 
-const EFF_LABELS = { health: ["Health", 1], poverty: ["Poverty", -1], crime: ["Crime", -1], unemp: ["Unemployment", -1], liberty: ["Liberty", 1], stability: ["Stability", 1], legitimacy: ["Legitimacy", 1], prestige: ["Prestige", 1], lit: ["Literacy/yr", 1], uni: ["University/yr", 1], tech: ["Technology/yr", 1], agri: ["Farm output growth", 1], indAll: ["Industrial growth", 1], growth: ["GDP growth", 1], mil: ["Military strength %", 1] };
+const EFF_LABELS = { cap: ["State capacity", 1], health: ["Health", 1], poverty: ["Poverty", -1], crime: ["Crime", -1], unemp: ["Unemployment", -1], liberty: ["Liberty", 1], stability: ["Stability", 1], legitimacy: ["Legitimacy", 1], prestige: ["Prestige", 1], lit: ["Literacy/yr", 1], uni: ["University/yr", 1], tech: ["Technology/yr", 1], agri: ["Farm output growth", 1], indAll: ["Industrial growth", 1], growth: ["GDP growth", 1], mil: ["Military strength %", 1], corruption: ["Corruption", -1], inflation: ["Inflation", -1] };
 
 function effSummary(eff) {
     return Object.entries(eff).filter(([, v]) => Math.abs(v) > 0.01).map(([k, v]) => {

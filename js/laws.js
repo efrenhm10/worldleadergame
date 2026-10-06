@@ -11,6 +11,7 @@
 // frameworks" in POLICY_AREAS; changing one is a major reform bill.
 
 const LAW_CATS = {
+    state:    { name: "State & administration", icon: "🏛️", dept: null },
     health:   { name: "Health", icon: "⚕️", dept: "health" },
     welfare:  { name: "Welfare & housing", icon: "🤲", dept: "welfare" },
     education:{ name: "Education & science", icon: "🎓", dept: "education" },
@@ -45,6 +46,7 @@ const LAWS = {
     // Education & science
     primary_schools:{ cat: "education", name: "Universal primary schooling", cost: 1.5, fx: { lit: 1.3 }, p: { people: 2 }, st: { socdem: 1, liberal: 1, communist: 1 }, desc: "Free, compulsory primary school for every child." },
     secondary_schools:{ cat: "education", name: "Secondary schools", cost: 1.5, fx: { lit: 0.4, uni: 0.06, growth: 0.1 }, p: { press: 2 }, st: { socdem: 1, liberal: 1 }, desc: "High schools and grammar schools." },
+    school_inspectorate:{ cat: "education", name: "Department of Education: inspectors & teacher colleges", cost: 0.3, fx: { lit: 0.5, uni: 0.03 }, p: { press: 1, clergy: -1 }, st: { socdem: 1, liberal: 1, communist: 1 }, desc: "A real education department: a national curriculum, school inspectors, and colleges that train teachers. Every school you fund teaches better." },
     literacy_campaign:{ cat: "education", name: "Adult literacy campaign", cost: 0.6, fx: { lit: 1.1 }, p: { peasants: 2 }, st: { communist: 1, nationalist: 1, socialist: 1 }, desc: "Teach the grown-ups to read too." },
     universities:   { cat: "education", name: "Public universities", cost: 1.2, fx: { uni: 0.25, tech: 0.3 }, p: { press: 4 }, st: { liberal: 1, socdem: 1 }, desc: "New universities and free tuition." },
     technical_schools:{ cat: "education", name: "Technical & vocational schools", cost: 0.6, fx: { uni: 0.05, growth: 0.15, unemp: -0.3 }, p: { labor: 2, business: 2 }, st: { conservative: 1, nationalist: 1 }, desc: "Train engineers, mechanics and technicians." },
@@ -57,9 +59,17 @@ const LAWS = {
     export_board:   { cat: "economy", name: "Export promotion board", cost: 0.3, fx: { indAll: 0.4 }, p: { business: 2 }, st: { nationalist: 1, liberal: 1 }, desc: "Help firms sell abroad." },
     price_controls: { cat: "economy", name: "Price controls", cost: 0, fx: { inflation: -1.5, growth: -0.3 }, p: { people: 3, business: -6 }, st: { socialist: 2, communist: 1, liberal: -3 }, desc: "The state sets the price of essentials." },
     antitrust:      { cat: "economy", name: "Competition & antitrust law", cost: 0.1, fx: { growth: 0.2, corruption: -2 }, p: { business: -3, press: 1 }, st: { liberal: 1, socdem: 1 }, desc: "Break up monopolies and cartels." },
+    // State capacity (cap, in points): the machinery that lets a government
+    // collect what it is owed (and so afford its programs).
+    revenue_authority:{ cat: "state", name: "National revenue authority", cost: 0.12, fx: { cap: 12, corruption: -2 }, p: { business: -3, people: -1 }, st: { liberal: 1, socdem: 1, conservative: -1 }, desc: "Professional tax collectors with their own budget and audit powers, instead of patronage clerks who take a cut. Fewer bribes, more revenue." },
+    statistics_office:{ cat: "state", name: "Census & statistics office", cost: 0.1, fx: { cap: 4, growth: 0.05 }, p: { press: 1 }, st: { socdem: 1, liberal: 1 }, desc: "Count the people, the farms and the firms. You can't tax, plan or target help at what you can't see." },
+    land_registry:  { cat: "state", name: "Land registry & cadastre", cost: 0.12, fx: { cap: 5, agri: 0.4, poverty: -1 }, p: { peasants: 2, business: 1, royals: -2 }, st: { liberal: 1, socdem: 1, traditionalist: -1 }, desc: "Survey and title every plot. Farmers with secure title invest and borrow; the state can levy property tax. Big landholders lose their murky claims." },
+    civil_registry: { cat: "state", name: "National ID & civil registration", cost: 0.08, fx: { cap: 4, corruption: -1, poverty: -0.5 }, p: { press: -1, security: 1 }, st: { socdem: 1, liberal: 0, nationalist: 1 }, desc: "Register every birth and issue identity cards. Taxes, pensions and benefits reach the right people, and ghost workers vanish from the payroll." },
+    admin_school:   { cat: "state", name: "School of public administration", cost: 0.1, fx: { cap: 4, corruption: -1 }, p: { press: 1, party: -1 }, st: { socdem: 1, liberal: 1, communist: 1 }, desc: "Train a generation of capable officials: budgeting, law, management." },
+    e_government:   { cat: "state", name: "Digital government & e-filing", cost: 0.1, fx: { cap: 10, corruption: -3 }, p: { business: 2, press: 1 }, st: { liberal: 1, socdem: 1 }, from: 1998, desc: "Taxes filed, permits issued and benefits paid online. Fewer counters, fewer bribes." },
     workplace_safety:{ cat: "economy", name: "Workplace safety code", cost: 0.1, fx: { health: 1 }, p: { labor: 3, business: -2 }, st: { socdem: 1 }, desc: "Inspectors in every mine and mill." },
-    anti_corruption:{ cat: "economy", name: "Anti-corruption commission", cost: 0.2, fx: { corruption: -8 }, p: { press: 3, royals: -4, tribes: -4, party: -2 }, st: { liberal: 2, socdem: 1 }, desc: "An independent body with powers to investigate ministers." },
-    civil_service:  { cat: "economy", name: "Merit civil service", cost: 0.3, fx: { corruption: -5, legitimacy: 1 }, p: { party: -3, tribes: -2 }, st: { liberal: 1, socdem: 1 }, desc: "Exams, not patronage." },
+    anti_corruption:{ cat: "state", name: "Anti-corruption commission", cost: 0.2, fx: { corruption: -8 }, p: { press: 3, royals: -4, tribes: -4, party: -2 }, st: { liberal: 2, socdem: 1 }, desc: "An independent body with powers to investigate ministers." },
+    civil_service:  { cat: "state", name: "Merit civil service", cost: 0.3, fx: { corruption: -5, legitimacy: 1, cap: 5 }, p: { party: -3, tribes: -2 }, st: { liberal: 1, socdem: 1 }, desc: "Exams, not patronage." },
     // Agriculture
     price_supports: { cat: "farms", name: "Farm price supports", cost: 1, fx: { agri: 1.2 }, p: { peasants: 5, people: -1 }, st: { conservative: 1, traditionalist: 1, liberal: -1 }, desc: "The state buys crops at guaranteed prices." },
     extension:      { cat: "farms", name: "Agricultural extension service", cost: 0.4, fx: { agri: 1 }, p: { peasants: 2 }, st: { socdem: 1 }, desc: "Advisers teach new methods in every district." },
@@ -202,7 +212,8 @@ function lawFx(key) {
         if (!d || !d.fx || d.tax) return;
         const v = d.fx[key];
         if (!v) return;
-        if (d.custom) custom += v * lawMult(k); else s += v * lawMult(k);
+        const m = lawMult(k) * lawDelivery(d, key);
+        if (d.custom) custom += v * m; else s += v * m;
     });
     const c = PROGRAM_CAP[key] || 3;
     return s + c * Math.tanh(custom / c);

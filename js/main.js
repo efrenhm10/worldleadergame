@@ -59,6 +59,7 @@ const ACTIONS = {
     builderOpen: () => { ui.builder = builderDefaults(); view = "legislature"; render(); },
     builderClose: () => { ui.builder = null; render(); },
     builderSubmit: () => { if (proposeProgram(ui.builder)) { ui.builder = null; const b = (G.bills || []).slice(-1)[0]; if (b && b.sponsor === "player" && b.stage === "committee") ui.billSel = b.id; } render(); },
+    lawCat: d => { view = "lawbook"; const l = lawsInCat(d.k).filter(x => lawAvailable(x.key)); ui.law = (l.find(x => !lawOn(x.key)) || l[0] || {}).key || null; ui.lawLevel = null; render(); window.scrollTo(0, 0); if (window.innerWidth < 900) { const det = document.querySelector("#view .cols2 > div:last-child"); if (det) det.scrollIntoView(); } },
     lawSel: d => { ui.law = d.k; ui.lawLevel = null; ui.area = null; render(); },
     lawAdj: d => { adjustLaw(d.k, +d.d); render(); },
     lawBill: d => { const def = lawDef(d.k); const lvl = d.repeal ? 0 : (ui.lawLevel != null ? ui.lawLevel : lawLevel(d.k) || 0.3); if (!d.repeal && lvl === lawLevel(d.k)) return toast("No change", "Pick a different level first."); proposeLawBill(d.k, lvl); ui.lawLevel = null; render(); },

@@ -121,7 +121,7 @@ function lawEffectsAt(d, lvl) {
     if (d.tax) return lawOn(d.key) ? `<span class="muted">Rate now ${fmt(taxRate(d.tax), 1)}${TAX_UNIT[d.tax] || "%"}, raising about ${fmt(taxRevenueAt(d.key, taxRate(d.tax)), 2)}% of GDP a year.</span>` : `<span class="muted">Not collected yet.</span>`;
     const m = lvl * fundMult(d.dept || (LAW_CATS[d.cat] && LAW_CATS[d.cat].dept));
     const eff = {};
-    Object.entries(d.fx || {}).forEach(([k, v]) => { eff[k] = v * m; });
+    Object.entries(d.fx || {}).forEach(([k, v]) => { eff[k] = v * m * lawDelivery(d, k); });
     const ps = Object.entries(d.p || {}).filter(([k]) => G.pillars[k]).map(([k, v]) => `<span class="${v > 0 ? "good" : "bad"}">${pillarName(k)} ${v > 0 ? "▲" : "▼"}</span>`).join(" · ");
     const builds = Object.entries(INFRA_LAWS).filter(([, m2]) => m2[d.key]).map(([ik, m2]) => `<span class="good">${INFRA[ik].icon} ${INFRA[ik].name} +${Math.round(m2[d.key] * m)}</span>`).join(" · ");
     return `${effSummary(eff)}${d.cost ? ` · <span class="muted">${fmt(d.cost * m, 2)}% of GDP</span>` : ""}${ps ? " · " + ps : ""}${builds ? `<br>Builds coverage (target): ${builds}` : ""}`;
