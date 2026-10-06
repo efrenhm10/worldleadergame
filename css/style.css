@@ -413,3 +413,4 @@ ul.family li { padding: 2px 0; }
 .budget-row.tre-row { grid-template-columns: 1fr auto; }
 .tre-row select { margin: 0; padding: 3px 4px; font-size: 12px; max-width: 190px; }
 .st-rank.tre-cash { font-size: 26px; color: var(--good); }
+.st-rank.pop-big { font-size: 26px; }

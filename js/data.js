@@ -249,6 +249,13 @@ const POLICY_AREAS = [
         { k: "partnership", name: "50/50 profit sharing", fx: { growth: 0.1 }, p: { people: 2 } },
         { k: "nationalized", name: "Nationalized", fx: { growth: -0.3, prestige: 4 }, p: { people: 8, business: -10, foreign: -15, cadres: 4 } }
     ]},
+    { key: "immigration", name: "Immigration", icon: "🛂", cost: 10, options: [
+        { k: "restrictive", name: "Restrictive quotas", desc: "Small national-origin quotas; most who want to come are turned away.", imm: 0.35, fx: {}, p: {} },
+        { k: "skilled", name: "Skilled & points-based", desc: "Admit engineers, doctors and graduates. Immigrants bring know-how: faster technology and more graduates.", imm: 0.6, skilled: true, fx: { growth: 0.05 }, p: { business: 3, press: 1 } },
+        { k: "guest", name: "Guest-worker programs", desc: "Recruit foreign workers on contracts for factories and building sites.", imm: 0.9, fx: { growth: 0.1, unemp: -0.3 }, p: { business: 5, labor: -4 } },
+        { k: "open", name: "Open immigration", desc: "Welcome settlers and their families, with assisted passages for newcomers.", imm: 1.3, fx: { growth: 0.1, stability: -1 }, p: { business: 4, labor: -3, people: -2 } },
+        { k: "exit_ban", name: "Closed borders & exit visas", desc: "No one comes in, and citizens need permission to leave.", imm: 0.05, emi: 0.05, fx: { liberty: -6, prestige: -2 }, p: { security: 4, people: -3 }, req: g => ["one_party", "military_junta"].includes(g) }
+    ]},
     { key: "space", name: "Space program", icon: "🚀", cost: 10, options: [
         { k: "no_space", name: "None", fx: {}, p: {} },
         { k: "satellites", name: "Rockets & satellites", spend: 0.5, fx: { prestige: 2 }, p: { military: 2, press: 2 }, req: (g, s) => s && s.year >= 1954 },

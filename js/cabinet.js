@@ -148,7 +148,7 @@ function healthTarget() {
 function povertyTarget() {
     let t = povertyBase();
     const lp = lawFx("poverty");
-    t += (lp < 0 ? lp * povertyReach() : lp) - covRel("housing") * 3 + ruralPoverty();
+    t += (lp < 0 ? lp * povertyReach() : lp) - covRel("housing") * 3 + ruralPoverty() + remittancePoverty();
     t -= G.pol.land === "reform" ? 3 * povertyReach() : 0;
     t += (G.econ.unemp - 6) * 0.8 - minBonus("health");
     if (G.pol.economy === "collectivized" || G.pol.economy === "planned") t -= 4;

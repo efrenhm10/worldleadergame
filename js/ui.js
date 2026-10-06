@@ -242,7 +242,7 @@ function renderCabinetSetup() {
 function viewsFor() {
     const v = [["office", "🏛️", "Office"]];
     if (G.gov.type === "colony") v.push(["movement", "✊", "Movement"]);
-    v.push([ "legislature", "📜", hasLegislature() ? "Legislature" : "Decrees"], ["lawbook", "📚", "Lawbook"], ["budget", "💰", "Budget"], ["finance", "💵", "Finance"], ["economy", "🏭", "Economy"], ["power", "⚖️", "Power"], ["world", "🌍", "World"], ["institutions", "🌐", "Institutions"], ["military", "🎖️", "Military"], ["record", "📖", "Record"]);
+    v.push([ "legislature", "📜", hasLegislature() ? "Legislature" : "Decrees"], ["lawbook", "📚", "Lawbook"], ["budget", "💰", "Budget"], ["finance", "💵", "Finance"], ["economy", "🏭", "Economy"], ["population", "👥", "Population"], ["power", "⚖️", "Power"], ["world", "🌍", "World"], ["institutions", "🌐", "Institutions"], ["military", "🎖️", "Military"], ["record", "📖", "Record"]);
     return v;
 }
 
@@ -293,7 +293,7 @@ function renderDock() {
 }
 
 function renderView() {
-    const fn = { office: viewOffice, movement: viewMovement, legislature: viewLegislature, lawbook: viewLawbook, budget: viewBudget, finance: viewFinance, economy: viewEconomy, power: viewPower, world: viewWorld, institutions: viewInstitutions, military: viewMilitary, record: viewRecord }[view] || viewOffice;
+    const fn = { office: viewOffice, movement: viewMovement, legislature: viewLegislature, lawbook: viewLawbook, budget: viewBudget, finance: viewFinance, population: viewPopulation, economy: viewEconomy, power: viewPower, world: viewWorld, institutions: viewInstitutions, military: viewMilitary, record: viewRecord }[view] || viewOffice;
     $("#view").innerHTML = fn();
 }
 

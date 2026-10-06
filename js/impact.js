@@ -102,7 +102,7 @@ function statParts(k) {
     if (usesPolicy) POLICY_AREAS.forEach(a => { const o = curOpt(a.key); if (o.fx && o.fx[k]) parts.push([optName(o), o.fx[k]]); });
     Object.keys(G.laws).forEach(lk => { const d = lawDef(lk); if (d && d.fx && d.fx[k] && !d.tax) parts.push([d.name, d.fx[k] * lawMult(lk) * lawDelivery(d, k) * (k === "poverty" && d.fx[k] < 0 ? povertyReach() : 1)]); });
     if (k === "health") { parts.push(["Hospitals coverage", covRel("hospitals") * 4], ["Excise & green taxes", taxHealth()], ["Health minister", minBonus("health") * 1.5]); }
-    if (k === "poverty") { parts.push(["Housing coverage", -covRel("housing") * 3], ["Unemployment", (G.econ.unemp - 6) * 0.8], ["Rural roads & irrigation", ruralPoverty()], ["Land reform", G.pol.land === "reform" ? -3 * povertyReach() : 0]); }
+    if (k === "poverty") { parts.push(["Housing coverage", -covRel("housing") * 3], ["Unemployment", (G.econ.unemp - 6) * 0.8], ["Rural roads & irrigation", ruralPoverty()], ["Money sent home from abroad", remittancePoverty()], ["Land reform", G.pol.land === "reform" ? -3 * povertyReach() : 0]); }
     if (k === "crime") { parts.push(["Housing coverage", -covRel("housing") * 1.5], ["Unemployment", G.econ.unemp * 1.2 - 7], ["Interior minister", -minBonus("interior") * 2]); }
     if (k === "stability") { parts.push(["Approval", (approval() - 50) * 0.3], ["Growth", (G.econ.growth - 3) * 1.2], ["Inflation & jobless", -(Math.max(0, G.econ.inflation - 8) * 0.8 + Math.max(0, G.econ.unemp - 8) * 0.8)], ["Poll tax", taxStability()]); }
     if (k === "unemp") parts.push(["Jobs you created", -(G.econ.jobsAdded || 0) * 0.7], ["Growth", -(G.econ.growth - 3) * 0.5]);

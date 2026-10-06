@@ -360,6 +360,39 @@ showed "+10".
   dollars. Debt can spiral into default, and oil shocks hit importers and
   enrich exporters.
 
+## Population (Population tab)
+
+- **The basics:** population and its growth, split into natural growth and
+  migration.
+  - Births and deaths per year (and per 1,000 people).
+  - Life expectancy.
+  - Age structure: children, working age, elderly.
+  - Cities versus countryside, the workforce, and how many live in each
+    region.
+  - A year-by-year table.
+- **Migration** follows history:
+  - People come when you're richer, safer and freer than where they live,
+    and your **immigration policy** lets them in. Choices: restrictive
+    quotas, skilled & points-based, guest workers, open immigration, or
+    closed borders with exit visas.
+  - Settler countries (US, Canada, Australia, New Zealand) take mostly
+    Europeans until their national-origin quotas end in 1965–74.
+  - Israel's Law of Return brings the mass aliyah of 1948–51 and the
+    Soviet exodus of the 1990s.
+  - Communist states rarely let people leave.
+  - People leave when home is poor, unstable, at war or repressive. The very
+    poorest can rarely afford to go, and emigration grows easier over the
+    decades. Britons and Germans emigrate overseas in the post-war years.
+  - The tab lists **who's moving in** and **where emigrants go**, country by
+    country, plus the share of residents born abroad.
+- **Effects:**
+  - Newcomers add workers and growth; skilled immigrants speed up technology
+    and add graduates.
+  - Emigration drains a few graduates, but money sent home by citizens
+    abroad cuts poverty.
+  - Wars next door send **refugees** to your border: take them in with UN
+    help, take a limited number, or close the border.
+
 ## Family
 
 The Office tab has a Family panel.
@@ -497,6 +530,7 @@ scandals, disasters, lobbyists, pork demands, investors and more.
 | `js/impact.js` | Impact snapshots, previews and the "what's moving the country" breakdown |
 | `js/family.js` | Spouse, children, heirs and family events |
 | `js/power.js` | The world power ranking |
+| `js/population.js` | Births, deaths, migration flows and the Population tab |
 | `js/treasury.js` | The treasury, development aid, debt and the Finance tab |
 | `js/trade.js` | Trade agreements: sector-by-sector exports, competition and cheaper imports |
 | `js/institutions.js` | The UN, IMF, World Bank and regional banks, GATT/WTO, OECD, G7/G20, debt relief |

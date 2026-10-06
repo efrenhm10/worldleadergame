@@ -99,7 +99,7 @@ function newGame(opts) {
     initInstitutions();
     G.powerHist = []; powerYearly();
     G.leader.family = initFamily(!!opts.historical);
-    tre(); treasuryYearly();
+    tre(); treasuryYearly(); popl();
     G.econ.rev = taxBase().total; G.econ.spend = governmentSpend().total; G.econ.deficit = G.econ.spend - G.econ.rev;
     setupPillars();
     if (c.status === "colony") initColony(c);
@@ -359,7 +359,7 @@ function recomputeDerived() {
 function devStage(v = G.dev.ind) { let s = DEV_STAGES[0][1]; DEV_STAGES.forEach(([t, n]) => { if (v >= t) s = n; }); return s; }
 
 function snapshot() {
-    return { t: G.t, a: Math.round(approval()), g: +fmt(G.econ.growth, 1), s: Math.round(G.s.stability), gdp: +fmt(G.econ.gdp, 2), i: +fmt(G.econ.inflation, 1), d: Math.round(G.econ.debt / G.econ.gdp * 100),
+    return { t: G.t, a: Math.round(approval()), g: +fmt(G.econ.growth, 1), s: Math.round(G.s.stability), gdp: +fmt(G.econ.gdp, 2), i: +fmt(G.econ.inflation, 1), d: Math.round(G.econ.debt / G.econ.gdp * 100), p: Math.round(G.econ.pop * 100) / 100,
         dv: [G.dev.ind, G.dev.tech, G.dev.lit, G.dev.uni, G.dev.urban].map(v => Math.round(v * 100) / 100) };
 }
 
@@ -469,6 +469,7 @@ function monthlyTick(newYear) {
     goalsCheck();
     institutionsMonth();
     treasuryMonthly();
+    populationMonthly();
     infraMonthly();
     statsMonthly();
     if (G.colony) colonyMonth();
@@ -530,7 +531,7 @@ function potentialGrowth() {
     if (G.gov.type === "colony") g -= 0.5;
     if (G.year >= 1974) g -= 0.5;
     g -= instGrowthDrag();
-    g += tradeGrowth();
+    g += tradeGrowth() + migrationGrowth();
     return clamp(g, -15, 14);
 }
 
@@ -574,9 +575,8 @@ function economyTick() {
     if (G.year > 1990 && G.dev.lit > 95) popR -= 0.4;
     if (G.ck === "usa") popR += 0.5;
     if (lawOn("nhs") || lawOn("nhi")) popR += 0.2;
-    if (["israel"].includes(G.ck) && G.year < 1965) popR += 5;
-    if (["australia", "canada"].includes(G.ck)) popR += 1;
-    e.pop *= 1 + popR / 100 / 52;
+    if (["australia", "canada", "newzealand"].includes(G.ck) && G.year < 1965) popR += 0.7;   // the baby boom
+    popWeek(popR);   // migration is added monthly (population.js)
     e.popR = popR;
     // Budget (annual % of GDP).
     // Revenue comes from the tax base: formal wages, company profits,
