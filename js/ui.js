@@ -293,7 +293,7 @@ function renderDock() {
 }
 
 function renderView() {
-    const fn = { office: viewOffice, movement: viewMovement, legislature: viewLegislature, lawbook: viewLawbook, budget: viewBudget, finance: viewFinance, mega: viewMega, population: viewPopulation, economy: viewEconomy, power: viewPower, world: viewWorld, institutions: viewInstitutions, military: viewMilitary, record: viewRecord }[view] || viewOffice;
+    const fn = { office: viewOffice, movement: viewMovement, legislature: viewLegislature, lawbook: viewLawbook, budget: viewBudget, finance: viewFinance, mega: viewMega, report: viewReport, population: viewPopulation, economy: viewEconomy, power: viewPower, world: viewWorld, institutions: viewInstitutions, military: viewMilitary, record: viewRecord }[view] || viewOffice;
     $("#view").innerHTML = fn();
 }
 
@@ -352,6 +352,7 @@ function viewOffice() {
             ${panel("Trends (last 6 years)", `<div class="spark-row"><span>Approval</span>${sparkline("a", "#7bd88f")}</div><div class="spark-row"><span>Growth</span>${sparkline("g", "#6fb3ff")}</div><div class="spark-row"><span>Stability</span>${sparkline("s", "#f0c05a")}</div><div class="spark-row"><span>GDP</span>${sparkline("gdp", "#c39bff")}</div>`)}
         </div>
         <div>
+            ${(G.reports || []).length ? `<div class="row"><button data-act="report" data-y="${G.reports[G.reports.length - 1].y}">📜 State of the Nation, ${G.reports[G.reports.length - 1].y}</button></div>` : ""}
             ${panel("Advisers say", advisories().map(t => `<p class="advice">${esc(t)}</p>`).join("") || "<p class='muted'>All quiet.</p>")}
             ${panel("National goals", `<ul class="goals">${goals}</ul>`)}
             ${panel("Latest cables", G.log.slice(0, 10).map(l => `<p class="cable ${l.type}"><small>${dateStr(l.t)}</small> ${esc(l.text)}</p>`).join(""))}
@@ -611,7 +612,8 @@ function viewRecord() {
     return `<div class="cols2">
         <div>${panel(`The record of ${esc(G.leader.name)}`, `<ul class="record">${G.record.map(r => `<li><small>${dateStr(r.t).split(" ").pop()}</small> ${esc(r.text)}</li>`).join("")}</ul>`)}
             ${tenures ? panel("Previous leaders (your playthrough)", `<ul>${tenures}</ul>`) : ""}
-            ${panel("Legacy so far", legacyHTML())}</div>
+            ${panel("Legacy so far", legacyHTML())}
+            ${(G.reports || []).length ? panel("State of the Nation reports", `<div class="row">${G.reports.map(r => `<button class="mini secondary" data-act="report" data-y="${r.y}" title="${esc(r.grade[0])}">${r.grade[1]} ${r.y}</button>`).join("")}</div>`) : ""}</div>
         <div>${panel("Cables", `<div class="filters">${filters.map(f => `<button class="mini ${ui.logFilter === f ? "on" : ""}" data-act="lfilter" data-k="${f}">${f}</button>`).join("")}</div>${logs}`)}</div>
     </div>`;
 }

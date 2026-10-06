@@ -360,6 +360,103 @@ showed "+10".
   dollars. Debt can spiral into default, and oil shocks hit importers and
   enrich exporters.
 
+## The State of the Nation
+
+Every January a report reviews the past year:
+- A grade, from "an excellent year" to "a bad year".
+- A scorecard of income per person, population, poverty, life expectancy,
+  literacy, cities, industrialization, technology, jobs, inflation, debt,
+  tax collection, stability, approval, crime, corruption and world rank,
+  each with its change.
+- **Why** things moved: the biggest pushes on growth and poverty.
+- The year's big moments.
+- Concrete **recommendations** from your advisers.
+- **How you compare with history**: what really happened to your country
+  (life expectancy gained, literacy, income versus 1950).
+
+Past reports are kept in the Record tab, and the latest is a button on the
+Office tab.
+
+## Megaprojects (Megaprojects tab)
+
+The big bets: great dams, national railways and highways, deep-water
+ports, steel complexes, special economic zones, new capitals, a Green
+Revolution, a national university and nuclear power. They carry real names
+by country and era: the Blue Nile dam (the Grand Renaissance Dam from 2010),
+Brasília, Itaipu, Bhilai, POSCO, Shenzhen, Jebel Ali, the Snowy Mountains
+Scheme, the Shinkansen and more.
+
+- **Unlocking:** each needs groundwork first. A steel mill needs power and
+  rail; a special economic zone needs a port and literate workers.
+- **Stages:** a feasibility study firms up the cost. Then a **financing
+  round** brings competing offers, depending on era and alignment:
+
+| Lender | Era | Terms |
+|---|---|---|
+| World Bank (IBRD) | 1946+ | Slow, careful, governance checks |
+| World Bank (IDA) | 1960+ | Near-free, poorest countries only |
+| Regional development banks | 1960s+ | Regional lending |
+| US aid | Cold War | Pulled if you drift East |
+| Soviet credits | 1955+ | Cheap, with engineers; pulled if you drift West |
+| Japanese yen loans | 1955+ | Asia |
+| European export credits | 1960+ | Their firms build it |
+| OPEC funds | 1974+ | Petrodollars for friendly states |
+| Oil- or ore-backed loans | 1970+ | Repaid in future exports |
+| Petrodollar bank loans | 1973–85 | Floating rates that spike when world rates do |
+| Eurobonds | 1991+ | Priced by your credit rating |
+| Chinese loans | 2000+ | Fast; Chinese contractors; collateral |
+| Private concessions | 1985+ | Built and run for tolls |
+| Diaspora bonds | Varies | Bought by citizens abroad |
+
+  Your treasury and domestic bonds cover the rest. Neutral countries can
+  play the superpowers against each other for better terms.
+- **Building:** cost overruns, delays, kickback scandals, resettlement
+  protests, halts during unrest or war, and lenders that walk out if you
+  switch sides. After a default, collateralized projects can be seized.
+- **Payoff:** an opening ceremony, then lasting gains to infrastructure,
+  industry, growth, poverty, health, technology and investment. These count
+  only as far as the country can use the project; a dam with no industry
+  to buy its power is a white elephant. Contested dams anger neighbours
+  downstream.
+
+## Money and the currency (Finance tab)
+
+- **Interest rates:** set them yourself, or make the central bank
+  independent (it then follows a rule and earns credibility). Real rates
+  move inflation, growth, capital flows and what new debt costs.
+  Concessional loans cost 1.5%.
+- **The exchange rate:** a dollar peg (the norm until the 1971 Nixon
+  shock), a managed crawl or a free float.
+  - Inflation above the world's overvalues a peg, which hurts exports and
+    drains reserves.
+  - Devaluation restores competitiveness but raises prices.
+  - Each currency is named, with its real 1950 rate.
+- **Reserves and the balance of payments:** trade, oil, remittances, aid,
+  loans and capital flows fill or drain your reserves. When they run low,
+  the market tests your peg. You can respond by devaluing, floating, calling
+  in the IMF, or imposing capital controls.
+- **Credit rating** from AAA to D, built from debt, wealth, reserves, tax
+  collection, corruption, inflation, stability, war and past defaults. It
+  prices your borrowing and decides who will lend for megaprojects.
+
+## Peoples and regions (Population tab)
+
+- **Identities:** regions with their own peoples carry grievances, with
+  religion and language. Examples include the Oromo, Somalis and Tigrayans;
+  the Igbo; Bengalis and Pashtuns; Tamils, Sikhs and Kashmiris; Tibetans
+  and Uyghurs; the Balts and the Caucasus; Scots and Northern Irish
+  Catholics; the Québécois; Kurds and Moros.
+- **What drives grievances:** neglect, poverty, discrimination, repression,
+  an established religion and megaproject displacement. Autonomy,
+  development money and investment calm them.
+- **Movements** grow from quiet to agitation, armed insurgency and a
+  secession crisis, each with a decision.
+- **Your tools:** cultural rights, regional autonomy, a federal state,
+  development funds, co-opting local elites, or crackdowns. Crackdowns buy
+  time but deepen the grievance.
+- **Secession:** a separatist war or a referendum can end with a region
+  leaving as a new state, taking its people and economy with it.
+
 ## Population (Population tab)
 
 - **The basics:** population and its growth, split into natural growth and
@@ -530,6 +627,10 @@ scandals, disasters, lobbyists, pork demands, investors and more.
 | `js/impact.js` | Impact snapshots, previews and the "what's moving the country" breakdown |
 | `js/family.js` | Spouse, children, heirs and family events |
 | `js/power.js` | The world power ranking |
+| `js/money.js` | Interest rates, exchange rates, reserves, balance of payments, credit rating |
+| `js/mega.js` | Megaprojects, their financing and the Megaprojects tab |
+| `js/identity.js` | Peoples, regional grievances, autonomy and separatism |
+| `js/report.js` | The yearly State of the Nation report |
 | `js/population.js` | Births, deaths, migration flows and the Population tab |
 | `js/treasury.js` | The treasury, development aid, debt and the Finance tab |
 | `js/trade.js` | Trade agreements: sector-by-sector exports, competition and cheaper imports |

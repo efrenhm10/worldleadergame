@@ -90,7 +90,7 @@ function ratingParts() {
         ["Reserves", Math.min(15, reserveMonths() * 2)],
         ["Tax collection", e.taxCap * 10],
         ["Corruption", -(G.s.corruption - 30) * 0.3],
-        ["Inflation", -Math.max(0, e.inflation - 5) * 1.5],
+        ["Inflation", -Math.min(25, Math.max(0, e.inflation - 5) * 1.5)],
         ["Stability", G.s.stability < 40 ? -15 : 0],
         ["War", playerWars().length ? -10 : 0],
         ["Past default", G.flags.defaulted_year && G.year - G.flags.defaulted_year < 10 ? -30 : 0],
@@ -130,7 +130,9 @@ function moneyWeek() {
     }
     // Reserves hold their real value only loosely.
     m.reserves *= 1 - Math.max(0, worldInflation() - 2) / 100 / 52;
-    m.score += (ratingParts().reduce((s, [, v]) => s + v, 50) - m.score) * 0.02;
+    // D is for countries that have actually defaulted.
+    const floor = G.flags.defaulted_year && G.year - G.flags.defaulted_year < 3 ? -999 : 12;
+    m.score += (Math.max(floor, ratingParts().reduce((s, [, v]) => s + v, 50)) - m.score) * 0.02;
     m.rating = ratingOf(m.score)[1];
     // A run on a pegged currency.
     if (m.regime !== "float" && G.ck !== "usa" && reserveMonths() < 1.5 && G.t - m.crisisT > 104 && !G.scenes.some(s => s.id === "fx_crisis")) { m.crisisT = G.t; queueScene("fx_crisis", {}); }

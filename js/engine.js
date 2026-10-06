@@ -108,6 +108,7 @@ function newGame(opts) {
     applyBackground();
     recomputeDerived();
     G.hist.push(snapshot());
+    G.annual = [yearSnap()];
     log(`${G.leader.name} takes office as ${G.leader.title} of ${c.name}.`, "major");
     record(`Took office as ${G.leader.title} of ${c.name}, January 1950.`);
     if (typeof openingScenes === "function") openingScenes();
@@ -480,6 +481,7 @@ function monthlyTick(newYear) {
 }
 
 function yearlyTick() {
+    annualReport();
     budgetNewYear();
     treasuryYearly();
     moneyYearly();
