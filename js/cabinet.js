@@ -129,19 +129,27 @@ function cabinetMonthly() {
 
 function gdpPerCapita(gdp = G.econ.gdp, pop = G.econ.pop) { return gdp * 1000 / Math.max(0.01, pop); }
 
+// What income and schooling alone give a country, before any policy.
+const healthBase = () => 20 + 28 * Math.log10(Math.max(1, gdpPerCapita() / 20)) + (G.dev.lit - 50) * 0.1;
+const povertyBase = () => 100 - 32 * Math.log10(Math.max(1, gdpPerCapita() / 15));
+// Anti-poverty programs reach more people where more people are poor.
+const povertyReach = () => clamp(povertyBase() / 35, 0.6, 1.8);
+// Where most people farm, rural roads and irrigation lift them out of poverty.
+const ruralShare = () => clamp(G.ind.agriculture.out / G.econ.gdp * 2, 0.2, 1);
+const ruralPoverty = () => -(Math.max(0, covRel("irrigation")) * 4 + Math.max(0, covRel("roads")) * 2) * ruralShare();
+
 function healthTarget() {
-    const pc = gdpPerCapita();
-    let t = 20 + 28 * Math.log10(Math.max(1, pc / 20)) + (G.dev.lit - 50) * 0.1;
+    let t = healthBase();
     t += lawFx("health") + covRel("hospitals") * 4 + taxHealth();
     t += minBonus("health") * 1.5 - G.s.weariness * 0.05;
     return clamp(t, 5, 98);
 }
 
 function povertyTarget() {
-    const pc = gdpPerCapita();
-    let t = 100 - 32 * Math.log10(Math.max(1, pc / 15));
-    t += lawFx("poverty") - covRel("housing") * 3;
-    t -= G.pol.land === "reform" ? 3 : 0;
+    let t = povertyBase();
+    const lp = lawFx("poverty");
+    t += (lp < 0 ? lp * povertyReach() : lp) - covRel("housing") * 3 + ruralPoverty();
+    t -= G.pol.land === "reform" ? 3 * povertyReach() : 0;
     t += (G.econ.unemp - 6) * 0.8 - minBonus("health");
     if (G.pol.economy === "collectivized" || G.pol.economy === "planned") t -= 4;
     return clamp(t, 2, 98);

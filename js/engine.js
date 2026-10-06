@@ -563,14 +563,16 @@ function economyTick() {
     e.growth = e.growth * 0.94 + inst * 0.06;
     e.shock *= 0.97;
     // Population.
-    // Demographic transition: births fall as literacy and cities spread.
-    let popR = clamp(3.1 - G.dev.lit * 0.022 - G.dev.urban * 0.005, 0.1, 3);
+    // Demographic transition: births fall as literacy and cities spread;
+    // where health is poor, high death rates hold growth down at first.
+    let popR = clamp(3.1 - G.dev.lit * 0.022 - G.dev.urban * 0.005 - Math.max(0, 45 - G.s.health) * 0.03, 0.1, 3);
     if (G.year > 1990 && G.dev.lit > 95) popR -= 0.4;
     if (G.ck === "usa") popR += 0.5;
     if (lawOn("nhs") || lawOn("nhi")) popR += 0.2;
     if (["israel"].includes(G.ck) && G.year < 1965) popR += 5;
     if (["australia", "canada"].includes(G.ck)) popR += 1;
     e.pop *= 1 + popR / 100 / 52;
+    e.popR = popR;
     // Budget (annual % of GDP).
     // Revenue comes from the tax base: formal wages, company profits,
     // resource royalties and tariffs. Industry and jobs widen it.

@@ -304,6 +304,15 @@ showed "+10".
   industry's share of the economy, discounted while most people farm),
   technology, literacy, university education and urbanization. Population
   growth slows as literacy and cities spread.
+  - The Office tab shows income per person since 1950 after inflation, and
+    this year's economic growth minus population growth. Population grows
+    fast while literacy is low, so it eats much of the growth in poor
+    countries. Poor health holds population growth down at first.
+  - Poverty and health start from what income buys (shown on the Office
+    tab); laws, projects and ministers add to that. Anti-poverty programs
+    count for more where more people are poor (up to 1.8×). In farming
+    countries, rural roads and irrigation above the normal level also cut
+    poverty.
   - Foreign companies speed up technological catch-up, and formal jobs pull
     people into cities.
   - The Economy tab shows what your companies add up to (output, share of GDP,

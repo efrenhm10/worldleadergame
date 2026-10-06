@@ -38,6 +38,14 @@ function indicatorBars(p, keys) {
     return IND_DEFS.filter(d => !keys || keys.includes(d.k)).map(d => meter(d.name, d.norm(p[d.k]), d.good, d.disp(p[d.k]), d.tip)).join("");
 }
 
+// Income per person over time, after inflation, and what's eating the growth.
+function incomeLine() {
+    const pc = gdpPerCapita(), start = G.ref && G.ref.pc, e = G.econ;
+    const popR = e.popR != null ? e.popR : 0, perHead = e.growth - popR;
+    const since = start ? `$${Math.round(start).toLocaleString("en-US")} in 1950 → $${Math.round(pc * cpi()).toLocaleString("en-US")} now${cpi() > 1.05 ? ` ($${Math.round(pc).toLocaleString("en-US")} in 1950 prices)` : ""}: <b class="${pc >= start ? "good" : "bad"}">×${fmt(pc / start, pc / start < 10 ? 1 : 0)}</b> after inflation. ` : "";
+    return `<p class="tiny">💵 <b>Income per person:</b> ${since}Each year now: economy ${fmt(e.growth, 1)}% − population ${fmt(popR, 1)}% = <b class="${perHead > 1 ? "good" : perHead < 0 ? "bad" : ""}">${perHead >= 0 ? "+" : ""}${fmt(perHead, 1)}%</b> a head.${popR > 2 && perHead < 2 ? " Fast population growth eats most of the gains; literacy, cities and family planning slow it." : ""}</p>`;
+}
+
 function liveProfile() {
     return { ls: livingStandards(), gdp: G.econ.gdp * cpi(), pc: gdpPerCapita() * cpi(), health: G.s.health, lit: G.dev.lit, unemp: G.econ.unemp, crime: G.s.crime, poverty: G.s.poverty, stability: G.s.stability, liberty: G.s.liberty, mil: G.mil.strength };
 }
@@ -339,7 +347,7 @@ function viewOffice() {
             ${panel("How you could fall", `<p class="small muted">${GOV_TYPES[G.gov.type].name}: ${GOV_TYPES[G.gov.type].fall.join(" · ")}</p>` + threatPanel())}
         </div>
         <div>
-            ${panel("Key indicators", indicatorBars(liveProfile()) + (() => { const me = myStanding(); return me ? `<p class="small">🌐 World standing: <b>#${me.rank}</b> · ${me.tier[2]} ${me.tier[1]} <span class="tiny muted">(power score ${Math.round(me.score)}; details on the World tab)</span></p>` : ""; })())}
+            ${panel("Key indicators", indicatorBars(liveProfile()) + incomeLine() + (() => { const me = myStanding(); return me ? `<p class="small">🌐 World standing: <b>#${me.rank}</b> · ${me.tier[2]} ${me.tier[1]} <span class="tiny muted">(power score ${Math.round(me.score)}; details on the World tab)</span></p>` : ""; })())}
             ${panel("What's moving the country", viewDrivers())}
             ${panel("Trends (last 6 years)", `<div class="spark-row"><span>Approval</span>${sparkline("a", "#7bd88f")}</div><div class="spark-row"><span>Growth</span>${sparkline("g", "#6fb3ff")}</div><div class="spark-row"><span>Stability</span>${sparkline("s", "#f0c05a")}</div><div class="spark-row"><span>GDP</span>${sparkline("gdp", "#c39bff")}</div>`)}
         </div>

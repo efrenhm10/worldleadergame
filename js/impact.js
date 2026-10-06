@@ -99,9 +99,9 @@ function statParts(k) {
     const parts = [];
     const usesPolicy = ["stability", "liberty", "corruption", "legitimacy", "unemp"].includes(k);
     if (usesPolicy) POLICY_AREAS.forEach(a => { const o = curOpt(a.key); if (o.fx && o.fx[k]) parts.push([optName(o), o.fx[k]]); });
-    Object.keys(G.laws).forEach(lk => { const d = lawDef(lk); if (d && d.fx && d.fx[k] && !d.tax) parts.push([d.name, d.fx[k] * lawMult(lk)]); });
+    Object.keys(G.laws).forEach(lk => { const d = lawDef(lk); if (d && d.fx && d.fx[k] && !d.tax) parts.push([d.name, d.fx[k] * lawMult(lk) * (k === "poverty" && d.fx[k] < 0 ? povertyReach() : 1)]); });
     if (k === "health") { parts.push(["Hospitals coverage", covRel("hospitals") * 4], ["Excise & green taxes", taxHealth()], ["Health minister", minBonus("health") * 1.5]); }
-    if (k === "poverty") { parts.push(["Housing coverage", -covRel("housing") * 3], ["Unemployment", (G.econ.unemp - 6) * 0.8]); }
+    if (k === "poverty") { parts.push(["Housing coverage", -covRel("housing") * 3], ["Unemployment", (G.econ.unemp - 6) * 0.8], ["Rural roads & irrigation", ruralPoverty()], ["Land reform", G.pol.land === "reform" ? -3 * povertyReach() : 0]); }
     if (k === "crime") { parts.push(["Housing coverage", -covRel("housing") * 1.5], ["Unemployment", G.econ.unemp * 1.2 - 7], ["Interior minister", -minBonus("interior") * 2]); }
     if (k === "stability") { parts.push(["Approval", (approval() - 50) * 0.3], ["Growth", (G.econ.growth - 3) * 1.2], ["Inflation & jobless", -(Math.max(0, G.econ.inflation - 8) * 0.8 + Math.max(0, G.econ.unemp - 8) * 0.8)], ["Poll tax", taxStability()]); }
     if (k === "unemp") parts.push(["Jobs you created", -(G.econ.jobsAdded || 0) * 0.7], ["Growth", -(G.econ.growth - 3) * 0.5]);
@@ -135,8 +135,9 @@ function viewDrivers() {
         const ps = parts.slice(0, 5).map(([l, v]) => { const good = lowGood ? v < 0 : v > 0; return `${esc(l)} <b class="${good ? "good" : "bad"}">${v > 0 ? "+" : ""}${Math.abs(v) < 1 ? fmt(v, 1) : Math.round(v)}</b>`; }).join(" · ");
         return `<div class="driver"><div class="meter-top"><span>${label}</span><b>${unit === "%" ? fmt(val, 1) : Math.round(val)}${unit}${chTxt}</b></div><p class="tiny muted">${ps || "No big pushes either way."}${head}${extra}</p></div>`;
     };
-    return row("health", "⚕️ Health", G.s.health, healthTarget(), false, statParts("health"))
-        + row("poverty", "🤲 Poverty", G.s.poverty, povertyTarget(), true, statParts("poverty"))
+    const pcTxt = `$${Math.round(gdpPerCapita() * cpi()).toLocaleString("en-US")} a head`;
+    return row("health", "⚕️ Health", G.s.health, healthTarget(), false, statParts("health"), "", `<br>Starting point from income (${pcTxt}) and literacy: <b>${Math.round(clamp(healthBase(), 5, 98))}</b>. Growth raises it; the items above add to it.`)
+        + row("poverty", "🤲 Poverty", G.s.poverty, povertyTarget(), true, statParts("poverty"), "", `<br>Starting point from income (${pcTxt}): <b>${Math.round(clamp(povertyBase(), 2, 98))}%</b>. Doubling income per head cuts it by about 10 points. ${povertyReach() > 1.05 ? `With so many poor, anti-poverty programs count ${fmt(povertyReach(), 1)}× as much here.` : ""}`)
         + row("crime", "🚔 Crime", G.s.crime, crimeTarget(), true, statParts("crime"))
         + row("unemp", "👷 Unemployment", G.econ.unemp, unempTarget(), true, statParts("unemp"), "%")
         + row("stability", "🏛️ Stability", G.s.stability, stabilityTarget(), false, statParts("stability"))
