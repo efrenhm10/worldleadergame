@@ -63,6 +63,7 @@ function migrationRates() {
     const war = playerWars().some(w => commitOf(w) >= 2);
     const why = [];
     let attract = Math.pow(ratio, 1.2) * clamp(G.s.stability / 60, 0.3, 1.3) * (G.econ.unemp > 10 ? 0.5 : G.econ.unemp > 7 ? 0.8 : 1) * (war ? 0.3 : 1) * (0.7 + 0.3 * G.s.liberty / 100);
+    attract *= 1 + Math.min(0.5, (typeof lmAppeal === "function" ? lmAppeal() : 0) * 0.025);   // landmarks put you on the map
     let imm = (o.imm || 0.35) * attract * 1.1;
     // The Law of Return: the mass aliyah of 1948-51, a steady flow after, and the Soviet exodus of the 1990s.
     if (G.ck === "israel") imm += 12 * Math.exp(-(G.year - 1950) / 3) + (G.year < 1975 ? 1.2 : 0.5) + (G.year >= 1990 && G.year <= 1995 ? 2.5 : 0);
@@ -112,6 +113,7 @@ function spread(list, total, book, sign) {
 }
 
 function populationMonthly() {
+    homeOwnTick();
     const p = popl(), e = G.econ, r = migrationRates(), o = curOpt("immigration");
     const src = migrantSources(), dst = migrantDestinations();
     const inn = src.length ? e.pop * r.imm / 100 / 12 : 0;
@@ -131,6 +133,16 @@ function populationMonthly() {
         if (n) queueScene("refugees", { who: n.key });
     }
 }
+
+// Share of households owning their home.
+function homeOwnTarget() {
+    const ratio = clamp(gdpPerCapita() / Math.max(1, frontierPC()), 0, 1);
+    const prog = lawOn("homeownership") ? lawMult("homeownership") * 22 : 0;
+    const rural = (1 - G.dev.urban / 100) * 35;   // farm families mostly own their homes and land
+    const land = G.pol.land === "landlords" ? -15 : G.pol.land === "reform" ? 8 : G.pol.land === "collective" ? -20 : 0;
+    return clamp(20 + rural + ratio * 30 + prog + land + covRel("housing") * 8 + (G.pol.economy === "planned" || G.pol.economy === "collectivized" ? -15 : 0), 5, 92);
+}
+function homeOwnTick() { G.homeOwn = G.homeOwn == null ? homeOwnTarget() : G.homeOwn + (homeOwnTarget() - G.homeOwn) * 0.06; }
 
 // Pulls on other stats.
 const foreignShare = () => G.popl ? G.popl.stockIn / Math.max(0.01, G.econ.pop) : 0;
@@ -185,7 +197,8 @@ function viewPopulation() {
         ${meter("Working age (15–64)", work / 100, true, Math.round(work) + "%")}
         ${meter("Elderly (65+)", over65 / 100, true, Math.round(over65) + "%")}
         <h4>Cities, countryside and work</h4>
-        <div class="budget"><div><small>In cities</small><b>${fmtPeople(e.pop * G.dev.urban / 100)}</b><span class="tiny muted">${Math.round(G.dev.urban)}%</span></div><div><small>Countryside</small><b>${fmtPeople(e.pop * (1 - G.dev.urban / 100))}</b></div><div><small>Workforce</small><b>${fmtPeople(laborForce())}</b><span class="tiny muted">${fmt(e.unemp, 1)}% jobless · ${Math.round(formalShare() * 100)}% formal</span></div></div>
+        <div class="budget"><div><small>In cities</small><b>${fmtPeople(e.pop * G.dev.urban / 100)}</b><span class="tiny muted">${Math.round(G.dev.urban)}%</span></div><div><small>Countryside</small><b>${fmtPeople(e.pop * (1 - G.dev.urban / 100))}</b></div><div><small>Own their home</small><b>${Math.round(G.homeOwn == null ? homeOwnTarget() : G.homeOwn)}%</b><span class="tiny muted">heading to ${Math.round(homeOwnTarget())}%${lawOn("homeownership") ? " · first-home program" : ""}</span></div><div><small>Workforce</small><b>${fmtPeople(laborForce())}</b><span class="tiny muted">${fmt(e.unemp, 1)}% jobless · ${Math.round(formalShare() * 100)}% formal</span></div></div>
+        ${e.startups ? `<p class="tiny">🏪 ${e.startups.toLocaleString("en-US")} businesses started with state start-up support so far.</p>` : ""}
         <div class="spark-row"><small>Population</small>${sparkline("p", "#7bd88f") || "<span class='tiny muted'>history builds as you play</span>"}</div>
         <p class="tiny muted">Births fall as literacy and cities spread (and with family planning); deaths fall as health improves. Poor countries grow fastest once health improves but schooling hasn't yet caught up.</p>`);
     const regionsPanel = panel("Where people live", G.regions.map(rg => `<div class="budget-row tre-row"><span>${esc(rg.n)} <span class="tiny muted">support ${Math.round(regionSupport(rg))}%</span></span><b>${fmtPeople(e.pop * rg.pop / 100)}</b></div>`).join(""));

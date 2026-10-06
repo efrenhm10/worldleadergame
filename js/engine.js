@@ -346,6 +346,7 @@ function prestigeTarget() {
     if (G.gov.type === "colony") t = Math.min(t, 25);
     if (G.gov.type === "occupied") t -= 15;
     t += (G.pmods.prestige || 0) + Math.min(6, indShare("film") * 3);
+    t += lmFx("prestige");
     return clamp(t, 2, 98);
 }
 
@@ -409,7 +410,7 @@ function indRate(k) {
     r += d.heavy ? covRel("power") * 0.8 + (covRel("rail") + covRel("roads")) * 0.3 : covRel("roads") * 0.3;
     if (k === "agriculture") r += ({ landlords: -0.4, reform: 0.5, collective: -1.6, mechanize: 1.2 }[G.pol.land] || 0) + lawFx("agri") + covRel("irrigation") * 1.5;
     else r += lawFx("indAll");
-    r += sectorBonus(k) + taxIndEffect(k) + tradeIndEffect(k) + megaInd(k);
+    r += sectorBonus(k) + taxIndEffect(k) + tradeIndEffect(k) + megaInd(k) + lmInd(k);
     if (k === "film") r += { free: 1, restricted: -0.8, state: -2.5 }[G.pol.press] || 0;
     if (["textiles", "autos", "electronics", "finance", "tourism"].includes(k)) r += { trade_free: 1, protection: -0.6, autarky: -2 }[G.pol.trade] || 0;
     if (d.heavy && G.pol.trade === "protection") r += 0.4;
@@ -444,6 +445,7 @@ function advanceWeek() {
     regionsTick();
     cipTick();
     megaWeek();
+    lmWeek();
     legislatureTick();
     if (G.colony) colonyTick();
     capitalTick();

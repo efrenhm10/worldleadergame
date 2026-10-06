@@ -344,6 +344,7 @@ function viewOffice() {
 
                 <p class="small">In office ${Math.floor((G.t - L.since) / 52)} yrs ${Math.floor(((G.t - L.since) % 52) / 4.3)} mo.${nv ? ` Next vote: ${nv.kind} in ${nv.weeks} weeks.` : ""}</p>`)}
             ${familyPanel()}
+            ${royalPanel()}
             ${panel("How you could fall", `<p class="small muted">${GOV_TYPES[G.gov.type].name}: ${GOV_TYPES[G.gov.type].fall.join(" · ")}</p>` + threatPanel())}
         </div>
         <div>
@@ -471,7 +472,9 @@ function viewEconomy() {
             <div class="row">${p.ceo && p.ceo.round ? "" : `<button class="mini" data-act="ceoTalk" data-i="${i}" ${G.capital < 4 ? "disabled" : ""}>✈️ Meet the CEO (4 ⚡)</button>`}<button class="mini primary" data-act="offer" data-i="${i}" ${G.capital < 5 ? "disabled" : ""}>Make the offer (5 ⚡)</button></div></div>`;
     }).join("") || "<p class='muted small'>No companies are looking at your country right now. Improve stability, education, infrastructure and openness.</p>";
     const deskPanel = panel("Investment desk", `<p class="small muted">Court foreign companies. New prospects arrive every six months. To grow your own firms, open an industry from the table.</p>${prospects}`);
-    const firms = (G.firms || []).slice().reverse().map(f => `<tr class="${f.closed ? "dim" : ""}"><td>${f.home && f.home !== G.ck ? flagOf(f.home) : f.foreign ? "🌐" : "🏠"} ${esc(f.name)}</td><td>${INDUSTRIES[f.sector].icon}</td><td>${esc(G.regions[f.region] ? G.regions[f.region].n : "")}</td><td>${fmtJobs(f.jobs)}</td><td>${f.closed ? "closed" : (() => { const ft = firmTaxes([f]); return `${f.holidayUntil > G.year ? `<span class="warn">holiday to ${f.holidayUntil}</span> (then ${moneyFine(ft.corpLater)})` : `<span class="good">${moneyFine(ft.corp)}</span>`} corp. · workers <span class="good">${moneyFine(ft.workers)}</span>`; })()}</td></tr>`).join("");
+    const starts = (G.firms || []).filter(f => f.way === "startup" && !f.closed);
+    const startRow = starts.length ? `<tr><td>🏪 ${starts.length} small businesses</td><td></td><td>start-up program</td><td>${fmtJobs(starts.reduce((s, f) => s + f.jobs, 0))}</td><td>${(() => { const ft = firmTaxes(starts); return `${moneyFine(ft.corp)} corp. · workers ${moneyFine(ft.workers)}`; })()}</td></tr>` : "";
+    const firms = startRow + (G.firms || []).filter(f => f.way !== "startup").slice().reverse().map(f => `<tr class="${f.closed ? "dim" : ""}"><td>${f.home && f.home !== G.ck ? flagOf(f.home) : f.foreign ? "🌐" : "🏠"} ${esc(f.name)}</td><td>${INDUSTRIES[f.sector].icon}</td><td>${esc(G.regions[f.region] ? G.regions[f.region].n : "")}</td><td>${fmtJobs(f.jobs)}</td><td>${f.closed ? "closed" : (() => { const ft = firmTaxes([f]); return `${f.holidayUntil > G.year ? `<span class="warn">holiday to ${f.holidayUntil}</span> (then ${moneyFine(ft.corpLater)})` : `<span class="good">${moneyFine(ft.corp)}</span>`} corp. · workers <span class="good">${moneyFine(ft.workers)}</span>`; })()}</td></tr>`).join("");
     const right = ui.ind ? industryPanel(ui.ind) : panel("Development", `
                 ${devCompanies()}
                 ${meter(`Industrialization: ${devStage()}`, d.ind / 100, true, fmt(d.ind, d.ind < 10 ? 1 : 0) + devTrend(0), "Heavy industry and manufacturing as a share of the economy, held back while most people farm. Grows as industries and companies grow.")}

@@ -431,3 +431,5 @@ ul.family li { padding: 2px 0; }
 .fin-bar .f-cash { background: #7bd88f; }
 .fin-bar .f-dom { background: #e0a85f; }
 .idn-row { padding: 6px 0 8px; border-bottom: 1px solid var(--line); } .idn-row p { margin: 3px 0; }
+.royal-row { padding: 6px 0 8px; border-bottom: 1px solid var(--line); } .royal-row p { margin: 3px 0; } .royal-row select { margin: 3px 0; font-size: 12px; padding: 4px 6px; }
+.lm-build { margin: 4px 0; } .mega-row input[type=text] { margin: 4px 0 2px; padding: 4px 6px; font-size: 12px; } .mega-row select { margin: 2px 0; font-size: 12px; padding: 4px 6px; }

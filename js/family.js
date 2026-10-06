@@ -38,7 +38,7 @@ const FAMILY_HIST = {
     mexico: { s: ["Beatriz Velasco", 40, "socialite"], c: [["Miguel", "m", 1932], ["Beatriz", "f", 1935]] },
     indonesia: { s: ["Fatmawati", 26, "beloved"], c: [["Guntur", "m", 1944], ["Megawati", "f", 1947]] },
     turkey: { s: ["Mevhibe İnönü", 53, "private"], c: [["Ömer", "m", 1924, "business"], ["Erdal", "m", 1926, "scholar"], ["Özden", "f", 1930]] },
-    saudi: { s: ["Hassa Al Sudairi", 50, "private"], c: [["Saud", "m", 1902, "politics"], ["Faisal", "m", 1906, "politics"], ["Fahd", "m", 1921, "politics"]] },
+    saudi: { s: ["Hassa Al Sudairi", 50, "private"], c: [["Saud", "m", 1902, "politics", "Umm Mansour"], ["Faisal", "m", 1906, "politics", "Iffat Al-Thunayan"], ["Fahd", "m", 1921, "politics"]] },
     nigeria: { s: ["Flora Azikiwe", 40, "philanthropist"], c: [["Chukwuma", "m", 1940]] },
     southafrica: { s: ["Maria Malan", 55, "private"], c: [] },
     argentina: { s: ["Eva Perón", 30, "beloved"], c: [] },
@@ -46,7 +46,7 @@ const FAMILY_HIST = {
     israel: { s: ["Paula Ben-Gurion", 58, "private"], c: [["Geula", "f", 1919, "scholar"], ["Amos", "m", 1920, "military"], ["Renana", "f", 1925, "scholar"]] },
     pakistan: { s: ["Ra'ana Liaquat Ali Khan", 44, "philanthropist"], c: [["Ashraf", "m", 1937], ["Akbar", "m", 1941]] },
     philippines: { w: "Alicia Syquia", c: [["Victoria", "f", 1931], ["Tomas", "m", 1934]] },
-    ethiopia: { s: ["Empress Menen", 60, "philanthropist"], c: [["Tenagnework", "f", 1912, "politics"], ["Asfaw Wossen", "m", 1916, "politics"], ["Makonnen", "m", 1923, "military"], ["Sahle Selassie", "m", 1931]] },
+    ethiopia: { s: ["Empress Menen", 60, "philanthropist"], c: [["Tenagnework", "f", 1912, "politics", "Ras Andargachew Messai"], ["Asfaw Wossen", "m", 1916, "politics", "Medferiashwork Abebe"], ["Makonnen", "m", 1923, "military", "Sara Gizaw"], ["Sahle Selassie", "m", 1931]] },
     venezuela: { s: ["Lucía Devine", 38, "socialite"], c: [] },
     norway: { s: ["Werna Gerhardsen", 37, "political"], c: [["Truls", "m", 1937], ["Kari", "f", 1940]] },
     barbados: { s: ["Grace Adams", 45, "private"], c: [["Tom", "m", 1931]] },
@@ -71,7 +71,7 @@ function initFamily(historical) {
     if (h) {
         if (h.s) fam.spouse = { name: h.s[0], gender: spouseGender, born: G.year - h.s[1], trait: h.s[2], alive: true, married: G.year - 10 };
         if (h.w) fam.widowed = h.w;
-        fam.children = (h.c || []).map(([n, g, b, path]) => ({ name: n, gender: g, born: b, path: path || null, alive: true }));
+        fam.children = (h.c || []).map(([n, g, b, path, sp]) => ({ name: n, gender: g, born: b, path: path || null, alive: true, spouse: sp ? { name: sp, from: "history", gender: g === "m" ? "f" : "m", born: b } : null }));
     } else {
         if (L.age >= 25 && chance(0.85)) fam.spouse = { name: randomPersonName(spouseGender), gender: spouseGender, born: G.year - Math.max(20, L.age - Math.round(rnd(-2, 6))), trait: pick(Object.keys(SPOUSE_TRAITS)), alive: true, married: G.year - Math.max(1, Math.round((L.age - 26) * 0.8)) };
         const kids = fam.spouse ? Math.max(0, Math.round(rnd(-0.5, 4) * clamp((L.age - 24) / 12, 0, 1))) : 0;
@@ -92,6 +92,10 @@ function heirOf() {
     const kids = f.children.filter(c => c.alive).sort((a, b) => a.born - b.born);
     const child = f.law === "equal" ? kids[0] : (kids.find(c => c.gender === "m") || null);
     if (child) return { name: `${child.gender === "m" ? "Crown Prince" : "Crown Princess"} ${child.name}`, age: ageOf(child), gender: child.gender, child: true };
+    // Then the grandchildren, eldest line first.
+    const grand = f.children.slice().sort((a, b) => a.born - b.born).flatMap(c => (c.kids || []).filter(g => g.alive !== false));
+    const gc = f.law === "equal" ? grand[0] : grand.find(g => g.gender === "m");
+    if (gc) return { name: `${gc.gender === "m" ? "Prince" : "Princess"} ${gc.name} (grandchild)`, age: ageOf(gc), gender: gc.gender, child: true, grand: true };
     return G.leader.heir ? Object.assign({ gender: "m" }, G.leader.heir) : null;
 }
 
@@ -103,6 +107,8 @@ function familyPillar(k) {
     if (f.spouse && f.spouse.alive) v += (SPOUSE_TRAITS[f.spouse.trait].p || {})[k] || 0;
     f.children.forEach(c => { if (c.alive && c.path && ageOf(c) >= 22) v += ((CHILD_PATHS[c.path].p || {})[k] || 0) * 0.5; });
     if (G.gov.type === "monarchy" && k === "royals" && !heirOf()) v -= clamp((G.leader.age - 35) * 0.4, 0, 12);
+    // Well-liked royals lift the monarchy; married heirs with children reassure the court.
+    if (G.gov.type === "monarchy") f.children.forEach(c => { if (c.alive && ageOf(c) >= 14) { if (k === "people") v += ((c.pop || 50) - 50) * 0.05; if (k === "royals") v += (c.spouse ? 1 : 0) + Math.min(3, (c.kids || []).length); } });
     return v;
 }
 function familyCapital() { const f = G.leader && G.leader.family; return f && f.spouse && f.spouse.alive ? SPOUSE_TRAITS[f.spouse.trait].capital || 0 : 0; }
@@ -111,6 +117,7 @@ function familyCapital() { const f = G.leader && G.leader.family; return f && f.
 
 function familyYearly() {
     const f = fam(), L = G.leader;
+    royalYearly(f);
     const sp = f.spouse && f.spouse.alive ? f.spouse : null;
     // Births.
     if (sp) {
@@ -272,4 +279,145 @@ function familyPanel() {
     if (sp) btns.push(`<button class="mini secondary danger" data-act="famDivorce" ${G.capital < 8 ? "disabled" : ""}>💔 Divorce (8 ⚡)</button>`);
     if (mon && f.law !== "equal") btns.push(`<button class="mini secondary" data-act="famLaw" ${G.capital < 10 ? "disabled" : ""}>⚖️ Let daughters inherit (10 ⚡)</button>`);
     return panel("Family", `${spTxt}${kids ? `<ul class="family">${kids}</ul>` : `<p class="tiny muted">No children.</p>`}${heirTxt}<div class="row">${btns.join("")}</div>`);
+}
+
+// ── The royal children: marriages, tours, visits, schooling, heirs ──
+//
+// A monarch's children are instruments of state. Marry them into foreign
+// royal houses or great domestic families, send them on tours of restless
+// provinces or on state visits abroad, choose where they are educated, and
+// lean on them for grandchildren to secure the line. Each choice has a
+// price: in their popularity, their happiness, and the court's goodwill.
+
+const SCHOOLS = [
+    { k: "oxford", name: "Eton & Oxford", host: "uk", skill: "diplomacy", p: { press: 2, clergy: -1 }, desc: "Polish, English and friends in every capital." },
+    { k: "sandhurst", name: "Sandhurst military academy", host: "uk", skill: "military", p: { military: 4 }, desc: "An officer's training; the army's respect." },
+    { k: "sorbonne", name: "The Sorbonne, Paris", host: "france", skill: "statecraft", p: { press: 2 }, desc: "Law, letters and ideas, some of them dangerous." },
+    { k: "harvard", name: "Harvard", host: "usa", skill: "statecraft", p: { business: 3, clergy: -1 }, from: 1950, desc: "Economics and American connections." },
+    { k: "moscow", name: "Moscow State University", host: "russia", skill: "statecraft", p: { politburo: 3, clergy: -2 }, align: -5, desc: "Soviet training; Washington frowns." },
+    { k: "azhar", name: "Al-Azhar, Cairo", host: "egypt", skill: "faith", p: { clergy: 5 }, muslim: true, desc: "Religious learning; the clerics approve." },
+    { k: "tokyo", name: "University of Tokyo", host: "japan", skill: "statecraft", p: { business: 2 }, from: 1960, desc: "Engineering and Japan's economic miracle up close." },
+    { k: "home", name: "At home, with private tutors", host: null, skill: "faith", p: { clergy: 2, royals: 2 }, desc: "Close to the court and its traditions; less of the world." }
+];
+const ROYAL_HOUSES = ["uk", "norway", "sweden", "denmark", "netherlands", "belgium", "spain", "japan", "saudi", "iran", "ethiopia", "jordan", "morocco", "thailand", "cambodia", "egypt", "iraq", "libya", "nepal", "afghanistan"];
+const MUSLIM_STATES = ["saudi", "iran", "pakistan", "indonesia", "turkey", "egypt", "iraq", "uae", "nigeria", "malaya"];
+
+function royalYearly(f) {
+    f.children.forEach(c => {
+        if (!c.alive) return;
+        c.pop = clamp((c.pop == null ? 50 : c.pop) + (50 - (c.pop == null ? 50 : c.pop)) * 0.08);
+        if (c.spouse && ageOf(c) <= 45) {
+            const press = c.pressure && G.year <= c.pressure ? 2.2 : 1;
+            const p = (ageOf(c) <= 32 ? 0.22 : ageOf(c) <= 40 ? 0.12 : 0.04) * press * ((c.kids || []).filter(g => ageOf(g) < 3).length ? 0.5 : 1);
+            if (chance(p)) {
+                const g = chance(0.51) ? "m" : "f", n = pick(firstNames(g));
+                c.kids = (c.kids || []).concat({ name: n, gender: g, born: G.year, alive: true });
+                applyEffects({ p: { royals: 2, people: 1 } });
+                log(`👶 A ${g === "m" ? "grandson" : "granddaughter"}, ${n}, is born to ${c.name} and ${c.spouse.name}.`, "good");
+            }
+            if (c.pressure && G.year <= c.pressure && chance(0.12)) { c.pop -= 6; log(`📰 Gossip columns say ${c.name}'s marriage is buckling under palace pressure for an heir.`, "bad"); }
+        }
+    });
+}
+
+function royalChild(name) { return fam().children.find(c => c.alive && c.name === name); }
+
+function royalAct(name, k, arg) {
+    const c = royalChild(name);
+    if (!c) return;
+    const cost = { tour: 2, visit: 3, school: 2, pressure: 1, marry: 3 }[k];
+    if (G.capital < cost) return toast("Not enough political capital", `It costs ${cost}.`);
+    if (k === "marry") { G.capital -= cost; return queueScene("royal_match", { name, seed: G.t }); }
+    if (k === "tour") {
+        const r = G.regions[+arg];
+        if (!r) return;
+        if (c.lastTour && G.t - c.lastTour < 52) return toast("Too soon", `${c.name} toured within the last year.`);
+        G.capital -= cost; c.lastTour = G.t;
+        const x = typeof idnOf === "function" ? idnOf(r) : null;
+        r.mod += 5 + (c.pop || 50) / 20;
+        if (x) { x.griev = Math.max(0, x.griev - 6); x.dev += 3; }
+        c.pop = clamp((c.pop || 50) + 6);
+        const gaffe = c.path === "playboy" && chance(0.35);
+        if (gaffe) { r.mod -= 6; c.pop -= 10; applyEffects({ scandal: 3 }); }
+        const danger = x && x.str >= 50 && chance(0.15);
+        if (danger) log(`🚨 Shots are fired at ${c.name}'s motorcade in ${r.n}. ${chance(0.85) ? "The royal escapes unhurt" : "The royal is wounded but survives"}; the nation rallies.`, "major");
+        log(`🚂 ${c.name} tours ${r.n}${x ? `, meeting ${x.g} elders` : ""}.${gaffe ? " An offhand remark about the local food causes a storm." : " Crowds turn out to cheer."}`, gaffe ? "bad" : "good");
+        toast("Royal tour", `${c.name} in ${r.n}.`, applyEffects({ p: { people: 2 } }));
+    }
+    if (k === "visit") {
+        const n = G.nations[arg];
+        if (!n) return;
+        if (c.lastVisit && G.t - c.lastVisit < 26) return toast("Too soon", `${c.name} was abroad recently.`);
+        G.capital -= cost; c.lastVisit = G.t;
+        const heir = heirOf() && heirOf().name.endsWith(c.name);
+        addRel(G.ck, arg, (heir ? 12 : 8) + (c.skill === "diplomacy" ? 4 : 0));
+        c.pop = clamp((c.pop || 50) + 3);
+        log(`✈️ ${c.name} pays a state visit to ${n.name}. ${c.skill === "diplomacy" ? "Their charm is the talk of the capital." : "Banquets, speeches and a warm communiqué."}`, "good");
+        toast("State visit", `${c.name} in ${n.name}.`, applyEffects({ prestige: 1 }));
+    }
+    if (k === "school") {
+        const s = SCHOOLS.find(x => x.k === arg);
+        if (!s || c.edu) return;
+        G.capital -= cost;
+        c.edu = s.k; c.skill = s.skill;
+        const fx = { p: s.p };
+        if (s.host && G.nations[s.host]) fx.rel = { [s.host]: 8 };
+        if (s.align) fx.align = s.align;
+        if (s.host) treasuryPay(G.econ.gdp * 0.00005);
+        log(`🎓 ${c.name} is sent to ${s.name}.`, "policy");
+        toast("Education", `${c.name}: ${s.name}.`, applyEffects(fx));
+    }
+    if (k === "pressure") {
+        if (!c.spouse) return toast("Not married", `${c.name} needs a spouse first.`);
+        G.capital -= cost;
+        c.pressure = G.year + 3;
+        c.pop -= 2;
+        log(`👑 You make it clear to ${c.name} and ${c.spouse.name} that the dynasty expects children.`, "policy");
+        toast("A word in private", `${c.name} has been told what the throne expects.`);
+    }
+}
+
+SCENES.royal_match = a => {
+    const c = royalChild(a.name);
+    if (!c) return S("💍", "", "", "", [ch("OK", {}, "")]);
+    const g = c.gender === "m" ? "f" : "m", child = g === "f" ? "daughter" : "son";
+    const ok = k => k !== G.ck && G.nations[k] && G.nations[k].status === "sovereign";
+    const houses = ROYAL_HOUSES.filter(k => ok(k) && (G.nations[k].gov === "monarchy" || ["uk", "norway", "sweden", "denmark", "netherlands", "belgium", "japan", "spain", "thailand"].includes(k)));
+    const foreign = pick(houses) || "uk";
+    const restless = typeof idnOf === "function" ? G.regions.filter(r => idnOf(r)).sort((x, y) => idnOf(y).griev - idnOf(x).griev)[0] : null;
+    const wed = (spouse, from, fx, extra) => () => {
+        c.spouse = { name: spouse, from, gender: g, born: c.born + Math.round(rnd(-3, 2)) };
+        c.pop = clamp((c.pop || 50) + 8);
+        applyEffects(Object.assign({ prestige: 2, p: { people: 3 } }, fx || {}));
+        if (extra) extra();
+        log(`💒 A royal wedding: ${c.name} marries ${spouse}.`, "major");
+        record(`${c.name} married ${spouse}, ${G.year}.`);
+        return "The bells ring out across the capital.";
+    };
+    const refuse = c.path === "playboy" || chance(0.12);
+    const choices = [
+        ch(`A ${G.nations[foreign].name} royal`, {}, "", { hint: `Closer ties with ${G.nations[foreign].name}; prestige.`, run: wed(`${pick(firstNames(g))} of ${G.nations[foreign].name}`, foreign, { prestige: 3, rel: { [foreign]: 18 }, p: { royals: 3 } }) }),
+        ch(restless ? `The ${child} of a leading family among the ${idnOf(restless).g}` : `The ${child} of a great noble family`, {}, "", { hint: restless ? `Binds ${restless.n} closer to the crown (grievance falls).` : "The nobility approves.", run: wed(randomPersonName(g), restless ? restless.n : "the nobility", { p: { royals: 4, tribes: 4 } }, () => { if (restless && idnOf(restless)) { idnOf(restless).griev = Math.max(0, idnOf(restless).griev - 12); idnOf(restless).str = Math.max(0, idnOf(restless).str - 8); restless.mod += 6; } }) }),
+        ch(`The ${child} of the country's richest industrialist`, {}, "", { hint: "Business is delighted; a generous dowry for the treasury.", run: wed(randomPersonName(g), "industry", { p: { business: 5, royals: -2 } }, () => treasuryAdd(G.econ.gdp * 0.002, "windfall", "Royal dowry")) }),
+        ch(`Let ${c.name} marry for love`, {}, "", { hint: "The public adores a love story; the court frets about rank.", run: wed(randomPersonName(g), "love", { p: { people: 6, royals: -4 } }) })
+    ];
+    if (refuse) choices.unshift(ch(`${c.name} refuses an arranged match`, {}, "", { hint: "Your child has other ideas.", run: () => { c.pop = clamp((c.pop || 50) + 4); applyEffects({ scandal: 4, p: { royals: -3 } }); log(`💔 ${c.name} refuses to marry for reasons of state. The court is scandalized; the public rather likes it.`, "bad"); return `${c.name} will choose their own spouse, in their own time.`; } }));
+    return S("💍", `${dateStr()} · The palace`, `A match for ${c.name}`, `${c.name}, ${ageOf(c)}, is of marriageable age. The court chamberlain has a short list, each with a purpose.`, refuse ? choices.slice(0, 1) : choices);
+};
+
+function royalPanel() {
+    const f = fam(), mon = G.gov.type === "monarchy";
+    const kids = f.children.filter(c => c.alive && ageOf(c) >= 10);
+    if (!kids.length) return "";
+    const rows = kids.map(c => {
+        const age = ageOf(c), btn = (k, label, cost, dis, arg) => `<button class="mini ${k === "pressure" ? "secondary" : ""}" data-act="royal" data-n="${esc(c.name)}" data-k="${k}"${arg != null ? ` data-x="${esc(String(arg))}"` : ""} ${dis || G.capital < cost ? "disabled" : ""}>${label} (${cost} ⚡)</button>`;
+        const school = !c.edu && age <= 24 ? `<select data-change="royalSchool" data-n="${esc(c.name)}"><option value="">🎓 Send to school…</option>${SCHOOLS.filter(s => (!s.from || G.year >= s.from) && (!s.host || (G.nations[s.host] && G.nations[s.host].status === "sovereign")) && (!s.muslim || MUSLIM_STATES.includes(G.ck))).map(s => `<option value="${s.k}">${esc(s.name)}: ${esc(s.desc)}</option>`).join("")}</select>` : "";
+        const tour = mon && age >= 14 ? `<select data-change="royalTour" data-n="${esc(c.name)}" ${c.lastTour && G.t - c.lastTour < 52 ? "disabled" : ""}><option value="">🚂 Royal tour of… (2 ⚡)</option>${G.regions.map((r, i) => `<option value="${i}">${esc(r.n)}${typeof idnOf === "function" && idnOf(r) ? ` (${esc(idnOf(r).g)})` : ""}</option>`).join("")}</select>` : "";
+        const visit = mon && age >= 16 ? `<select data-change="royalVisit" data-n="${esc(c.name)}" ${c.lastVisit && G.t - c.lastVisit < 26 ? "disabled" : ""}><option value="">✈️ State visit to… (3 ⚡)</option>${Object.values(G.nations).filter(n => n.key !== G.ck && n.status === "sovereign" && !n.rebel && getRel(G.ck, n.key) > -30).sort((a, b) => b.gdp - a.gdp).slice(0, 20).map(n => `<option value="${n.key}">${n.flag} ${esc(n.name)}</option>`).join("")}</select>` : "";
+        const sch = c.edu ? SCHOOLS.find(s => s.k === c.edu) : null;
+        return `<div class="royal-row"><b>${esc(c.name)}</b> <span class="tiny muted">${age}${c.path ? ` · ${CHILD_PATHS[c.path].icon} ${CHILD_PATHS[c.path].name}` : ""}${sch ? ` · 🎓 ${esc(sch.name)}` : ""} · popularity ${Math.round(c.pop || 50)}</span>
+            <p class="tiny">${c.spouse ? `💍 Married to ${esc(c.spouse.name)}${(c.kids || []).length ? ` · 👶 ${(c.kids || []).map(g => esc(g.name)).join(", ")}` : " · no children yet"}${c.pressure && G.year <= c.pressure ? " · <span class='warn'>under pressure for an heir</span>" : ""}` : age >= 18 ? "Unmarried" : "Too young to marry"}</p>
+            <div class="row">${mon && !c.spouse && age >= 18 ? btn("marry", "💍 Arrange a marriage", 3) : ""}${mon && c.spouse ? btn("pressure", "👶 Press for an heir", 1, c.pressure && G.year <= c.pressure) : ""}</div>${school}${tour}${visit}</div>`;
+    }).join("");
+    return panel(mon ? "The royal children" : "Your children", rows + `<p class="tiny muted">${mon ? "Tours calm restless regions; state visits warm relations; marriages bind houses, families and provinces to the crown. Grandchildren join the line of succession." : "Where your children study shapes their careers and your foreign ties."}</p>`);
 }

@@ -89,8 +89,10 @@ const ACTIONS = {
     cipTreasury: d => { payProjectFromTreasury(d.id); render(); },
     treCapital: d => { treasuryToCapital(+d.f); render(); },
     treRepay: d => { treasuryRepay(+d.f); render(); },
+    royal: d => { royalAct(d.n, d.k, d.x); render(); },
     report: d => { view = "report"; ui.reportY = +d.y; render(); window.scrollTo(0, 0); },
     idn: d => { idnAct(d.r, d.k); render(); },
+    lmBuild: d => { lmBuild(d.k); render(); },
     megaStudy: d => { startStudy(d.k); render(); },
     megaPick: d => { megaToggle(+d.id, d.k); render(); },
     megaBid: d => { megaBid(+d.id); render(); },
@@ -144,6 +146,11 @@ document.addEventListener("click", e => {
 document.addEventListener("change", e => {
     const el = e.target;
     if (el.dataset.change === "support") { setSupport(el.dataset.k, +el.value); render(); }
+    if (el.dataset.change === "royalSchool" && el.value) { royalAct(el.dataset.n, "school", el.value); render(); }
+    if (el.dataset.change === "royalTour" && el.value !== "") { royalAct(el.dataset.n, "tour", el.value); render(); }
+    if (el.dataset.change === "royalVisit" && el.value) { royalAct(el.dataset.n, "visit", el.value); render(); }
+    if (el.dataset.change === "lmName") { const L = lmState(); L.draft[el.dataset.k] = Object.assign(L.draft[el.dataset.k] || {}, { name: el.value.trim() }); }
+    if (el.dataset.change === "lmStyle") { const L = lmState(); L.draft[el.dataset.k] = Object.assign(L.draft[el.dataset.k] || {}, { style: el.value }); render(); }
     if (el.dataset.change === "megaCash") { megaTreasury(+el.dataset.id, el.value); render(); }
     if (el.dataset.change === "rate") { const before = impactSnapshot(); setRate(el.value); toast("Interest rate", `Central bank rate set to ${fmt(mon().rate, 2)}%.`, impactDiff(before, "Interest rate")); render(); }
     if (el.dataset.change === "treOpt") { treasuryOpt(el.dataset.k, el.value); render(); }

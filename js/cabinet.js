@@ -139,7 +139,7 @@ const ruralShare = () => clamp(G.ind.agriculture.out / G.econ.gdp * 2, 0.2, 1);
 const ruralPoverty = () => -(Math.max(0, covRel("irrigation")) * 4 + Math.max(0, covRel("roads")) * 2) * ruralShare();
 
 function healthTarget() {
-    let t = healthBase() + megaFx("health");
+    let t = healthBase() + megaFx("health") + lmFx("health");
     t += lawFx("health") + covRel("hospitals") * 4 + taxHealth();
     t += minBonus("health") * 1.5 - G.s.weariness * 0.05;
     return clamp(t, 5, 98);

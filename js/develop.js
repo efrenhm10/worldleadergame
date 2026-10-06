@@ -183,10 +183,26 @@ const LOCAL_WAYS = {
 
 function localOdds(sector, way) {
     const W = LOCAL_WAYS[way];
-    return clamp(0.32 + G.dev.lit / 250 + (G.s.stability - 50) / 200 + G.ind[sector].sup * 0.05 - indGap(sector) * 0.06 + skill("economics") * 0.02 + W.odds + sectorBonus(sector) * 0.03, 0.05, 0.9);
+    return clamp(0.32 + (lawOn("small_business") ? lawMult("small_business") * 0.1 : 0) + G.dev.lit / 250 + (G.s.stability - 50) / 200 + G.ind[sector].sup * 0.05 - indGap(sector) * 0.06 + skill("economics") * 0.02 + W.odds + sectorBonus(sector) * 0.03, 0.05, 0.9);
 }
 
 function yearlyFirms() {
+    // Start-up programs: new local businesses open every year.
+    const sb = lawOn("small_business") ? lawMult("small_business") : 0;
+    if (sb > 0) {
+        const ks = Object.keys(INDUSTRIES).filter(k => indAvailable(k) && indGap(k) < 3 && !["oil", "aerospace", "shipbuilding"].includes(k));
+        const n = Math.round(sb * 3 * clamp(G.s.stability / 60, 0.4, 1.2) + Math.random());
+        let opened = 0;
+        for (let i = 0; i < n && ks.length; i++) {
+            if (!chance(0.35 + G.dev.lit / 300)) continue;
+            const sector = pick(ks), founder = randomLeaderName(G.ck).split(" ").pop(), out = Math.min(plantSize({ size: "S" }) * 0.25, G.econ.gdp * 0.004);
+            G.firms = G.firms || [];
+            G.firms.push({ name: `${founder} ${LOCAL_SUFFIX[sector] || "Enterprises"}`, sector, home: G.ck, out, jobs: jobsFor(out, sector), holidayUntil: G.year, local: 2, region: bestRegionFor(sector), foreign: false, way: "startup", since: G.t });
+            G.ind[sector].out += out; addJobs(jobsFor(out, sector)); opened++;
+        }
+        G.econ.startups = (G.econ.startups || 0) + opened;
+        if (opened) log(`🏪 ${opened} new business${opened > 1 ? "es" : ""} started with state start-up support this year.`, "good");
+    }
     (G.firms || []).forEach(f => {
         if (f.foreign || f.closed) return;
         const b = sectorBonus(f.sector);

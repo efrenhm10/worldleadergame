@@ -419,6 +419,47 @@ Scheme, the Shinkansen and more.
   to buy its power is a white elephant. Contested dams anger neighbours
   downstream.
 
+## Landmarks & wonders (Megaprojects tab)
+
+Commission buildings that put you on the map:
+- An iconic airport, an opera house or a record-breaking tower.
+- A grand mosque, cathedral or temple.
+- A national museum or stadium.
+- A signature bridge or a palace.
+- A luxury resort coast or a national park.
+- A national monument, or a World's Fair.
+
+You **name** each one (with real suggestions: the Sydney Opera House,
+Changi, the Burj Khalifa, Simien Mountains National Park) and choose a
+**style**:
+
+| Style | Cost | Appeal |
+|---|---|---|
+| Practical | Cheaper | Forgettable |
+| The era's architecture | Normal | Normal (from Modernist to parametric neo-futurism) |
+| National revival | A little more | A little more, plus legitimacy |
+| A visionary star architect | 1.5× | 1.8× |
+
+Landmarks are paid for as they rise. When they open:
+- Tourism jumps, and the country gets on the tourist map if it wasn't.
+- Visitors, skilled migrants and foreign investors follow.
+- Prestige and national pride rise.
+
+A national stadium lets you bid for the Olympics or the World Cup. The
+Megaprojects tab shows foreign visitors per year and your total landmark
+appeal.
+
+## Homes and new businesses
+
+Two programs in the Lawbook; their strength slider sets how much the
+state pays.
+- **First-home ownership program:** the state pays up to 40% of a first
+  home. Homeownership and housing rise, poverty falls, builders hire, and
+  house prices creep up. The Population tab shows the homeownership rate.
+- **Start-up grants & guaranteed loans:** the state covers up to 40% of
+  start-up costs. New local businesses open every year, homegrown firms
+  are more likely to succeed, and jobs grow.
+
 ## Money and the currency (Finance tab)
 
 - **Interest rates:** set them yourself, or make the central bank
@@ -516,6 +557,29 @@ The Office tab has a Family panel.
     succession-crisis risk appears under How you could fall. Dying without
     an heir means a bitter struggle and a weak successor.
   - **On succession:** the heir takes the throne.
+
+### The royal children
+
+In a monarchy, your children are instruments of state (Office tab):
+- **Arranged marriages:**
+  - A foreign royal house: closer ties with that country.
+  - A leading family of a restless people: their grievance falls. For
+    Ethiopia, a Somali or Oromo family.
+  - The richest industrialist's child: business is pleased, and the
+    treasury gets a dowry.
+  - A love match: the public adores it; the court frets.
+  - Some children refuse.
+- **Royal tours** of a region: support rises and grievances fall. A
+  jet-setter may cause a gaffe, and an insurgent region can be dangerous.
+- **State visits** abroad warm relations, especially by the heir.
+- **Schooling:** Eton & Oxford, Sandhurst, the Sorbonne, Harvard, Moscow
+  State, Al-Azhar, the University of Tokyo, or tutors at home. Each choice
+  shapes their skills, foreign ties and which power bases approve.
+- **Pressing for an heir:** grandchildren come sooner, but marriages
+  strain.
+- **Succession:** grandchildren join the line after your children.
+  Popular, married royals with children strengthen the monarchy.
+- Real royal spouses are included (Ethiopia, Saudi Arabia).
 
 ## World standing
 
@@ -630,6 +694,7 @@ scandals, disasters, lobbyists, pork demands, investors and more.
 | `js/money.js` | Interest rates, exchange rates, reserves, balance of payments, credit rating |
 | `js/mega.js` | Megaprojects, their financing and the Megaprojects tab |
 | `js/identity.js` | Peoples, regional grievances, autonomy and separatism |
+| `js/landmarks.js` | Landmarks & wonders, tourism appeal, Olympic bids |
 | `js/report.js` | The yearly State of the Nation report |
 | `js/population.js` | Births, deaths, migration flows and the Population tab |
 | `js/treasury.js` | The treasury, development aid, debt and the Finance tab |

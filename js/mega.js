@@ -389,7 +389,7 @@ function viewMega() {
         ${panel("Megaprojects under way", cur || "<p class='small muted'>None yet. Pick a project below: a feasibility study firms up the cost, then you find the money.</p>")}
         ${done ? panel("Completed", done + `<p class="tiny muted">Use rises with industry, trade, skills and state capacity. Under 50% is a white elephant.</p>`) : ""}
         ${loans ? panel("Project loans at special rates", loans + `<p class="tiny muted">Concessional loans (World Bank, aid, Soviet credits) are counted with your official debt at low interest.</p>`) : ""}
-        </div><div>${panel("The big bets", `<p class="small muted">Nation-defining projects, up to two at a time. Each unlocks as your country develops.</p>${avail || "<p class='muted small'>You've built them all.</p>"}`)}</div></div>`;
+        </div><div>${landmarksPanel()}${panel("The big bets", `<p class="small muted">Nation-defining projects, up to two at a time. Each unlocks as your country develops.</p>${avail || "<p class='muted small'>You've built them all.</p>"}`)}</div></div>`;
 }
 
 function megaBid(id) {

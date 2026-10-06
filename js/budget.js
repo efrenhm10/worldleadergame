@@ -39,7 +39,7 @@ const INFRA_LAWS = {
     schools: { primary_schools: 8, secondary_schools: 5, literacy_campaign: 3, religious_schools: 2 },
     hospitals: { public_clinics: 8, nhs: 9, nhi: 5 },
     universities: { universities: 10, technical_schools: 4 },
-    housing: { public_housing: 12, public_works: 3 },
+    housing: { public_housing: 12, public_works: 3, homeownership: 10 },
     irrigation: { green_revolution: 6, mechanization: 5, extension: 3, rural_credit: 3 },
     telecom: {}
 };
@@ -69,6 +69,8 @@ function infraParts(k) {
     Object.entries(INFRA_LAWS[k] || {}).forEach(([lk, pts]) => { if (lawOn(lk)) parts.push([lawDef(lk).name, pts * lawMult(lk)]); });
     const mb = typeof megaInfra === "function" ? megaInfra(k) : 0;
     if (mb >= 0.5) parts.push(["Megaprojects", mb]);
+    const lb = typeof lmInfra === "function" ? lmInfra(k) : 0;
+    if (lb >= 0.5) parts.push(["Landmarks", lb]);
     Object.entries(G.customLaws || {}).forEach(([lk, d]) => {
         const w = d.issue && PROGRAM_INFRA[d.issue] && PROGRAM_INFRA[d.issue][k];
         if (w && lawOn(lk)) parts.push([d.name, Math.min(20, (d.cost || 0) / 0.5 * 8) * w * lawMult(lk) * (d.region != null ? 0.5 : 1)]);

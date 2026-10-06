@@ -107,7 +107,7 @@ function lawControls(k) {
     const target = ui.lawLevel != null ? ui.lawLevel : lvl > 0 ? lvl : 0.3;
     const slider = d.tax
         ? `<label class="small">Rate: <b>${fmt(target * d.max, 1)}${TAX_UNIT[d.tax] || "%"}</b> · would raise about <b>${fmt(taxRevenueAt(k, target * d.max), 2)}% of GDP</b> (${money(G.econ.gdp * cpi() * taxRevenueAt(k, target * d.max) / 100)}) a year<input type="range" min="0.05" max="1" step="0.05" value="${target}" data-change="lawLevel"></label>`
-        : `<label class="small">Level: <b>${pct(target)}</b><input type="range" min="0.1" max="1" step="0.1" value="${target}" data-change="lawLevel"></label>`;
+        : `<label class="small">${d.levelText ? `<b>${esc(d.levelText(target))}</b>` : `Level: <b>${pct(target)}</b>`}<input type="range" min="0.1" max="1" step="0.1" value="${target}" data-change="lawLevel"></label>`;
     const pv = lawPreview(k, target);
     const preview = `<p class="tiny">${lvl ? `At ${d.tax ? fmt(target * d.max, 1) + (TAX_UNIT[d.tax] || "%") : pct(target)} instead` : `If it passes at ${d.tax ? fmt(target * d.max, 1) + (TAX_UNIT[d.tax] || "%") : pct(target)}`}: ${pv.length ? chipsHtml(pv) : "<span class='muted'>little measurable change</span>"}</p>`;
     if (!demo) return `${slider}${preview}<div class="row"><button class="primary" data-act="lawDecree" data-k="${k}">${lvl ? "Decree new level" : "Enact by decree"} (${d.tax ? 8 : 6} ⚡)</button>${lvl ? `<button class="secondary" data-act="lawDecree" data-k="${k}" data-repeal="1">Repeal (6 ⚡)</button>` : ""}</div>`;
@@ -149,7 +149,7 @@ function viewLawbook() {
         const d = lawDef(ui.law), l = lawLevel(ui.law);
         const st = Object.entries(d.st || {}).filter(([, v]) => v).map(([k, v]) => `<span class="${v > 0 ? "good" : "bad"}">${IDEOLOGIES[k].name} ${v > 0 ? "for" : "against"}</span>`).join(" · ");
         detail = panel(esc(d.name), `<p class="small">${esc(d.desc || "")}</p>
-            <p class="tiny"><b>${l ? `In force at ${d.tax ? fmt(taxRate(d.tax), 1) + "%" : pct(l)}${G.laws[ui.law] && G.laws[ui.law].since ? `, since ${dateStr(G.laws[ui.law].since).split(" ").pop()}` : ""}` : "Not in force"}.</b> ${l ? lawEffectsAt(d, l) : d.tax ? lawEffectsAt(d, 0) : "At 100%: " + lawEffectsAt(d, 1)}</p>
+            <p class="tiny"><b>${l ? `In force at ${d.tax ? fmt(taxRate(d.tax), 1) + "%" : pct(l)}${d.levelText && l ? ` (${esc(d.levelText(l).replace(/^The state/, "the state"))})` : ""}${G.laws[ui.law] && G.laws[ui.law].since ? `, since ${dateStr(G.laws[ui.law].since).split(" ").pop()}` : ""}` : "Not in force"}.</b> ${l ? lawEffectsAt(d, l) : d.tax ? lawEffectsAt(d, 0) : "At 100%: " + lawEffectsAt(d, 1)}</p>
             ${st ? `<p class="tiny">Ideologies: ${st}</p>` : ""}${d.until ? `<p class="tiny warn">Expires ${d.until}.</p>` : ""}
             ${lawControls(ui.law)}`);
     }
@@ -233,7 +233,8 @@ function industryPanel(k) {
         const built = assetBuilt(k, ak), q = assetQueued(k, ak);
         return `<div class="asset ${built ? "built" : ""}"><span>${built ? "✅" : q ? "🏗️" : "⬜"} <b>${esc(a.name)}</b><div class="tiny muted">${esc(a.desc)}</div></span>${built ? "<span class='tiny good'>Built</span>" : q ? "<span class='tiny'>In the CIP</span>" : `<button class="mini" data-act="assetPropose" data-k="${k}" data-a="${ak}" ${G.capital < 2 ? "disabled" : ""}>Add to CIP · ${nominal(projectCostBn(`asset:${k}:${ak}`))}</button>`}</div>`;
     }).join("");
-    const firms = (G.firms || []).filter(f => f.sector === k && !f.closed).map(f => `${f.home && f.home !== G.ck ? flagOf(f.home) : f.foreign ? "🌐" : "🏠"} ${esc(f.name)}`).join(", ");
+    const nStart = (G.firms || []).filter(f => f.sector === k && !f.closed && f.way === "startup").length;
+    const firms = (G.firms || []).filter(f => f.sector === k && !f.closed && f.way !== "startup").map(f => `${f.home && f.home !== G.ck ? flagOf(f.home) : f.foreign ? "🌐" : "🏠"} ${esc(f.name)}`).concat(nStart ? [`🏪 ${nStart} small start-up${nStart > 1 ? "s" : ""}`] : []).join(", ");
     const ways = Object.entries(LOCAL_WAYS).filter(([, w]) => !w.req || w.req()).map(([wk, w]) => `<button class="mini" data-act="startup" data-k="${k}" data-w="${wk}" title="${esc(w.desc)}" ${G.capital < 6 ? "disabled" : ""}>${w.name} · ${Math.round(localOdds(k, wk) * 100)}%</button>`).join("");
     const share = indShare(k);
     return panel(`${I.icon} ${I.name}`, `<p class="small">${esc(I.desc)}</p>
