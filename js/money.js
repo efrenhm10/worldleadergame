@@ -75,7 +75,7 @@ function moneyGrowth() {
 function debtInterest() {
     const e = G.econ, m = mon();
     const official = G.treasury ? Object.values(G.treasury.cred || {}).reduce((s, v) => s + v, 0) : 0;
-    const market = Math.max(0, Math.min(e.debt, e.gdp * 2.5) - official);
+    const market = Math.max(0, Math.min(e.debt, e.gdp * 2.5) - official - (typeof megaLoanTotal === "function" ? megaLoanTotal() : 0));
     return (market * m.avgRate / 100 + Math.min(official, e.debt) * 0.015) / e.gdp * 100;
 }
 

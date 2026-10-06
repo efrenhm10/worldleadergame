@@ -139,7 +139,7 @@ const ruralShare = () => clamp(G.ind.agriculture.out / G.econ.gdp * 2, 0.2, 1);
 const ruralPoverty = () => -(Math.max(0, covRel("irrigation")) * 4 + Math.max(0, covRel("roads")) * 2) * ruralShare();
 
 function healthTarget() {
-    let t = healthBase();
+    let t = healthBase() + megaFx("health");
     t += lawFx("health") + covRel("hospitals") * 4 + taxHealth();
     t += minBonus("health") * 1.5 - G.s.weariness * 0.05;
     return clamp(t, 5, 98);
@@ -148,7 +148,7 @@ function healthTarget() {
 function povertyTarget() {
     let t = povertyBase();
     const lp = lawFx("poverty");
-    t += (lp < 0 ? lp * povertyReach() : lp) - covRel("housing") * 3 + ruralPoverty() + remittancePoverty();
+    t += (lp < 0 ? lp * povertyReach() : lp) - covRel("housing") * 3 + ruralPoverty() + remittancePoverty() + megaFx("poverty");
     t -= G.pol.land === "reform" ? 3 * povertyReach() : 0;
     t += (G.econ.unemp - 6) * 0.8 - minBonus("health");
     if (G.pol.economy === "collectivized" || G.pol.economy === "planned") t -= 4;

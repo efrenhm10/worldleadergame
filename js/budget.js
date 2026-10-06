@@ -67,6 +67,8 @@ function infraParts(k) {
     const n = infraNormal(k), base = infraBase(k);
     if (Math.abs(base - n) >= 0.5) parts.push([`${DEPTS[INFRA_DEPT(k)].name} funding ${Math.round(fundMult(INFRA_DEPT(k)) * 100)}%`, base - n]);
     Object.entries(INFRA_LAWS[k] || {}).forEach(([lk, pts]) => { if (lawOn(lk)) parts.push([lawDef(lk).name, pts * lawMult(lk)]); });
+    const mb = typeof megaInfra === "function" ? megaInfra(k) : 0;
+    if (mb >= 0.5) parts.push(["Megaprojects", mb]);
     Object.entries(G.customLaws || {}).forEach(([lk, d]) => {
         const w = d.issue && PROGRAM_INFRA[d.issue] && PROGRAM_INFRA[d.issue][k];
         if (w && lawOn(lk)) parts.push([d.name, Math.min(20, (d.cost || 0) / 0.5 * 8) * w * lawMult(lk) * (d.region != null ? 0.5 : 1)]);
@@ -418,7 +420,7 @@ function governmentSpend() {
     Object.values(G.ind).forEach(i => { lines.industry += SUPPORT_LEVELS[i.sup].spend * 0.5 * fundMult("industry"); });
     lines.capital = G.budget.status === "cr" ? 0 : G.budget.capital;
     lines.war = playerWars().reduce((s, w) => s + [0, 0.6, 2, 5][commitOf(w)], 0);
-    lines.interest = Math.max(0, debtInterest() - imfRelief());
+    lines.interest = Math.max(0, debtInterest() + megaInterest() - imfRelief());
     const total = Object.values(lines).reduce((a, b) => a + b, 0) - minBonus("finance") * 0.2;
     return { lines, total };
 }

@@ -408,7 +408,7 @@ function indRate(k) {
     r += d.heavy ? covRel("power") * 0.8 + (covRel("rail") + covRel("roads")) * 0.3 : covRel("roads") * 0.3;
     if (k === "agriculture") r += ({ landlords: -0.4, reform: 0.5, collective: -1.6, mechanize: 1.2 }[G.pol.land] || 0) + lawFx("agri") + covRel("irrigation") * 1.5;
     else r += lawFx("indAll");
-    r += sectorBonus(k) + taxIndEffect(k) + tradeIndEffect(k);
+    r += sectorBonus(k) + taxIndEffect(k) + tradeIndEffect(k) + megaInd(k);
     if (k === "film") r += { free: 1, restricted: -0.8, state: -2.5 }[G.pol.press] || 0;
     if (["textiles", "autos", "electronics", "finance", "tourism"].includes(k)) r += { trade_free: 1, protection: -0.6, autarky: -2 }[G.pol.trade] || 0;
     if (d.heavy && G.pol.trade === "protection") r += 0.4;
@@ -442,6 +442,7 @@ function advanceWeek() {
     pillarsTick();
     regionsTick();
     cipTick();
+    megaWeek();
     legislatureTick();
     if (G.colony) colonyTick();
     capitalTick();
@@ -470,6 +471,7 @@ function monthlyTick(newYear) {
     institutionsMonth();
     treasuryMonthly();
     populationMonthly();
+    megaMonthly();
     infraMonthly();
     statsMonthly();
     if (G.colony) colonyMonth();
@@ -532,7 +534,7 @@ function potentialGrowth() {
     if (G.gov.type === "colony") g -= 0.5;
     if (G.year >= 1974) g -= 0.5;
     g -= instGrowthDrag();
-    g += tradeGrowth() + migrationGrowth() + moneyGrowth();
+    g += tradeGrowth() + migrationGrowth() + moneyGrowth() + megaFx("growth");
     return clamp(g, -15, 14);
 }
 
@@ -616,11 +618,11 @@ function techRate() {
     const frontier = Math.max(...Object.values(G.nations).filter(n => n.tech != null).map(n => n.tech), G.dev.tech);
     const openness = { trade_free: 1.5, managed: 1, protection: 0.7, autarky: 0.3 }[G.pol.trade] || 1;
     const fdi = Object.values(G.ind).filter(i => i.own === "foreign" && i.out > 0).length * 0.1 + firmTech();
-    return lawFx("tech") + covEff("telecom") * 0.2 + G.dev.uni * 0.05 + (frontier - G.dev.tech) * 0.025 * (openness + fdi) + (trait("intellectual") ? 0.3 : 0) + minBonus("education") * 0.15;
+    return lawFx("tech") + megaFx("tech") + covEff("telecom") * 0.2 + G.dev.uni * 0.05 + (frontier - G.dev.tech) * 0.025 * (openness + fdi) + (trait("intellectual") ? 0.3 : 0) + minBonus("education") * 0.15;
 }
 
 function devTick() {
-    const uniRate = (0.02 + lawFx("uni")) * (1 + covRel("universities") * 0.4);
+    const uniRate = (0.02 + lawFx("uni") + megaFx("uni")) * (1 + covRel("universities") * 0.4);
     const colony = G.gov.type === "colony" ? 0.5 : 1;
     G.dev.lit = clamp(G.dev.lit + literacyRate() / 52, 0, 99.5);
     G.dev.uni = clamp(G.dev.uni + uniRate * 2 * (1 - G.dev.uni / 55) / 52 * colony, 0, 55);

@@ -96,7 +96,7 @@ function prospectOdds(p) {
     const dbl = k => (pr === k ? 2 : 1);
     let o = 0.22;
     Object.entries(INCENTIVES).forEach(([k, inc]) => { o += inc.odds[p.inc[k]] * (inc.prio ? dbl(inc.prio) : 1); });
-    o += (G.dev.lit - I.lit) / 120 * dbl("skills") - indGap(p.sector) * 0.05;
+    o += (G.dev.lit - I.lit) / 120 * dbl("skills") - indGap(p.sector) * 0.05 + megaFx("odds");
     o += (G.s.stability - 50) / 150 * dbl("stability");
     o += Math.log10(Math.max(0.05, G.econ.gdp)) * 0.04 * dbl("market");
     o += clamp((30 - taxRate("corporate")) * 0.006, -0.15, 0.12) * dbl("taxes");
