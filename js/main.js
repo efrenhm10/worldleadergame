@@ -89,6 +89,10 @@ const ACTIONS = {
     cipTreasury: d => { payProjectFromTreasury(d.id); render(); },
     treCapital: d => { treasuryToCapital(+d.f); render(); },
     treRepay: d => { treasuryRepay(+d.f); render(); },
+    fxRegime: d => { setRegime(d.k); render(); },
+    devalue: d => { if (G.capital < 3) return toast("Not enough political capital", "A devaluation costs 3."); G.capital -= 3; const before = impactSnapshot(); devalue(+d.x); toast("Devaluation", `A dollar now buys ${fmtFx(mon().fx)}.`, impactDiff(before, "Devaluation")); render(); },
+    cbIndep: d => { toggleIndependence(); render(); },
+    capControls: d => { toggleControls(); render(); },
     parisClub: () => { parisClub(); render(); },
     hipc: () => { hipcApply(); render(); },
     ceoTalk: d => { startCeoTalk(+d.i); render(); },
@@ -133,6 +137,7 @@ document.addEventListener("click", e => {
 document.addEventListener("change", e => {
     const el = e.target;
     if (el.dataset.change === "support") { setSupport(el.dataset.k, +el.value); render(); }
+    if (el.dataset.change === "rate") { const before = impactSnapshot(); setRate(el.value); toast("Interest rate", `Central bank rate set to ${fmt(mon().rate, 2)}%.`, impactDiff(before, "Interest rate")); render(); }
     if (el.dataset.change === "treOpt") { treasuryOpt(el.dataset.k, el.value); render(); }
     if (el.dataset.change === "own") { setOwnership(el.dataset.k, el.value); render(); }
     if (el.dataset.change === "inc") { setIncentive(+el.dataset.i, el.dataset.k, +el.value); render(); }

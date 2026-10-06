@@ -99,7 +99,7 @@ function newGame(opts) {
     initInstitutions();
     G.powerHist = []; powerYearly();
     G.leader.family = initFamily(!!opts.historical);
-    tre(); treasuryYearly(); popl();
+    tre(); treasuryYearly(); popl(); mon();
     G.econ.rev = taxBase().total; G.econ.spend = governmentSpend().total; G.econ.deficit = G.econ.spend - G.econ.rev;
     setupPillars();
     if (c.status === "colony") initColony(c);
@@ -479,6 +479,7 @@ function monthlyTick(newYear) {
 function yearlyTick() {
     budgetNewYear();
     treasuryYearly();
+    moneyYearly();
     programsYearly();
     yearlyFirms();
     holidaysEnd();
@@ -531,7 +532,7 @@ function potentialGrowth() {
     if (G.gov.type === "colony") g -= 0.5;
     if (G.year >= 1974) g -= 0.5;
     g -= instGrowthDrag();
-    g += tradeGrowth() + migrationGrowth();
+    g += tradeGrowth() + migrationGrowth() + moneyGrowth();
     return clamp(g, -15, 14);
 }
 
@@ -594,8 +595,9 @@ function economyTick() {
     const oilImp = G.res.includes("oil") ? -0.5 : 1.2;
     let infT = 3 + policyFx("inflation") + Math.max(0, e.deficit) * 0.45 + Math.max(0, e.growth - 6) * 0.4 + (G.oilPrice - 1) * oilImp * 0.6 + Math.min(15, Math.max(0, debtPct - 100) * 0.03) + war * 0.4;
     if (G.year >= 1971 && G.year <= 1982) infT += 3;
-    infT += tradeInflation();
+    infT += tradeInflation() + moneyInflation();
     e.inflation += (clamp(infT, -3, 60) - e.inflation) * 0.035;
+    moneyWeek();
     e.jobsAdded = (e.jobsAdded || 0) * 0.9985;
     e.formalAdded = (e.formalAdded || 0) * 0.9995;
     e.unemp += (unempTarget() - e.unemp) * 0.04;

@@ -206,7 +206,7 @@ function startImf(offer) {
     G.inst.offer = null;
     const ch = applyEffects({ growth: 1.2, inflation: -1.5, prestige: -2, p: { business: 6, people: -5, labor: -4 }, rel: { usa: 4 } });
     G.factions.forEach(f => { if (["nationalist", "socialist", "communist"].includes(f.ideo)) f.loyalty = clamp(f.loyalty - 6); });
-    if (o.conds.some(c => c.k === "devalue")) applyEffects({ inflation: 4, growth: 0.4, p: { people: -3 } });
+    if (o.conds.some(c => c.k === "devalue")) devalue(0.3);
     log(`💵 You sign an IMF ${o.kind}: ${fmt(o.amount, 1)}% of GDP over ${long ? "two and a half years" : "eighteen months"}. Conditions: ${o.conds.map(c => c.t.toLowerCase()).join("; ")}.`, "major");
     record(`Signed an IMF ${o.kind}, ${G.year}.`);
     ch.push(...impactDiff(before, "IMF program"));

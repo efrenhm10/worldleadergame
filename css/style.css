@@ -414,3 +414,6 @@ ul.family li { padding: 2px 0; }
 .tre-row select { margin: 0; padding: 3px 4px; font-size: 12px; max-width: 190px; }
 .st-rank.tre-cash { font-size: 26px; color: var(--good); }
 .st-rank.pop-big { font-size: 26px; }
+.st-rank[class*="rating-"] { font-size: 30px; }
+.rating-AAA, .rating-AA, .rating-A { color: var(--good) !important; }
+.rating-CCC, .rating-CC, .rating-D { color: var(--bad) !important; }

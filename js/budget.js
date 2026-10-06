@@ -418,7 +418,7 @@ function governmentSpend() {
     Object.values(G.ind).forEach(i => { lines.industry += SUPPORT_LEVELS[i.sup].spend * 0.5 * fundMult("industry"); });
     lines.capital = G.budget.status === "cr" ? 0 : G.budget.capital;
     lines.war = playerWars().reduce((s, w) => s + [0, 0.6, 2, 5][commitOf(w)], 0);
-    lines.interest = Math.max(0, Math.min(e.debt / e.gdp * 100, 250) * 0.03 - imfRelief());
+    lines.interest = Math.max(0, debtInterest() - imfRelief());
     const total = Object.values(lines).reduce((a, b) => a + b, 0) - minBonus("finance") * 0.2;
     return { lines, total };
 }

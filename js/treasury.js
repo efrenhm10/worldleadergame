@@ -27,6 +27,7 @@ function treasuryAdd(bn, src, text) {
     if (!(bn > 0)) return;
     tre().cash += bn;
     book("in", src, bn);
+    if (src === "aid" && G.money) G.money.reserves += bn;   // aid arrives in foreign currency
     if (text) ledger(text, bn);
 }
 
@@ -211,5 +212,5 @@ function viewFinance() {
         ${Object.entries(sp.lines).filter(([, v]) => v >= 0.05).sort((a, b) => b[1] - a[1]).map(([k, v]) => row(k === "admin" ? "Administration" : k === "interest" ? "Interest on the debt" : k === "capital" ? "Capital budget (CIP)" : k === "war" ? "War" : DEPTS[k] ? DEPTS[k].name : k, money(gdpN * v / 100), "", `${fmt(v, 1)}%`)).join("")}
         <p class="tiny muted">Taxes are set in the Budget tab; the Economy tab breaks down where revenue comes from.</p>
         <div class="row"><button class="mini" data-act="view" data-v="budget">💰 Budget</button><button class="mini secondary" data-act="view" data-v="economy">🏭 Taxes & jobs</button></div>`);
-    return `<div class="cols2"><div>${treasuryPanel()}</div><div>${debtPanel}${flowPanel}</div></div>`;
+    return `<div class="cols2"><div>${treasuryPanel()}${moneyPanel()}</div><div>${debtPanel}${flowPanel}</div></div>`;
 }
