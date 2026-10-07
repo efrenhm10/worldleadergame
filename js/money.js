@@ -116,6 +116,7 @@ function moneyWeek() {
     // Net oil exporters gain when prices rise; everyone else pays.
     ca += oilShare > 0.08 && G.ck !== "usa" ? oilShare * (G.oilPrice - 1) * 25 : -(G.oilPrice - 1) * 1.5 * importShare() / 0.15 * (1 - oilShare / 0.08);
     if (typeof diasporaShare === "function") ca += Math.min(5, diasporaShare() * 100 * 0.3);
+    if (typeof exportsCA === "function") ca += clamp(exportsCA(), -4, 4);
     let cap = (realRate() - 0.5) * 0.15 + (m.score - 50) * 0.02 - (G.s.stability < 35 ? 1.5 : 0) - (m.regime === "peg" && mis < -0.15 ? 1.5 : 0);
     if (m.controls) cap = cap > 0 ? cap * 0.5 : Math.max(cap, -0.3);
     m.ca = ca; m.cap = cap;

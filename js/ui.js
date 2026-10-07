@@ -242,7 +242,7 @@ function renderCabinetSetup() {
 function viewsFor() {
     const v = [["office", "🏛️", "Office"]];
     if (G.gov.type === "colony") v.push(["movement", "✊", "Movement"]);
-    v.push([ "legislature", "📜", hasLegislature() ? "Legislature" : "Decrees"], ["lawbook", "📚", "Lawbook"], ["budget", "💰", "Budget"], ["finance", "💵", "Finance"], ["mega", "🏗️", "Megaprojects"], ["economy", "🏭", "Economy"], ["population", "👥", "Population"], ["power", "⚖️", "Power"], ["world", "🌍", "World"], ["institutions", "🌐", "Institutions"], ["military", "🎖️", "Military"], ["record", "📖", "Record"]);
+    v.push([ "legislature", "📜", hasLegislature() ? "Legislature" : "Decrees"], ["lawbook", "📚", "Lawbook"], ["budget", "💰", "Budget"], ["finance", "💵", "Finance"], ["mega", "🏗️", "Megaprojects"], ["economy", "🏭", "Economy"], ["exports", "🚢", "Exports & Jobs"], ["population", "👥", "Population"], ["culture", "🎨", "Culture"], ["power", "⚖️", "Power"], ["world", "🌍", "World"], ["institutions", "🌐", "Institutions"], ["military", "🎖️", "Military"], ["record", "📖", "Record"]);
     return v;
 }
 
@@ -293,7 +293,7 @@ function renderDock() {
 }
 
 function renderView() {
-    const fn = { office: viewOffice, movement: viewMovement, legislature: viewLegislature, lawbook: viewLawbook, budget: viewBudget, finance: viewFinance, mega: viewMega, report: viewReport, population: viewPopulation, economy: viewEconomy, power: viewPower, world: viewWorld, institutions: viewInstitutions, military: viewMilitary, record: viewRecord }[view] || viewOffice;
+    const fn = { office: viewOffice, movement: viewMovement, legislature: viewLegislature, lawbook: viewLawbook, budget: viewBudget, finance: viewFinance, mega: viewMega, report: viewReport, population: viewPopulation, exports: viewExports, culture: viewCulture, economy: viewEconomy, power: viewPower, world: viewWorld, institutions: viewInstitutions, military: viewMilitary, record: viewRecord }[view] || viewOffice;
     $("#view").innerHTML = fn();
 }
 
@@ -468,6 +468,7 @@ function viewEconomy() {
             <p class="tiny">${p.known ? `They care most about <b>${PRIORITIES[p.prio]}</b>.` : "Their priorities are unknown. Meet the CEO at headquarters to find out."}${p.ceo && p.ceo.round ? ` CEO meeting: ${p.ceo.bonus > 0.1 ? "went very well" : p.ceo.bonus > 0 ? "went well" : "went badly"}.` : ""}</p>
             ${incs}
             <div class="budget"><div><small>Jobs</small><b>${fmtJobs(t.jobs)}</b></div><div><small>Output</small><b>${nominal(t.out)}/yr</b></div><div><small>Your cost</small><b>${money(t.cost * cpi())}</b></div><div><small>Corporate tax/yr</small><b>${moneyFine(t.annualTax * cpi())}</b>${t.holidayYrs ? `<span class="tiny muted">after a ${t.holidayYrs}-yr holiday</span>` : ""}</div><div><small>Workers' taxes/yr</small><b class="good">${moneyFine(firmTaxes([{ out: t.out, jobs: t.jobs }]).workers)}</b><span class="tiny muted">from day one</span></div></div>
+            <p class="tiny">👷 ${jobSplitText(t.jobs, p.sector)}</p>
             <p class="small">Chance they say yes: <b class="${odds > 0.6 ? "good" : odds < 0.35 ? "bad" : "warn"}">${Math.round(clamp(odds, 0.02, 0.97) * 100)}%</b>${t.cost > 0 ? ` · pays back in ~${Math.round(t.payback)} yrs` : ""}</p>
             <div class="row">${p.ceo && p.ceo.round ? "" : `<button class="mini" data-act="ceoTalk" data-i="${i}" ${G.capital < 4 ? "disabled" : ""}>✈️ Meet the CEO (4 ⚡)</button>`}<button class="mini primary" data-act="offer" data-i="${i}" ${G.capital < 5 ? "disabled" : ""}>Make the offer (5 ⚡)</button></div></div>`;
     }).join("") || "<p class='muted small'>No companies are looking at your country right now. Improve stability, education, infrastructure and openness.</p>";

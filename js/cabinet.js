@@ -139,7 +139,7 @@ const ruralShare = () => clamp(G.ind.agriculture.out / G.econ.gdp * 2, 0.2, 1);
 const ruralPoverty = () => -(Math.max(0, covRel("irrigation")) * 4 + Math.max(0, covRel("roads")) * 2) * ruralShare();
 
 function healthTarget() {
-    let t = healthBase() + megaFx("health") + lmFx("health");
+    let t = healthBase() + megaFx("health") + lmFx("health") + cultureFx("health");
     t += lawFx("health") + covRel("hospitals") * 4 + taxHealth();
     t += minBonus("health") * 1.5 - G.s.weariness * 0.05;
     return clamp(t, 5, 98);
@@ -148,7 +148,7 @@ function healthTarget() {
 function povertyTarget() {
     let t = povertyBase();
     const lp = lawFx("poverty");
-    t += (lp < 0 ? lp * povertyReach() : lp) - covRel("housing") * 3 + ruralPoverty() + remittancePoverty() + megaFx("poverty");
+    t += (lp < 0 ? lp * povertyReach() : lp) - covRel("housing") * 3 + ruralPoverty() + remittancePoverty() + megaFx("poverty") + wagePoverty() + devFx("poverty");
     t -= G.pol.land === "reform" ? 3 * povertyReach() : 0;
     t += (G.econ.unemp - 6) * 0.8 - minBonus("health");
     if (G.pol.economy === "collectivized" || G.pol.economy === "planned") t -= 4;
@@ -159,7 +159,7 @@ function crimeTarget() {
     let t = 15 + G.econ.unemp * 1.2 + G.dev.urban * 0.15 + G.s.poverty * 0.2 + (G.s.liberty > 60 ? 4 : 0) - (G.s.stability - 50) * 0.15;
     t -= { political: 8, terror: 15 }[G.pol.security] || 0;
     t -= minBonus("interior") * 2;
-    t += lawFx("crime") - covRel("housing") * 1.5;
+    t += lawFx("crime") - covRel("housing") * 1.5 + cultureFx("crime");
     return clamp(t, 2, 95);
 }
 

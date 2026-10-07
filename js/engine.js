@@ -99,7 +99,7 @@ function newGame(opts) {
     initInstitutions();
     G.powerHist = []; powerYearly();
     G.leader.family = initFamily(!!opts.historical);
-    tre(); treasuryYearly(); popl(); mon(); peoples();
+    tre(); treasuryYearly(); popl(); mon(); peoples(); exState();
     G.econ.rev = taxBase().total; G.econ.spend = governmentSpend().total; G.econ.deficit = G.econ.spend - G.econ.rev;
     setupPillars();
     if (c.status === "colony") initColony(c);
@@ -346,7 +346,7 @@ function prestigeTarget() {
     if (G.gov.type === "colony") t = Math.min(t, 25);
     if (G.gov.type === "occupied") t -= 15;
     t += (G.pmods.prestige || 0) + Math.min(6, indShare("film") * 3);
-    t += lmFx("prestige");
+    t += lmFx("prestige") + cultureScore() / 25;
     return clamp(t, 2, 98);
 }
 
@@ -410,7 +410,7 @@ function indRate(k) {
     r += d.heavy ? covRel("power") * 0.8 + (covRel("rail") + covRel("roads")) * 0.3 : covRel("roads") * 0.3;
     if (k === "agriculture") r += ({ landlords: -0.4, reform: 0.5, collective: -1.6, mechanize: 1.2 }[G.pol.land] || 0) + lawFx("agri") + covRel("irrigation") * 1.5;
     else r += lawFx("indAll");
-    r += sectorBonus(k) + taxIndEffect(k) + tradeIndEffect(k) + megaInd(k) + lmInd(k);
+    r += sectorBonus(k) + taxIndEffect(k) + tradeIndEffect(k) + megaInd(k) + lmInd(k) + wageInd(k) + devInd(k) + cultureInd(k);
     if (k === "film") r += { free: 1, restricted: -0.8, state: -2.5 }[G.pol.press] || 0;
     if (["textiles", "autos", "electronics", "finance", "tourism"].includes(k)) r += { trade_free: 1, protection: -0.6, autarky: -2 }[G.pol.trade] || 0;
     if (d.heavy && G.pol.trade === "protection") r += 0.4;
@@ -446,6 +446,9 @@ function advanceWeek() {
     cipTick();
     megaWeek();
     lmWeek();
+    devWeek();
+    exWeek();
+    cultureWeek();
     legislatureTick();
     if (G.colony) colonyTick();
     capitalTick();
@@ -476,6 +479,8 @@ function monthlyTick(newYear) {
     populationMonthly();
     megaMonthly();
     identityMonthly();
+    talentMonthly();
+    exMonthly();
     infraMonthly();
     statsMonthly();
     if (G.colony) colonyMonth();
@@ -487,6 +492,8 @@ function yearlyTick() {
     budgetNewYear();
     treasuryYearly();
     moneyYearly();
+    wagesYearly();
+    cultureYearly();
     programsYearly();
     yearlyFirms();
     holidaysEnd();
@@ -602,7 +609,7 @@ function economyTick() {
     const oilImp = G.res.includes("oil") ? -0.5 : 1.2;
     let infT = 3 + policyFx("inflation") + Math.max(0, e.deficit) * 0.45 + Math.max(0, e.growth - 6) * 0.4 + (G.oilPrice - 1) * oilImp * 0.6 + Math.min(15, Math.max(0, debtPct - 100) * 0.03) + war * 0.4;
     if (G.year >= 1971 && G.year <= 1982) infT += 3;
-    infT += tradeInflation() + moneyInflation();
+    infT += tradeInflation() + moneyInflation() + wageInflation();
     e.inflation += (clamp(infT, -3, 60) - e.inflation) * 0.035;
     moneyWeek();
     e.jobsAdded = (e.jobsAdded || 0) * 0.9985;
@@ -612,18 +619,18 @@ function economyTick() {
 
 // Targets the weekly simulation drifts toward (also used to show the player
 // what each decision moves).
-function unempTarget() { const e = G.econ; return clamp(5.5 + policyFx("unemp") - (e.growth - 3) * 0.5 + G.ind.agriculture.out / e.gdp * 4 - (e.jobsAdded || 0) * 0.7, 1, 28); }
+function unempTarget() { const e = G.econ; return clamp(5.5 + wageUnemp() + devFx("unemp") + policyFx("unemp") - (e.growth - 3) * 0.5 + G.ind.agriculture.out / e.gdp * 4 - (e.jobsAdded || 0) * 0.7, 1, 28); }
 function libertyTarget() { return clamp(50 + policyFx("liberty")); }
 function corruptionTarget() { return clamp(C().econ.corruption + policyFx("corruption") + (trait("honest") ? -8 : 0) + (trait("corrupt") ? 8 : 0) + (G.s.liberty < 30 ? 5 : 0) - (G.pol.press === "free" ? 4 : 0) + (G.pmods.corruption || 0), 1, 95); }
 // Literacy points a year at today's level.
-function literacyRate() { return (0.2 + lawFx("lit")) * (1 + covRel("schools") * 0.4) * 2.2 * (1 - G.dev.lit / 100) * (G.gov.type === "colony" ? 0.5 : 1) * (1 + minBonus("education") * 0.1); }
+function literacyRate() { return (0.2 + lawFx("lit") + cultureFx("lit")) * (1 + covRel("schools") * 0.4) * 2.2 * (1 - G.dev.lit / 100) * (G.gov.type === "colony" ? 0.5 : 1) * (1 + minBonus("education") * 0.1); }
 // Foreign companies bring know-how: each open one speeds up catching up with the frontier.
 const firmTech = () => Math.min(0.6, (G.firms || []).filter(f => !f.closed && f.foreign).length * 0.04);
 function techRate() {
     const frontier = Math.max(...Object.values(G.nations).filter(n => n.tech != null).map(n => n.tech), G.dev.tech);
     const openness = { trade_free: 1.5, managed: 1, protection: 0.7, autarky: 0.3 }[G.pol.trade] || 1;
     const fdi = Object.values(G.ind).filter(i => i.own === "foreign" && i.out > 0).length * 0.1 + firmTech();
-    return lawFx("tech") + megaFx("tech") + covEff("telecom") * 0.2 + G.dev.uni * 0.05 + (frontier - G.dev.tech) * 0.025 * (openness + fdi) + (trait("intellectual") ? 0.3 : 0) + minBonus("education") * 0.15;
+    return lawFx("tech") + megaFx("tech") + devFx("tech") + cultureFx("tech") + covEff("telecom") * 0.2 + G.dev.uni * 0.05 + (frontier - G.dev.tech) * 0.025 * (openness + fdi) + (trait("intellectual") ? 0.3 : 0) + minBonus("education") * 0.15;
 }
 
 function devTick() {

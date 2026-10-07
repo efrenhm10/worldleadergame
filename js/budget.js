@@ -69,6 +69,7 @@ function infraParts(k) {
     Object.entries(INFRA_LAWS[k] || {}).forEach(([lk, pts]) => { if (lawOn(lk)) parts.push([lawDef(lk).name, pts * lawMult(lk)]); });
     const mb = typeof megaInfra === "function" ? megaInfra(k) : 0;
     if (mb >= 0.5) parts.push(["Megaprojects", mb]);
+    if (k === "housing" && typeof devFx === "function" && devFx("housing")) parts.push(["Workforce housing", devFx("housing")]);
     const lb = typeof lmInfra === "function" ? lmInfra(k) : 0;
     if (lb >= 0.5) parts.push(["Landmarks", lb]);
     Object.entries(G.customLaws || {}).forEach(([lk, d]) => {

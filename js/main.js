@@ -89,6 +89,13 @@ const ACTIONS = {
     cipTreasury: d => { payProjectFromTreasury(d.id); render(); },
     treCapital: d => { treasuryToCapital(+d.f); render(); },
     treRepay: d => { treasuryRepay(+d.f); render(); },
+    lawGo: d => { view = "lawbook"; ui.law = d.k; ui.lawLevel = null; ui.area = null; render(); window.scrollTo(0, 0); if (window.innerWidth < 900) { const det = document.querySelector("#view .cols2 > div:last-child"); if (det) det.scrollIntoView(); } },
+    cBuild: d => { cBuild(d.k); render(); },
+    cEvent: d => { cToggle(d.k); render(); },
+    rPatron: d => { royalPatron(d.k); render(); },
+    exPlant: d => { exPlant(d.k, d.x); render(); },
+    exBrand: d => { exBrand(d.k); render(); },
+    devBuild: d => { devBuild(d.k, (ui.devRegion || {})[d.k] || 0); render(); },
     royal: d => { royalAct(d.n, d.k, d.x); render(); },
     report: d => { view = "report"; ui.reportY = +d.y; render(); window.scrollTo(0, 0); },
     idn: d => { idnAct(d.r, d.k); render(); },
@@ -146,6 +153,8 @@ document.addEventListener("click", e => {
 document.addEventListener("change", e => {
     const el = e.target;
     if (el.dataset.change === "support") { setSupport(el.dataset.k, +el.value); render(); }
+    if (el.dataset.change === "rPatronChild" && el.value) { royalPatron("patron", el.value); render(); }
+    if (el.dataset.change === "devRegion") { ui.devRegion = ui.devRegion || {}; ui.devRegion[el.dataset.k] = +el.value; }
     if (el.dataset.change === "royalSchool" && el.value) { royalAct(el.dataset.n, "school", el.value); render(); }
     if (el.dataset.change === "royalTour" && el.value !== "") { royalAct(el.dataset.n, "tour", el.value); render(); }
     if (el.dataset.change === "royalVisit" && el.value) { royalAct(el.dataset.n, "visit", el.value); render(); }

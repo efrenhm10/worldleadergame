@@ -449,6 +449,87 @@ A national stadium lets you bid for the Olympics or the World Cup. The
 Megaprojects tab shows foreign visitors per year and your total landmark
 appeal.
 
+## Exports & Jobs (new tab)
+
+### From raw to refined
+
+Each country's real commodity exports climb a value chain: raw, then
+processed, then branded.
+
+| Good | Raw | Processed | Branded |
+|---|---|---|---|
+| Coffee (Ethiopia, Brazil, Indonesia, Mexico, Venezuela) | Green beans | Roasted & packaged | Specialty single-origin brands |
+| Hides & leather | Hides | Finished leather & shoes | Luxury leather goods |
+| Cotton | Raw cotton | Cloth & garments | Fashion labels |
+| Cocoa | Beans | Butter & powder | Fine chocolate |
+| Oil | Crude | Fuels & petrochemicals | Specialty chemicals |
+| Gold & diamonds | Rough | Cut & polished | Jewellery |
+
+Also tea, wool, sugar, beef, dairy, wine, fruit and flowers, rubber, fish,
+timber and ores.
+
+- **Processing:** build a state-owned plant (more jobs, but run worse
+  where corruption is high) or a joint venture (cheaper, brings know-how).
+  New private processors add capacity too.
+- **Branding** needs processing first. How far it can go depends on design
+  talent (culture), quality standards, festivals and fairs, royal warrants
+  and trade deals with rich markets.
+- **Value kept:** the tab shows how much of the final value you keep.
+  Ethiopian coffee starts at 16%.
+- **Prices:** commodity prices swing, with the real booms and busts (the
+  1977 coffee frost, the 1989 coffee crash, the 1974 sugar spike). Raw
+  exporters feel them most.
+
+### Wages and the middle-income trap
+
+- **Setting wages:** a national wage decree and a minimum wage set as a
+  share of the average wage. A sovereign decrees them; elsewhere they go
+  through the legislature.
+- **When pay outruns skills,** labour-intensive industries (textiles,
+  farming, tourism, assembly) lose their edge to cheaper neighbours. The
+  tab names them. Factories close and move, and unemployment rises.
+- **Skills raise what the economy can afford to pay:** literacy,
+  graduates, technology and vocational training.
+- **Warning:** the tab flags middle-income trap risk when growth stalls
+  with low skills.
+
+### Talent: brain drain and brain gain
+
+- **Brain drain:** when there are more graduates than high-skill jobs and
+  pay abroad is far higher, graduates leave, and the tab shows where they
+  go.
+- **Brain gain:** when high-skill jobs outnumber graduates, graduates come
+  home and foreigners arrive.
+- **What helps:** bonded scholarships, a diaspora return program, culture
+  and royal scholarships.
+- **Company offers** now show high-paying versus lower-wage jobs, with
+  monthly pay for each.
+
+### Development projects
+
+Workforce housing, state research parks, vocational institutes, a state
+tech & design campus and a cold-chain logistics hub, each built in a region
+you choose. Subsidized commercial rent (a Lawbook program) cuts rent for
+start-ups, studios and workshops.
+
+## Culture (new tab)
+
+- **Venues:** museums of fine art, history and science, a children's
+  museum, playgrounds and parks, a national library, cinemas and an
+  entertainment district, a concert hall, a theme park.
+- **Creative schools:** an academy of fine arts, a school of design &
+  architecture, a fashion institute, a film school, a music conservatory.
+- **Annual events:** fashion week, a film festival, a music festival, an
+  art biennale, a design & trade fair, and a coffee, wine, tea or chocolate
+  festival for countries that grow them.
+- **The culture score** keeps talent at home, draws tourists, raises
+  prestige, and supplies the design talent that lets export brands go
+  further. Censorship stifles it.
+- **Royal patronage** (monarchs): a Royal Academy of Arts, royal warrants
+  for craftsmen (a higher branding ceiling), a Royal Arts Foundation, royal
+  scholarships with a duty to return, and a royal child as patron of the
+  arts.
+
 ## Homes and new businesses
 
 Two programs in the Lawbook; their strength slider sets how much the
@@ -695,6 +776,9 @@ scandals, disasters, lobbyists, pork demands, investors and more.
 | `js/mega.js` | Megaprojects, their financing and the Megaprojects tab |
 | `js/identity.js` | Peoples, regional grievances, autonomy and separatism |
 | `js/landmarks.js` | Landmarks & wonders, tourism appeal, Olympic bids |
+| `js/wages.js` | Wages, competitiveness, the middle-income trap, talent flows, development projects |
+| `js/exports.js` | Export value chains: processing, branding, commodity prices |
+| `js/culture.js` | The Culture tab: venues, creative schools, festivals, royal patronage |
 | `js/report.js` | The yearly State of the Nation report |
 | `js/population.js` | Births, deaths, migration flows and the Population tab |
 | `js/treasury.js` | The treasury, development aid, debt and the Finance tab |

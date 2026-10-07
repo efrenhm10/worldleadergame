@@ -96,7 +96,7 @@ function prospectOdds(p) {
     const dbl = k => (pr === k ? 2 : 1);
     let o = 0.22;
     Object.entries(INCENTIVES).forEach(([k, inc]) => { o += inc.odds[p.inc[k]] * (inc.prio ? dbl(inc.prio) : 1); });
-    o += (G.dev.lit - I.lit) / 120 * dbl("skills") - indGap(p.sector) * 0.05 + megaFx("odds") + lmFx("odds");
+    o += (G.dev.lit - I.lit) / 120 * dbl("skills") - indGap(p.sector) * 0.05 + megaFx("odds") + lmFx("odds") + wageOdds(p.sector) + devFx("odds") + (SKILL_INTENSIVE.includes(p.sector) ? devFx("oddsHS") : 0);
     o += (G.s.stability - 50) / 150 * dbl("stability");
     o += Math.log10(Math.max(0.05, G.econ.gdp)) * 0.04 * dbl("market");
     o += clamp((30 - taxRate("corporate")) * 0.006, -0.15, 0.12) * dbl("taxes");
@@ -179,7 +179,8 @@ function openFirm(f) {
     const ft = firmTaxes([f]);
     const taxTxt = ` Its workers will pay about ${moneyFine(ft.workers)} a year in income tax and contributions; the company ${f.holidayUntil > G.year ? `${moneyFine(ft.corpLater)} a year in corporate tax once its holiday ends in ${f.holidayUntil}` : `${moneyFine(ft.corp)} a year in corporate tax`}.`;
     log(`💰 ${f.name}:${taxTxt}`, "good");
-    toast(`${f.name} is coming!`, `A new ${INDUSTRIES[f.sector].name.toLowerCase()} plant in ${where}. ${fmtJobs(f.jobs)} jobs.${taxTxt}`, [{ label: "Jobs", v: fmtJobs(f.jobs), good: true, raw: true }].concat(impactDiff(before, f.name)));
+    toast(`${f.name} is coming!`, `A new ${INDUSTRIES[f.sector].name.toLowerCase()} plant in ${where}. ${fmtJobs(f.jobs)} jobs: ${jobSplitText(f.jobs, f.sector)}.${taxTxt}`, [{ label: "Jobs", v: fmtJobs(f.jobs), good: true, raw: true }].concat(impactDiff(before, f.name)));
+    if (typeof exportsOnFirm === "function") exportsOnFirm(f);
 }
 
 function addJobs(thousands, temporary) {

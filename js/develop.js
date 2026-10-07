@@ -188,7 +188,7 @@ function localOdds(sector, way) {
 
 function yearlyFirms() {
     // Start-up programs: new local businesses open every year.
-    const sb = lawOn("small_business") ? lawMult("small_business") : 0;
+    const sb = (lawOn("small_business") ? lawMult("small_business") : 0) + (lawOn("commercial_rent") ? lawMult("commercial_rent") * 0.5 : 0);
     if (sb > 0) {
         const ks = Object.keys(INDUSTRIES).filter(k => indAvailable(k) && indGap(k) < 3 && !["oil", "aerospace", "shipbuilding"].includes(k));
         const n = Math.round(sb * 3 * clamp(G.s.stability / 60, 0.4, 1.2) + Math.random());
