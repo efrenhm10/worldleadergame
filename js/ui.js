@@ -415,6 +415,19 @@ function devCompanies() {
     return `<p class="tiny">🏢 <b>${fs.length} compan${fs.length > 1 ? "ies" : "y"}</b> produce ${nominal(out)} a year (${fmt(out / G.econ.gdp * 100, 1)}% of GDP) and employ ${fmtJobs(jobs)} (${fmt(jobs / Math.max(1, laborForce() * 1000) * 100, 1)}% of the workforce).</p>`;
 }
 
+// What keeps more (and better) investors away.
+function investorBlocks() {
+    const out = [], d = G.dev;
+    const locked = Object.entries(INDUSTRIES).filter(([k]) => !(indAvailable(k) && indGap(k) <= 4) && (!INDUSTRIES[k].res || G.res.includes(INDUSTRIES[k].res)) && (!INDUSTRIES[k].from || G.year >= INDUSTRIES[k].from))
+        .map(([k, I]) => { const need = []; if (d.lit < I.lit) need.push(`literacy ${I.lit}% (you ${Math.round(d.lit)}%)`); if (d.tech < I.tech) need.push(`technology ${I.tech} (you ${Math.round(d.tech)})`); if (d.uni < I.uni) need.push(`graduates ${I.uni}% (you ${fmt(d.uni, 1)}%)`); return [k, I, need, indGap(k)]; })
+        .filter(x => x[2].length).sort((a, b) => a[3] - b[3]).slice(0, 3);
+    if (locked.length) out.push(`🔒 Industries investors can't enter yet: ${locked.map(([, I, need]) => `${I.icon} ${I.name} needs ${need.join(", ")}`).join("; ")}.`);
+    if (typeof wageGap === "function" && wageGap() > 0.05) out.push("💸 Wages are ahead of skills, which scares off labour-intensive factories.");
+    if (G.s.stability < 40) out.push("⚠️ Instability frightens investors.");
+    if (typeof investorHomes === "function" && investorHomes().length < 3) out.push("🌐 Few rich countries are on good terms with you: improve relations to widen the pool.");
+    return out.length ? `<p class="tiny muted"><b>Why not more?</b> ${out.join(" ")}</p>` : "";
+}
+
 function viewEconomy() {
     const d = G.dev, e = G.econ;
     const rows = Object.keys(INDUSTRIES).map(k => {
@@ -464,15 +477,17 @@ function viewEconomy() {
     const prospects = pros.map((p, i) => {
         const t = offerTerms(p), odds = prospectOdds(p) + (p.ceo ? p.ceo.bonus : 0);
         const incs = Object.entries(INCENTIVES).map(([k, inc]) => `<div class="inc-row"><span>${inc.name}</span><select id="inc_${i}_${k}" data-change="inc" data-i="${i}" data-k="${k}">${inc.opts.map((o, j) => `<option value="${j}" ${p.inc[k] === j ? "selected" : ""}>${o}</option>`).join("")}</select></div>`).join("");
-        return `<div class="prospect"><div class="row"><b>${p.home ? flagOf(p.home) : "🏳️"} ${esc(p.name)}</b> <span class="badge small">${INDUSTRIES[p.sector].icon} ${INDUSTRIES[p.sector].name}</span></div>
+        return `<div class="prospect"><div class="row"><b>${p.home ? flagOf(p.home) : "🏳️"} ${esc(p.name)}</b> <span class="badge small">${INDUSTRIES[p.sector].icon} ${INDUSTRIES[p.sector].name}</span>${p.expand ? ` <span class="badge small">📈 Expansion</span>` : ""}</div>${p.expand ? `<p class="tiny good">Already operating here and doing well: they want to expand.</p>` : ""}
             <p class="tiny">${p.known ? `They care most about <b>${PRIORITIES[p.prio]}</b>.` : "Their priorities are unknown. Meet the CEO at headquarters to find out."}${p.ceo && p.ceo.round ? ` CEO meeting: ${p.ceo.bonus > 0.1 ? "went very well" : p.ceo.bonus > 0 ? "went well" : "went badly"}.` : ""}</p>
             ${incs}
             <div class="budget"><div><small>Jobs</small><b>${fmtJobs(t.jobs)}</b></div><div><small>Output</small><b>${nominal(t.out)}/yr</b></div><div><small>Your cost</small><b>${money(t.cost * cpi())}</b></div><div><small>Corporate tax/yr</small><b>${moneyFine(t.annualTax * cpi())}</b>${t.holidayYrs ? `<span class="tiny muted">after a ${t.holidayYrs}-yr holiday</span>` : ""}</div><div><small>Workers' taxes/yr</small><b class="good">${moneyFine(firmTaxes([{ out: t.out, jobs: t.jobs }]).workers)}</b><span class="tiny muted">from day one</span></div></div>
             <p class="tiny">👷 ${jobSplitText(t.jobs, p.sector)}</p>
+            ${(() => { const parts = prospectOddsParts(p).filter(([l]) => l !== "Base interest"); const neg = parts.filter(x => x[1] < 0).sort((a, b) => a[1] - b[1]).slice(0, 3), pos = parts.filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]).slice(0, 3);
+                return `<p class="tiny">${neg.length ? `<span class="bad">Holding them back:</span> ${neg.map(([l, v]) => `${esc(l)} ${Math.round(v * 100)}%`).join(", ")}. ` : ""}${pos.length ? `<span class="good">Drawing them in:</span> ${pos.map(([l, v]) => `${esc(l)} +${Math.round(v * 100)}%`).join(", ")}.` : ""}</p>`; })()}
             <p class="small">Chance they say yes: <b class="${odds > 0.6 ? "good" : odds < 0.35 ? "bad" : "warn"}">${Math.round(clamp(odds, 0.02, 0.97) * 100)}%</b>${t.cost > 0 ? ` · pays back in ~${Math.round(t.payback)} yrs` : ""}</p>
             <div class="row">${p.ceo && p.ceo.round ? "" : `<button class="mini" data-act="ceoTalk" data-i="${i}" ${G.capital < 4 ? "disabled" : ""}>✈️ Meet the CEO (4 ⚡)</button>`}<button class="mini primary" data-act="offer" data-i="${i}" ${G.capital < 5 ? "disabled" : ""}>Make the offer (5 ⚡)</button></div></div>`;
     }).join("") || "<p class='muted small'>No companies are looking at your country right now. Improve stability, education, infrastructure and openness.</p>";
-    const deskPanel = panel("Investment desk", `<p class="small muted">Court foreign companies. New prospects arrive every six months. To grow your own firms, open an industry from the table.</p>${prospects}`);
+    const deskPanel = panel("Investment desk", `<p class="small muted">Court foreign companies. New prospects arrive every six months (next in ${Math.max(1, Math.round(((G.prospectsT || G.t) - G.t) / 4.3))} months). To grow your own firms, open an industry from the table.</p>${prospects}${investorBlocks()}`);
     const starts = (G.firms || []).filter(f => f.way === "startup" && !f.closed);
     const startRow = starts.length ? `<tr><td>🏪 ${starts.length} small businesses</td><td></td><td>start-up program</td><td>${fmtJobs(starts.reduce((s, f) => s + f.jobs, 0))}</td><td>${(() => { const ft = firmTaxes(starts); return `${moneyFine(ft.corp)} corp. · workers ${moneyFine(ft.workers)}`; })()}</td></tr>` : "";
     const firms = startRow + (G.firms || []).filter(f => f.way !== "startup").slice().reverse().map(f => `<tr class="${f.closed ? "dim" : ""}"><td>${f.home && f.home !== G.ck ? flagOf(f.home) : f.foreign ? "🌐" : "🏠"} ${esc(f.name)}</td><td>${INDUSTRIES[f.sector].icon}</td><td>${esc(G.regions[f.region] ? G.regions[f.region].n : "")}</td><td>${fmtJobs(f.jobs)}</td><td>${f.closed ? "closed" : (() => { const ft = firmTaxes([f]); return `${f.holidayUntil > G.year ? `<span class="warn">holiday to ${f.holidayUntil}</span> (then ${moneyFine(ft.corpLater)})` : `<span class="good">${moneyFine(ft.corp)}</span>`} corp. · workers <span class="good">${moneyFine(ft.workers)}</span>`; })()}</td></tr>`).join("");

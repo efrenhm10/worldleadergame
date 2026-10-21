@@ -71,46 +71,80 @@ function companyAvailable(c) {
     if (!indAvailable(c.sector) || indGap(c.sector) > 4) return false;
     if (c.home && G.nations[c.home] && (G.nations[c.home].status !== "sovereign" || getRel(G.ck, c.home) < -30)) return false;
     if (c.home && G.wars.some(w => !w.over && ((w.a.includes(G.ck) && w.b.includes(c.home)) || (w.b.includes(G.ck) && w.a.includes(c.home))))) return false;
-    if (G.firms && G.firms.some(f => f.name === c.name)) return false;
+    if (G.firms && G.firms.some(f => f.name === c.name && (!f.closed || G.year - (f.closedY || G.year) < 10))) return false;
     return true;
+}
+
+// Countries whose firms invest abroad, and how they name themselves.
+function investorHomes() {
+    return Object.values(G.nations).filter(n => n.key !== G.ck && n.status === "sovereign" && !n.rebel && nationPc(n) > gdpPerCapita() * 1.5 && n.gdp > G.econ.gdp * 0.5 && getRel(G.ck, n.key) > -30
+        && !G.wars.some(w => !w.over && ((w.a.includes(G.ck) && w.b.includes(n.key)) || (w.b.includes(G.ck) && w.a.includes(n.key))))).sort((a, b) => b.gdp * (1 + getRel(G.ck, b.key) / 100) - a.gdp * (1 + getRel(G.ck, a.key) / 100));
+}
+// When the famous names are used up, other firms from friendly countries come looking.
+function genericProspect(sectors) {
+    const homes = investorHomes().slice(0, 8);
+    if (!homes.length || !sectors.length) return null;
+    const home = pick(homes), sector = pick(sectors);
+    const NPC_NAMES = { italy: ["Rossi", "Ferrari", "Colombo", "Ricci", "Marino", "Conti"], eastgermany: ["Becker", "Schulz", "Hoffmann"], poland: ["Nowak", "Kowalski"], yugoslavia: ["Petrović", "Horvat"] };
+    const founder = NPC_NAMES[home.key] ? pick(NPC_NAMES[home.key]) : randomLeaderName(home.key).split(" ").pop();
+    const name = `${founder} ${LOCAL_SUFFIX[sector] || "Industries"} (${home.name})`;
+    if (G.firms && G.firms.some(f => f.name === name && !f.closed)) return null;
+    return { name, sector, home: home.key, size: chance(0.7) ? "S" : "M", generic: true };
+}
+// Companies already here offer to expand when business is good.
+function expansionProspect() {
+    const ok = (G.firms || []).filter(f => f.foreign && !f.closed && !f.expanded && G.t - (f.since || 0) > 104 && indAvailable(f.sector) && sectorBonus(f.sector) > -0.5 && wageGap() < 0.1);
+    if (!ok.length) return null;
+    const f = pick(ok);
+    return { name: f.name, sector: f.sector, home: f.home, size: "S", expand: f.name };
 }
 
 function refreshProspects(force) {
     if (!G.prospects || force || G.t >= (G.prospectsT || 0)) {
         const pool = COMPANIES.filter(companyAvailable);
         const out = [];
-        while (out.length < 3 && pool.length) {
-            const i = Math.floor(Math.random() * pool.length);
-            const c = pool.splice(i, 1)[0];
-            out.push({ name: c.name, sector: c.sector, home: c.home, size: c.size, prio: pick(Object.keys(PRIORITIES)), known: false, inc: { holiday: 0, grant: 0, local: 0, labor: 0, site: 0 } });
-        }
+        const add = c => out.push({ name: c.name, sector: c.sector, home: c.home, size: c.size, expand: c.expand || null, generic: !!c.generic, prio: pick(Object.keys(PRIORITIES)), known: false, inc: { holiday: 0, grant: 0, local: 0, labor: 0, site: 0 } });
+        while (out.length < 3 && pool.length) add(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+        // An expansion offer now and then from a firm already here.
+        const ex = chance(0.5) ? expansionProspect() : null;
+        if (ex && out.length >= 3) out[2] = null, out.length = 2;
+        if (ex) add(ex);
+        // Fill the rest with other firms from friendly countries.
+        const open = Object.keys(INDUSTRIES).filter(k => indAvailable(k) && indGap(k) <= 4 && k !== "oil");
+        for (let tries = 0; out.length < 3 && tries < 6; tries++) { const g = genericProspect(open); if (g && !out.some(o => o.name === g.name)) add(g); }
         G.prospects = out;
         G.prospectsT = G.t + 26;
     }
     return G.prospects;
 }
 
-function prospectOdds(p) {
-    const I = INDUSTRIES[p.sector];
-    const pr = p.prio;
-    const dbl = k => (pr === k ? 2 : 1);
-    let o = 0.22;
-    Object.entries(INCENTIVES).forEach(([k, inc]) => { o += inc.odds[p.inc[k]] * (inc.prio ? dbl(inc.prio) : 1); });
-    o += (G.dev.lit - I.lit) / 120 * dbl("skills") - indGap(p.sector) * 0.05 + megaFx("odds") + lmFx("odds") + wageOdds(p.sector) + devFx("odds") + (SKILL_INTENSIVE.includes(p.sector) ? devFx("oddsHS") : 0);
-    o += (G.s.stability - 50) / 150 * dbl("stability");
-    o += Math.log10(Math.max(0.05, G.econ.gdp)) * 0.04 * dbl("market");
-    o += clamp((30 - taxRate("corporate")) * 0.006, -0.15, 0.12) * dbl("taxes");
-    o += ({ restrict: 0.05, bargaining: -0.02, state_unions: -0.04 }[G.pol.labor] || 0) * dbl("labor");
-    o += (covEff("power") + covEff("roads")) * 0.04 * dbl("infra") + sectorBonus(p.sector) * 0.03;
-    o += ({ planned: -0.15, collectivized: -0.45, market: 0.05 }[G.pol.economy] || 0);
-    o += ({ trade_free: 0.06, protection: -0.02, autarky: -0.35 }[G.pol.trade] || 0);
-    if (G.pol.resources === "nationalized" && ["oil", "mining"].includes(p.sector)) o -= 0.15;
-    if (p.home && G.nations[p.home]) o += getRel(G.ck, p.home) / 400;
-    o += skill("economics") * 0.015 + minBonus("industry") * 0.03 + (p.known ? 0.05 : 0);
-    if (G.gov.type === "colony") o -= 0.1;
-    o += instInvestBonus();
-    return clamp(o, 0.02, 0.95);
+// What pushes a company toward yes or no, as [label, change in odds].
+function prospectOddsParts(p) {
+    const I = INDUSTRIES[p.sector], pr = p.prio, dbl = k => (pr === k ? 2 : 1), parts = [];
+    const add = (l, v) => { if (Math.abs(v) >= 0.005) parts.push([l, v]); };
+    add("Base interest", 0.22);
+    let inc = 0; Object.entries(INCENTIVES).forEach(([k, x]) => { inc += x.odds[p.inc[k]] * (x.prio ? dbl(x.prio) : 1); }); add("Your incentives", inc);
+    add(G.dev.lit >= I.lit ? "Educated workforce" : `Workforce skills (literacy ${Math.round(G.dev.lit)}% vs ${I.lit}% wanted)`, (G.dev.lit - I.lit) / 120 * dbl("skills"));
+    add("Industry not yet ready here", -indGap(p.sector) * 0.05);
+    add("Megaprojects & landmarks", megaFx("odds") + lmFx("odds"));
+    add(SKILL_INTENSIVE.includes(p.sector) ? "Skill level for high-tech work" : wageGap() > 0 ? "Wages ahead of skills" : "Cheap, capable labour", wageOdds(p.sector));
+    add("Development projects", devFx("odds") + (SKILL_INTENSIVE.includes(p.sector) ? devFx("oddsHS") : 0));
+    add(G.s.stability >= 50 ? "Stability" : `Instability (${Math.round(G.s.stability)})`, (G.s.stability - 50) / 150 * dbl("stability"));
+    add("Size of your market", Math.log10(Math.max(0.05, G.econ.gdp)) * 0.04 * dbl("market"));
+    add(`Corporate tax (${fmt(taxRate("corporate"), 0)}%)`, clamp((30 - taxRate("corporate")) * 0.006, -0.15, 0.12) * dbl("taxes"));
+    add("Labour laws", ({ restrict: 0.05, bargaining: -0.02, state_unions: -0.04 }[G.pol.labor] || 0) * dbl("labor"));
+    add("Infrastructure", (covEff("power") + covEff("roads")) * 0.04 * dbl("infra") + sectorBonus(p.sector) * 0.03);
+    add(optName(curOpt("economy")), { planned: -0.15, collectivized: -0.45, market: 0.05 }[G.pol.economy] || 0);
+    add(optName(curOpt("trade")), { trade_free: 0.06, protection: -0.02, autarky: -0.35 }[G.pol.trade] || 0);
+    if (G.pol.resources === "nationalized" && ["oil", "mining"].includes(p.sector)) add("Nationalized resources", -0.15);
+    if (p.home && G.nations[p.home]) add(`Relations with ${nationName(p.home)}`, getRel(G.ck, p.home) / 400);
+    add("Your skill & ministers", skill("economics") * 0.015 + minBonus("industry") * 0.03);
+    if (p.known) add("You know what they want", 0.05);
+    if (G.gov.type === "colony") add("Colonial status", -0.1);
+    add("Institutions (World Bank, WTO…)", instInvestBonus());
+    return parts;
 }
+function prospectOdds(p) { return clamp(prospectOddsParts(p).reduce((s, [, v]) => s + v, 0), 0.02, 0.95); }
 
 function offerCost(p) {
     const size = plantSize(p);
@@ -147,6 +181,18 @@ function makeOffer(i) {
         return toast("Offer declined", `${p.name} chose another country.`);
     }
     G.econ.debt += t.cost;
+    if (p.expand) {
+        const f = (G.firms || []).find(x => x.name === p.expand && !x.closed);
+        if (f) {
+            f.out += t.out; f.jobs += t.jobs; f.expanded = true;
+            G.ind[f.sector].out += t.out; addJobs(t.jobs);
+            if (p.home) addRel(G.ck, p.home, 4);
+            log(`📈 ${f.name} expands its plant: ${fmtJobs(t.jobs)} more jobs (${jobSplitText(t.jobs, f.sector)}).`, "good");
+            toast(`${f.name} expands`, `${fmtJobs(t.jobs)} new jobs.`);
+            G.prospects.splice(i, 1);
+            return;
+        }
+    }
     const ri = bestRegionFor(p.sector);
     openFirm({ name: p.name, sector: p.sector, home: p.home, out: t.out, jobs: t.jobs, holidayUntil: G.year + t.holidayYrs, local: p.inc.local, region: ri, foreign: true });
     if (p.inc.labor) applyEffects({ p: { labor: -5 }, liberty: -1 });

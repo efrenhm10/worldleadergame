@@ -80,7 +80,7 @@ function wagesYearly() {
     if (gap <= 0.05) return;
     (G.firms || []).filter(f => f.foreign && !f.closed && LABOR_INTENSIVE.includes(f.sector)).forEach(f => {
         if (!chance(gap * 0.3)) return;
-        f.closed = true;
+        f.closed = true; f.closedY = G.year;
         G.ind[f.sector].out = Math.max(0.0001, G.ind[f.sector].out - f.out * 0.8);
         G.econ.jobsAdded = (G.econ.jobsAdded || 0) - f.jobs / Math.max(1, laborForce() * 1000) * 100;
         const to = cheaperRivals()[0];
