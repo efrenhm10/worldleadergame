@@ -530,6 +530,25 @@ start-ups, studios and workshops.
   scholarships with a duty to return, and a royal child as patron of the
   arts.
 
+## Healthcare industry
+
+Healthcare & medical services is an industry on the Economy tab.
+- **Starting size:** its 1950 size ranges from about 4.5% of GDP in the US
+  and 3.5% in Britain to under 1% in the poorest countries.
+- **What grows it:**
+  - Rising incomes: richer people spend more on health.
+  - Public health laws (a national health service buys care).
+  - Hospital coverage.
+  - A medical tourism zone (from 1980).
+- **Its own assets:** medical schools, nursing colleges and the medical
+  tourism zone.
+- **Companies:** Johnson & Johnson, Baxter, Bupa, Medtronic, HCA, Fresenius,
+  Philips, Parkway, GE Healthcare, Siemens Healthineers and Apollo
+  Hospitals arrive in their real eras.
+- **Health:** a medical sector that grows beyond its 1950 size raises the
+  health index. Its jobs are about 40% high-skill (doctors, nurses,
+  technicians), which helps keep graduates at home.
+
 ## Homes and new businesses
 
 Two programs in the Lawbook; their strength slider sets how much the

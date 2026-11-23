@@ -364,6 +364,8 @@ const INDUSTRIES = {
                     desc: "Banks, insurance and trade finance. Thrives on stability and open trade." },
     film:         { name: "Film & media", icon: "🎬", tech: 20, lit: 40, uni: 1, jobs: 1.0, heavy: false, project: "Film studio complex",
                     desc: "Cinema, then television, then streaming. Censorship stifles it; a hit industry is soft power." },
+    healthcare:   { name: "Healthcare & medical services", icon: "🏥", tech: 15, lit: 35, uni: 1.5, jobs: 1.4, heavy: false, project: "Teaching hospital & medical school",
+                    desc: "Hospitals, clinics, doctors, nurses and labs. Grows as people get richer and live longer, and as public health systems expand. Can earn foreign money from medical tourism." },
     tourism:      { name: "Tourism", icon: "🏝️", tech: 5, lit: 20, uni: 0, jobs: 1.6, heavy: false, res: "tourism", project: "Resort & jet airport",
                     desc: "Hotels, beaches and airlines. Needs attractions and peace." }
 };
@@ -374,7 +376,7 @@ function industryTrend(k, year) {
     const T = {
         agriculture: [2, 1.5, 1.5, 1.5], mining: [3.5, 1.5, 1, 2], oil: [7, 2, 1, 1], textiles: [4, 2, 1.5, 1], steel: [6, 0.5, 0, 0.5],
         machinery: [6, 3, 2.5, 2], chemicals: [7, 3.5, 3, 2.5], shipbuilding: [6, -2, -1, 0], autos: [8, 3, 3, 2], electronics: [11, 8, 7, 4],
-        aerospace: [7, 4, 3, 3], computing: [18, 16, 14, 8], finance: [5, 5, 6, 3], tourism: [8, 6, 5, 4], film: [5, 4, 5, 6], renewables: [0, 0, 12, 14], ai: [0, 0, 0, 25]
+        aerospace: [7, 4, 3, 3], computing: [18, 16, 14, 8], finance: [5, 5, 6, 3], healthcare: [5, 4.5, 4, 3.5], tourism: [8, 6, 5, 4], film: [5, 4, 5, 6], renewables: [0, 0, 12, 14], ai: [0, 0, 0, 25]
     };
     return T[k][e];
 }

@@ -12,7 +12,7 @@
 //   vocational institutes that build the skills and jobs to climb.
 
 // Share of each sector's jobs that are high-skill, high-paying.
-const HS_SHARE = { agriculture: 0.03, mining: 0.12, oil: 0.3, textiles: 0.06, steel: 0.12, machinery: 0.25, chemicals: 0.35, shipbuilding: 0.15, autos: 0.2, electronics: 0.3, aerospace: 0.5, computing: 0.6, renewables: 0.4, ai: 0.75, finance: 0.55, film: 0.35, tourism: 0.1 };
+const HS_SHARE = { agriculture: 0.03, mining: 0.12, oil: 0.3, textiles: 0.06, steel: 0.12, machinery: 0.25, chemicals: 0.35, shipbuilding: 0.15, autos: 0.2, electronics: 0.3, aerospace: 0.5, computing: 0.6, renewables: 0.4, ai: 0.75, finance: 0.55, film: 0.35, tourism: 0.1, healthcare: 0.4 };
 // Sectors that live on cheap labour, and those that live on skills.
 const LABOR_INTENSIVE = ["textiles", "agriculture", "tourism", "autos", "electronics", "shipbuilding"];
 const SKILL_INTENSIVE = ["machinery", "chemicals", "aerospace", "computing", "renewables", "ai", "finance", "film"];

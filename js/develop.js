@@ -28,6 +28,7 @@ const SECTOR_CONDITIONS = {
     aerospace: () => [uniOk(8), techOk(65), covOk("airports", 50)],
     computing: () => [uniOk(12), covOk("telecom", 60), techOk(75)],
     finance: () => [stabOk(60), litOk(60), covOk("telecom", 40)],
+    healthcare: () => [covOk("hospitals", 50), litOk(50), uniOk(2)],
     tourism: () => [covOk("airports", 40), stabOk(55), C_("Crime 45 or less", () => G.s.crime <= 45, "Policing, jobs and housing")],
     renewables: () => [covOk("power", 60), uniOk(15)],
     ai: () => [uniOk(25), covOk("telecom", 80), techOk(130)],
@@ -52,6 +53,7 @@ const SECTOR_ASSETS = {
     aerospace: { tunnel: { name: "Wind tunnel & test range", cost: 0.2, desc: "Test aircraft and missiles." }, school: { name: "Aeronautics institute", cost: 0.15, desc: "Aircraft designers." }, airfield: { name: "Factory airfield", cost: 0.15, desc: "Fly what you build." } },
     computing: { cs: { name: "Computer science departments", cost: 0.15, desc: "Programmers and researchers." }, hub: { name: "Technology hub & incubators", cost: 0.15, desc: "Where startups grow." }, fiber: { name: "Fiber-optic backbone", cost: 0.3, desc: "Fast data everywhere.", from: 1985 } },
     finance: { exchange: { name: "Modern stock exchange", cost: 0.1, desc: "Let companies raise capital." }, central: { name: "Independent central bank", cost: 0.05, desc: "Investors trust the currency." }, school: { name: "School of finance", cost: 0.1, desc: "Bankers, accountants, actuaries." } },
+    healthcare: { medschool: { name: "Medical schools", cost: 0.15, desc: "Doctors trained at home instead of abroad." }, nursing: { name: "Nursing colleges", cost: 0.08, desc: "Nurses, midwives and technicians." }, medtour: { name: "Medical tourism zone", cost: 0.2, from: 1980, desc: "International-standard hospitals that draw paying patients from abroad." } },
     tourism: { airport: { name: "International airport terminal", cost: 0.3, desc: "Jets full of visitors." }, hotel: { name: "Hotel & tourism school", cost: 0.1, desc: "Service that brings people back." }, heritage: { name: "Heritage site restoration", cost: 0.15, desc: "Ruins, temples and old towns." } },
     renewables: { grid: { name: "Smart grid", cost: 0.3, desc: "Handle wind and solar power." }, factory: { name: "Solar panel factory", cost: 0.25, desc: "Build panels at home." }, battery: { name: "Battery research lab", cost: 0.15, desc: "Store the power." } },
     film: { studios: { name: "Studio lot & sound stages", cost: 0.15, desc: "Stages, backlots and post-production. Foreign shoots come too." }, school: { name: "National film school", cost: 0.06, desc: "Directors, cinematographers and editors trained at home." }, fund: { name: "Film fund & production rebate", cost: 0.08, desc: "Co-finances local films and refunds part of what foreign productions spend here." } },
@@ -66,6 +68,7 @@ function assetQueued(k, a) { return G.cip && (G.cip.queue.concat(G.cip.active)).
 function sectorFit(k) {
     if (G.fit && G.fit[k] != null) return G.fit[k];
     if (k === "film" && FILM_FIT[G.ck]) { G.fit = G.fit || {}; return (G.fit[k] = FILM_FIT[G.ck]); }
+    if (k === "healthcare" && HEALTH_FIT[G.ck]) { G.fit = G.fit || {}; return (G.fit[k] = HEALTH_FIT[G.ck]); }
     const c = C(), sh = (c.econ.inds[k] || 0);
     let f = sh >= 8 ? 5 : sh >= 4 ? 4 : sh >= 1.5 ? 3 : sh > 0 ? 2.5 : 2;
     const d = INDUSTRIES[k];
@@ -215,3 +218,7 @@ function yearlyFirms() {
 const FILM_1950 = { usa: 0.6, uk: 0.3, france: 0.3, india: 0.25, japan: 0.35, mexico: 0.4, argentina: 0.3, brazil: 0.1, germany: 0.2, russia: 0.15, china: 0.05, turkey: 0.1, philippines: 0.15, egypt: 0.2, southkorea: 0.05, canada: 0.05, australia: 0.05, iran: 0.05, israel: 0.05, singapore: 0.1, uruguay: 0.05, southafrica: 0.05, pakistan: 0.05, indonesia: 0.05, norway: 0.05, switzerland: 0.05, nigeria: 0.02 };
 const FILM_FIT = { usa: 5, india: 5, japan: 4, uk: 4, france: 4, mexico: 4, nigeria: 4, southkorea: 4, argentina: 3.5, brazil: 3.5, philippines: 3.5, turkey: 3.5, iran: 3.5, china: 3.5, germany: 3.5, australia: 3.5, canada: 3.5 };
 Object.entries(FILM_1950).forEach(([k, v]) => { if (COUNTRIES[k]) COUNTRIES[k].econ.inds.film = v; });
+// Healthcare's share of GDP in 1950 (private and public provision), from income and literacy.
+const HEALTH_1950 = { usa: 4.5, uk: 3.5, switzerland: 3.5, canada: 3.2, australia: 3, newzealand: 3, norway: 3, france: 3, germany: 3, israel: 3, uruguay: 2.5, argentina: 2.5, japan: 2, southafrica: 2 };
+Object.entries(COUNTRIES).forEach(([k, c]) => { c.econ.inds.healthcare = HEALTH_1950[k] || Math.round(clamp(0.3 + c.dev.lit * 0.02, 0.3, 2) * 10) / 10; });
+const HEALTH_FIT = { usa: 5, switzerland: 5, uk: 4, singapore: 4.5, india: 4, israel: 4, germany: 4, france: 4, cuba: 4, thailand: 4, southkorea: 3.5 };

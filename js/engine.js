@@ -412,6 +412,9 @@ function indRate(k) {
     else r += lawFx("indAll");
     r += sectorBonus(k) + taxIndEffect(k) + tradeIndEffect(k) + megaInd(k) + lmInd(k) + wageInd(k) + devInd(k) + cultureInd(k);
     if (k === "film") r += { free: 1, restricted: -0.8, state: -2.5 }[G.pol.press] || 0;
+    // Public health systems buy care; hospitals give it somewhere to happen; medical tourists pay in dollars.
+    // Richer people spend a rising share of their income on health.
+    if (k === "healthcare") r += 1.5 * clamp(gdpPerCapita() / Math.max(1, frontierPC()), 0, 1) + Math.min(1.5, lawFx("health") * 0.08) + covRel("hospitals") * 1.2 + (assetBuilt("healthcare", "medtour") ? 1 : 0);
     if (["textiles", "autos", "electronics", "finance", "tourism"].includes(k)) r += { trade_free: 1, protection: -0.6, autarky: -2 }[G.pol.trade] || 0;
     if (d.heavy && G.pol.trade === "protection") r += 0.4;
     if (["steel", "aerospace", "shipbuilding", "machinery"].includes(k) && playerWars().length) r += 1.5;
@@ -836,6 +839,13 @@ function load() {
     try {
         const s = localStorage.getItem(SAVE_KEY); if (!s) return false; G = JSON.parse(s);
         if (G && G.scenes) G.scenes = G.scenes.filter(q => q.id !== "cip_region");   // pickers never outlive a session
+        if (G && G.ind && G.econ) Object.keys(INDUSTRIES).forEach(k => {
+            if (G.ind[k]) return;
+            const share = (C().econ.inds[k] || 0) * (k === "healthcare" ? Math.max(1, G.dev.lit / 50) : 1) / 100;
+            const out = Math.min(G.econ.services * 0.2, G.econ.gdp * share);
+            G.ind[k] = { out, out0: out, sup: 0, own: "private" };
+            G.econ.services -= out;
+        });
         if (G && G.econ && !G.annual) { try { G.annual = [yearSnap()]; } catch (e) { /* first report a year later */ } }
         if (G && G.firms) G.firms.forEach(f => { if (f.foreign && !f.home) { const c = COMPANIES.find(x => x.name === f.name); if (c) f.home = c.home; } });
         return !!G && G.v === 1;

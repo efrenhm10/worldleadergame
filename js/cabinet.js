@@ -138,8 +138,16 @@ const povertyReach = () => clamp(povertyBase() / 35, 0.6, 1.8);
 const ruralShare = () => clamp(G.ind.agriculture.out / G.econ.gdp * 2, 0.2, 1);
 const ruralPoverty = () => -(Math.max(0, covRel("irrigation")) * 4 + Math.max(0, covRel("roads")) * 2) * ruralShare();
 
+// A growing medical sector (more doctors, nurses, clinics) adds to health beyond its 1950 level.
+function healthIndustryFx() {
+    if (!G.ind || !G.ind.healthcare) return 0;
+    if (!G.ref) return 0;
+    if (G.ref.hc == null) G.ref.hc = indShare("healthcare");
+    return clamp((indShare("healthcare") - G.ref.hc) * 0.9, -3, 6);
+}
+
 function healthTarget() {
-    let t = healthBase() + megaFx("health") + lmFx("health") + cultureFx("health");
+    let t = healthBase() + megaFx("health") + lmFx("health") + cultureFx("health") + healthIndustryFx();
     t += lawFx("health") + covRel("hospitals") * 4 + taxHealth();
     t += minBonus("health") * 1.5 - G.s.weariness * 0.05;
     return clamp(t, 5, 98);

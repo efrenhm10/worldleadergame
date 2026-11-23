@@ -23,6 +23,10 @@ const COMPANIES = [
     ["Hilton Hotels", "tourism", "usa", 1950, 2026, "M"], ["Club Med", "tourism", "france", 1955, 2026, "S"], ["Marriott", "tourism", "usa", 1960, 2026, "M"], ["Accor", "tourism", "france", 1970, 2026, "M"],
     ["Citibank", "finance", "usa", 1950, 2026, "M"], ["HSBC", "finance", "uk", 1950, 2026, "M"], ["Union Bank of Switzerland", "finance", "switzerland", 1950, 2026, "M"], ["Goldman Sachs", "finance", "usa", 1980, 2026, "M"],
     ["Mitsubishi Heavy Industries", "shipbuilding", "japan", 1955, 2026, "L"], ["Harland & Wolff", "shipbuilding", "uk", 1950, 1975, "M"], ["Hyundai Heavy Industries", "shipbuilding", "southkorea", 1975, 2026, "L"],
+    ["Johnson & Johnson Medical", "healthcare", "usa", 1950, 2026, "M"], ["Baxter International", "healthcare", "usa", 1950, 2026, "S"], ["Bupa", "healthcare", "uk", 1950, 2026, "S"],
+    ["Medtronic", "healthcare", "usa", 1960, 2026, "S"], ["HCA Healthcare", "healthcare", "usa", 1968, 2026, "M"], ["Fresenius", "healthcare", "germany", 1970, 2026, "M"],
+    ["Philips Medical Systems", "healthcare", null, 1960, 2026, "M"], ["Parkway Hospitals", "healthcare", "singapore", 1987, 2026, "S"], ["GE Healthcare", "healthcare", "usa", 1994, 2026, "M"],
+    ["Siemens Healthineers", "healthcare", "germany", 2017, 2026, "M"], ["Apollo Hospitals", "healthcare", "india", 1983, 2026, "S"],
     ["Levi Strauss", "textiles", "usa", 1950, 2026, "S"], ["Courtaulds", "textiles", "uk", 1950, 1990, "M"], ["Nike", "textiles", "usa", 1975, 2026, "M"], ["Inditex (Zara)", "textiles", null, 1990, 2026, "M"],
     ["Rio Tinto", "mining", "uk", 1950, 2026, "L"], ["Anglo American", "mining", "southafrica", 1950, 2026, "L"], ["Alcoa", "mining", "usa", 1950, 2026, "M"], ["BHP", "mining", "australia", 1960, 2026, "L"], ["Vale", "mining", "brazil", 1975, 2026, "L"],
     ["Vestas", "renewables", null, 2000, 2026, "M"], ["Tesla", "renewables", "usa", 2015, 2026, "L"], ["BYD", "renewables", "china", 2015, 2026, "L"], ["CATL", "renewables", "china", 2018, 2026, "L"],
@@ -240,7 +244,7 @@ function addJobs(thousands, temporary) {
 const fmtJobs = k => k >= 1000 ? `${fmt(k / 1000, 1)} million` : k >= 1 ? `${Math.round(k).toLocaleString()},000` : `${Math.max(1, Math.round(k * 1000)).toLocaleString()}`;
 
 // Homegrown firms: back a local entrepreneur.
-const LOCAL_SUFFIX = { film: "Studios", agriculture: "Agro", mining: "Mining", oil: "Petroleum", textiles: "Textiles", steel: "Steel", machinery: "Engineering", chemicals: "Chemicals", shipbuilding: "Shipyards", autos: "Motors", electronics: "Electronics", aerospace: "Aviation", computing: "Systems", finance: "Bank", tourism: "Resorts", renewables: "Energy", ai: "AI Labs" };
+const LOCAL_SUFFIX = { healthcare: "Hospitals", film: "Studios", agriculture: "Agro", mining: "Mining", oil: "Petroleum", textiles: "Textiles", steel: "Steel", machinery: "Engineering", chemicals: "Chemicals", shipbuilding: "Shipyards", autos: "Motors", electronics: "Electronics", aerospace: "Aviation", computing: "Systems", finance: "Bank", tourism: "Resorts", renewables: "Energy", ai: "AI Labs" };
 
 function backEntrepreneur(sector, way = "grant") {
     const W = LOCAL_WAYS[way];
